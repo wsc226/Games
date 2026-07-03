@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shinkansen Pixel Runner</title>
     <style>
-        /* Lock down viewport to prevent any scrolling or iOS/Chrome bouncing */
         html, body {
             margin: 0;
             padding: 0;
@@ -27,7 +26,6 @@
             display: block;
             width: 100%;
             height: 100%;
-            /* Keep pixels crisp and clean (Minecraft style) */
             image-rendering: corner-detecting;
             image-rendering: crisp-edges;
             image-rendering: pixelated;
@@ -36,7 +34,6 @@
             user-select: none;
         }
 
-        /* Top Left Score HUD */
         #hud {
             position: absolute;
             top: 20px;
@@ -49,7 +46,6 @@
             pointer-events: none;
         }
 
-        /* Ergonomic Stacked Right-Side Controls for Right Thumb */
         #controls-container {
             position: absolute;
             bottom: 40px;
@@ -74,8 +70,6 @@
             justify-content: center;
             align-items: center;
             box-shadow: 0 8px 0px #000;
-            
-            /* Guardrails against mobile zooming/gestures */
             touch-action: none;
             -webkit-user-select: none;
             user-select: none;
@@ -88,7 +82,6 @@
             background-color: rgba(255, 255, 255, 0.3);
         }
 
-        /* Menu Overlay Screens */
         .screen {
             position: absolute;
             top: 0;
@@ -105,7 +98,6 @@
             text-align: center;
         }
 
-        /* Pixel art styled fonts */
         .screen h1 {
             font-size: 54px;
             margin-bottom: 5px;
@@ -127,7 +119,6 @@
             background-color: #ff4757;
             color: white;
             border: 4px solid #fff;
-            border-radius: 0px; /* Blocky pixel style */
             box-shadow: 0 8px 0px #000;
             touch-action: none;
             -webkit-user-select: none;
@@ -147,7 +138,7 @@
 <body>
 
     <div id="game-container">
-        <div id="hud">SCORE: <span id="score-val">0</span></div>
+        <div id="hud">CROSSINGS AVOIDED: <span id="score-val">0</span></div>
 
         <canvas id="gameCanvas"></canvas>
 
@@ -164,7 +155,7 @@
 
         <div id="game-over-screen" class="screen hidden">
             <h1>GAME OVER</h1>
-            <p>Distance Traveled: <span id="final-score">0</span> tracks</p>
+            <p>Crossings Avoided: <span id="final-score">0</span></p>
             <button id="btn-restart" class="menu-btn" style="background-color: #2ed573;">PLAY AGAIN</button>
         </div>
     </div>
@@ -172,8 +163,6 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        
-        // Turn off anti-aliasing to preserve clean pixel blocks
         ctx.imageSmoothingEnabled = false;
 
         const scoreVal = document.getElementById('score-val');
@@ -186,26 +175,15 @@
         const btnStart = document.getElementById('btn-start');
         const btnRestart = document.getElementById('btn-restart');
 
-        // Dynamic Sizing Management
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            calculateLayout();
-        }
-        window.addEventListener('resize', resizeCanvas);
-
-        // Track & Screen Layout Dimensions
         let grassTopHeight, grassBottomHeight, trackZoneHeight, trackSpacing;
         let trackPositions = [];
 
         function calculateLayout() {
-            // Setup environmental vertical boundaries
             grassTopHeight = canvas.height * 0.25;
             grassBottomHeight = canvas.height * 0.25;
             trackZoneHeight = canvas.height - grassTopHeight - grassBottomHeight;
             trackSpacing = trackZoneHeight / 4;
 
-            // Generate center Y anchor coordinates for all 4 tracks
             trackPositions = [
                 grassTopHeight + (trackSpacing * 0.5),
                 grassTopHeight + (trackSpacing * 1.5),
@@ -214,95 +192,102 @@
             ];
 
             if(player) {
-                player.x = 80; // Keep train anchored near left side
+                player.x = 80;
+                // Dynamically adjust train heights to match 55% of track space (never overflows)
+                player.height = Math.floor(trackSpacing * 0.55);
+                player.width = player.height * 2.8; 
                 player.y = trackPositions[player.currentTrack] - (player.height / 2);
             }
         }
 
-        // Future-proofing architecture for multiple unlockable/selectable trains
         const TRAIN_DATABASE = [
             {
                 id: "E5",
                 name: "E5 Series Hayabusa",
-                primaryColor: "#00a896", // Teal
-                stripeColor: "#ff007f",  // Pink Shinkansen line
-                baseColor: "#e5e5e5"    // White/Light Gray belly
-            },
-            {
-                id: "E6",
-                name: "E6 Series Komachi",
-                primaryColor: "#c21807", // Crimson Red
-                stripeColor: "#111111",  // Dark accent
-                baseColor: "#e5e5e5"
+                primaryColor: "#00a896", 
+                stripeColor: "#ff007f",  
+                baseColor: "#e5e5e5"    
             }
         ];
         
-        let selectedTrainIndex = 0; // Defaulting to E5
-
-        // Game Engines State
+        let selectedTrainIndex = 0;
         let gameActive = false;
         let score = 0;
         let obstacles = [];
         let bushes = [];
         let spawnTimer = 0;
-        let spawnInterval = 70;
-        let gameSpeed = 7;
+        let spawnInterval = 65;
+        let gameSpeed = 8;
 
-        // Player Instance Setup
         const player = {
-            width: 140, // Horizontal aspect ratio for a train coach nose
-            height: 40,
-            currentTrack: 1, // Start on second track down
+            width: 110, 
+            height: 30,
+            currentTrack: 1, 
             x: 80,
             y: 0
         };
 
-        // Custom Render Loop: Handcrafting a Pixel Art Shinkansen Nose
+        // Finer, much more detailed pixel architecture for the train nose
         function drawPixelTrain(x, y, w, h, trainConfig) {
-            let pSize = 4; // Block pixel scaling unit
+            let p = Math.max(1, Math.floor(h / 12)); // Finer pixel grid size
+            
+            // 1. Main teal body shell
             ctx.fillStyle = trainConfig.primaryColor;
+            ctx.fillRect(x, y, w - (6 * p), h * 0.5);
+            ctx.fillRect(x + w - (6 * p), y + (2 * p), 4 * p, (h * 0.5) - (2 * p));
+            ctx.fillRect(x + w - (2 * p), y + (4 * p), 2 * p, (h * 0.5) - (4 * p));
             
-            // Upper main shell aerodynamic curves
-            ctx.fillRect(x, y, w - 40, h * 0.5);
-            ctx.fillRect(x + w - 40, y + 8, 20, (h * 0.5) - 8);
-            ctx.fillRect(x + w - 20, y + 16, 15, (h * 0.5) - 16);
-            
-            // Signature Shinkansen Pink/Accent Line Middle Segment
+            // 2. Crisp, thin pink stripe
             ctx.fillStyle = trainConfig.stripeColor;
-            ctx.fillRect(x, y + (h * 0.5), w, pSize);
+            ctx.fillRect(x, y + Math.floor(h * 0.5), w, p);
 
-            // Lower Base Underbelly Chassis
+            // 3. Light gray bottom underbelly
             ctx.fillStyle = trainConfig.baseColor;
-            ctx.fillRect(x, y + (h * 0.5) + pSize, w - 10, (h * 0.5) - pSize);
+            ctx.fillRect(x, y + Math.floor(h * 0.5) + p, w - (2 * p), Math.floor(h * 0.5) - p);
             
-            // Cockpit Windshield block
-            ctx.fillStyle = "#222";
-            ctx.fillRect(x + w - 55, y + 4, 16, 6);
+            // Black bogies/wheels hidden under base
+            ctx.fillStyle = "#111";
+            ctx.fillRect(x + (2 * p), y + h - p, 4 * p, p);
+            ctx.fillRect(x + w - (8 * p), y + h - p, 4 * p, p);
 
-            // Clean cut passenger square structural windows
-            ctx.fillStyle = "#333";
-            for(let i = 15; i < w - 70; i += 25) {
-                ctx.fillRect(x + i, y + 8, 12, 8);
+            // 4. Sleek cockpit windows
+            ctx.fillStyle = "#1a252f";
+            ctx.fillRect(x + w - (10 * p), y + (2 * p), 3 * p, 2 * p);
+
+            // 5. Clean, aligned side passenger windows
+            ctx.fillStyle = "#2c3e50";
+            let windowWidth = 4 * p;
+            let windowHeight = 3 * p;
+            let gap = 3 * p;
+            for(let sx = x + (4 * p); sx < x + w - (16 * p); sx += (windowWidth + gap)) {
+                ctx.fillRect(sx, y + (2 * p), windowWidth, windowHeight);
             }
         }
 
-        // Custom Render Loop: Handcrafting a Japanese Crossbuck Obstacle
-        function drawPixelCrossbuck(x, y, w, h) {
-            ctx.fillStyle = "#f1c40f"; // Yellow back post
-            ctx.fillRect(x + (w/2) - 4, y, 8, h);
+        // Floating Pixelated "X" Crossbuck only—no pole support
+        function drawPixelCrossbuck(x, y, size) {
+            let p = Math.max(1, Math.floor(size / 10)); // Fine rendering block
             
-            // Cross signs (X structure)
-            ctx.fillStyle = "#111"; // Black board
             ctx.save();
-            ctx.translate(x + (w/2), y + 14);
-            ctx.rotate(Math.PI / 4);
-            ctx.fillRect(-18, -4, 36, 8);
-            ctx.rotate(-Math.PI / 2);
-            ctx.fillRect(-18, -4, 36, 8);
+            ctx.translate(x + size/2, y + size/2);
+            
+            // Outer yellow cross borders
+            ctx.fillStyle = "#f1c40f";
+            for (let i = -4; i <= 4; i++) {
+                ctx.fillRect((i * p) - p, (i * p) - p, 3 * p, 3 * p);
+                ctx.fillRect((i * p) - p, (-i * p) - p, 3 * p, 3 * p);
+            }
+
+            // Inner black core stripes
+            ctx.fillStyle = "#111111";
+            for (let i = -4; i <= 4; i++) {
+                ctx.fillRect(i * p, i * p, p, p);
+                ctx.fillRect(i * p, -i * p, p, p);
+            }
+            
             ctx.restore();
         }
 
-        // Instant Touch Navigation Inputs
         btnUp.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (!gameActive) return;
@@ -321,7 +306,6 @@
             }
         }, { passive: false });
 
-        // Menu Interactivity via touchstart
         btnStart.addEventListener('touchstart', (e) => {
             e.preventDefault();
             startScreen.classList.add('hidden');
@@ -334,12 +318,11 @@
             resetGame();
         }, { passive: false });
 
-
         function resetGame() {
             score = 0;
             obstacles = [];
             bushes = [];
-            gameSpeed = 7;
+            gameSpeed = 8;
             spawnTimer = 0;
             player.currentTrack = 1;
             scoreVal.textContent = score;
@@ -348,60 +331,56 @@
             animate();
         }
 
-        // Frame update loop logic
         function animate() {
             if (!gameActive) return;
 
-            // 1. CLEAR FRAME & DRAW SCENERY BACKGROUND
-            // Grass Zones
+            // Render environmental grass
             ctx.fillStyle = "#2ecc71"; 
             ctx.fillRect(0, 0, canvas.width, grassTopHeight);
             ctx.fillRect(0, canvas.height - grassBottomHeight, canvas.width, grassBottomHeight);
             
-            // Concrete Tracks Bed Zone
+            // Concrete tracks zone
             ctx.fillStyle = "#bdc3c7"; 
             ctx.fillRect(0, grassTopHeight, canvas.width, trackZoneHeight);
 
-            // Visual Track Rails Lines
+            // Clean, dark-gray inner rail tracks lines
             ctx.fillStyle = "#7f8c8d";
             for(let i = 0; i < 4; i++) {
                 ctx.fillRect(0, trackPositions[i] - 2, canvas.width, 4);
             }
 
-            // 2. PARALLAX BUSHES MANAGEMENT
+            // Pixelated bushes scrolling by
             if (Math.random() < 0.03) {
                 let isTop = Math.random() > 0.5;
                 bushes.push({
                     x: canvas.width,
                     y: isTop ? Math.random() * (grassTopHeight - 30) : canvas.height - grassBottomHeight + 10 + Math.random() * (grassBottomHeight - 40),
-                    size: Math.random() * (40 - 20) + 20
+                    size: Math.random() * (35 - 20) + 20
                 });
             }
             
-            ctx.fillStyle = "#27ae60"; // Darker blocky green
+            ctx.fillStyle = "#27ae60"; 
             for(let b = bushes.length - 1; b >= 0; b--) {
                 bushes[b].x -= gameSpeed;
                 ctx.fillRect(bushes[b].x, bushes[b].y, bushes[b].size, bushes[b].size * 0.8);
                 if (bushes[b].x + bushes[b].size < 0) bushes.splice(b, 1);
             }
 
-            // 3. PLAYER TRAIN RENDER
+            // Draw player train perfectly sized within the single track spacing bounds
             drawPixelTrain(player.x, player.y, player.width, player.height, TRAIN_DATABASE[selectedTrainIndex]);
 
-            // 4. OBSTACLE GENERATION & PROCESSING
+            // Spawn Crossbucks
             spawnTimer++;
             if (spawnTimer >= spawnInterval) {
                 let randomTrack = Math.floor(Math.random() * 4);
+                let size = Math.floor(trackSpacing * 0.5); // Perfectly matches scaled bounds
                 obstacles.push({
                     x: canvas.width,
-                    y: trackPositions[randomTrack] - 25, // Centered inside lane bounds
-                    width: 40,
-                    height: 50,
+                    y: trackPositions[randomTrack] - (size / 2),
+                    size: size,
                     track: randomTrack
                 });
                 spawnTimer = 0;
-                
-                // Speed up slightly over run time progression
                 gameSpeed += 0.15;
             }
 
@@ -409,15 +388,14 @@
                 let obs = obstacles[i];
                 obs.x -= gameSpeed;
 
-                // Render matching customized crossbuck
-                drawPixelCrossbuck(obs.x, obs.y, obs.width, obs.height);
+                // Render standalone "X" icon safely
+                drawPixelCrossbuck(obs.x, obs.y, obs.size);
 
-                // Collision Detection Step
-                let collisionBuffer = 15; // Generous window edge buffer for arcade mechanics fairness
+                // Precise Hitbox Calculations
                 if (
                     player.currentTrack === obs.track &&
-                    player.x + player.width - collisionBuffer > obs.x &&
-                    player.x + collisionBuffer < obs.x + obs.width
+                    player.x + player.width > obs.x &&
+                    player.x < obs.x + obs.size
                 ) {
                     gameActive = false;
                     finalScore.textContent = score;
@@ -425,8 +403,7 @@
                     return;
                 }
 
-                // Scoring Point Accumulation
-                if (obs.x + obs.width < 0) {
+                if (obs.x + obs.size < 0) {
                     obstacles.splice(i, 1);
                     score++;
                     scoreVal.textContent = score;
@@ -436,8 +413,10 @@
             requestAnimationFrame(animate);
         }
 
-        // Dynamic Setup Triggering initialization on launch
-        calculateLayout();
+        window.addEventListener('load', () => {
+            resizeCanvas();
+        });
+        resizeCanvas();
     </script>
 </body>
 </html>
