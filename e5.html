@@ -3,253 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shinkansen Crossing v1.40</title>
+    <title>Shinkansen Crossing v3.0 - Tencent Mobile Edition</title>
     <style>
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
             background-color: #111;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             position: fixed;
         }
 
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
+        #game-container { position: relative; width: 100vw; height: 100vh; }
+        canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            image-rendering: corner-detecting;
-            image-rendering: crisp-edges;
-            image-rendering: pixelated;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-
+        /* Mobile-First Minimalist HUD */
         #hud {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #ffffff;
-            font-size: 26px;
-            font-weight: bold;
-            text-shadow: 3px 3px 0px #000;
-            z-index: 5;
-            pointer-events: none;
-            line-height: 1.4;
+            position: absolute; top: 15px; left: 15px; right: 15px;
+            display: flex; justify-content: space-between;
+            color: #ffffff; font-size: 18px; font-weight: bold;
+            text-shadow: 2px 2px 0px #000; z-index: 5; pointer-events: none;
         }
+        .coin-count { color: #f1c40f; }
 
-        #controls-container {
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
-            width: 130px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            z-index: 5;
-        }
-
-        .btn {
-            width: 130px;
-            height: 110px;
-            background-color: rgba(0, 0, 0, 0.6);
-            border: 4px solid #fff;
-            border-radius: 15px;
-            color: white;
-            font-size: 32px;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 8px 0px #000;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0px #000;
-            background-color: rgba(255, 255, 255, 0.3);
-        }
-
+        /* Full Screen Overlay Menus */
         .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.75);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 10;
-            text-align: center;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(15, 15, 26, 0.95);
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; color: white; z-index: 10; text-align: center;
+            padding: 20px; box-sizing: border-box;
         }
 
         .screen h1 {
-            font-size: 54px;
-            margin-bottom: 5px;
-            color: #00d2d3;
-            text-shadow: 4px 4px 0px #000;
-            letter-spacing: 2px;
+            font-size: 42px; margin: 0; color: #ffaa00;
+            text-shadow: 3px 3px 0px #000; letter-spacing: 1px;
         }
 
-        .version-tag {
-            font-size: 20px;
-            color: #ff4757;
-            font-weight: bold;
-            margin-top: -5px;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 0px #000;
+        /* Gacha Capsule Style UI */
+        .gacha-panel {
+            background: rgba(255,255,255,0.05); border: 2px dashed #555;
+            padding: 15px; border-radius: 12px; margin: 15px 0; width: 90%; max-width: 340px;
+        }
+        .current-train-display {
+            font-size: 20px; color: #00e676; font-weight: bold; margin-bottom: 8px;
         }
 
-        .screen p {
-            font-size: 22px;
-            margin-bottom: 30px;
-            color: #ccc;
-        }
+        .btn-group { display: flex; gap: 10px; width: 100%; max-width: 340px; }
 
         .menu-btn {
-            padding: 20px 50px;
-            font-size: 28px;
-            font-weight: bold;
-            background-color: #ff4757;
-            color: white;
-            border: 4px solid #fff;
-            box-shadow: 0 8px 0px #000;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
+            flex: 1; padding: 14px; font-size: 18px; font-weight: bold;
+            border-radius: 8px; border: 3px solid #fff; cursor: pointer;
+            box-shadow: 0 5px 0px #000; text-transform: uppercase;
         }
+        .btn-play { background-color: #00e676; color: #000; border-color: #fff; }
+        .btn-gacha { background-color: #9c27b0; color: #fff; }
+        .btn-ad { background-color: #2196f3; color: #fff; font-size: 15px; }
 
-        .menu-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0px #000;
-        }
+        .menu-btn:active { transform: translateY(3px); box-shadow: 0 2px 0px #000; }
 
-        /* Fullscreen Landscape Enforcement Notification Overlay */
-        #orientation-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #111;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            text-align: center;
+        /* Simulated Social Leaderboard Panel */
+        .leaderboard {
+            width: 90%; max-width: 340px; background: rgba(0,0,0,0.4);
+            border-radius: 10px; padding: 10px; margin-top: 15px; font-size: 14px;
         }
+        .leaderboard-title { color: #aaa; font-weight: bold; margin-bottom: 5px; text-align: left;}
+        .leaderboard-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .rank-me { color: #ffaa00; font-weight: bold; background: rgba(241, 196, 15, 0.1); }
 
-        #orientation-screen .icon {
-            font-size: 70px;
-            margin-bottom: 20px;
-            animation: rotateDevice 2s infinite ease-in-out;
+        /* Invisible Touch Splitting Overlay Hints for One-Handed Control */
+        #touch-zones {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; z-index: 1; pointer-events: auto;
         }
+        .zone { flex: 1; opacity: 0.1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 30px; color: white; font-size: 32px; font-weight: bold; pointer-events: auto;}
+        .zone-up { background: linear-gradient(to right, rgba(255,255,255,0.05), transparent); }
+        .zone-down { background: linear-gradient(to left, rgba(255,255,255,0.05), transparent); }
 
-        @keyframes rotateDevice {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(-90deg); }
-            100% { transform: rotate(0deg); }
-        }
-
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
     <div id="game-container">
-        <div id="orientation-screen" class="hidden">
-            <div class="icon">📱🔄</div>
-            <h2>PLEASE ROTATE DEVICE</h2>
-            <p>Play in Landscape Mode for the best Train View!</p>
+        <div id="hud">
+            <div>🏆 <span id="score-val">0</span></div>
+            <div>Lv.<span id="level-val">1</span></div>
+            <div class="coin-count">🪙 <span id="coin-val">0</span></div>
         </div>
 
-        <div id="hud">
-            <div>LEVEL: <span id="level-val">1</span></div>
-            <div>CROSSINGS AVOIDED: <span id="score-val">0</span></div>
+        <!-- Touch Zones for input handling -->
+        <div id="touch-zones" class="hidden">
+            <div id="zone-left" class="zone zone-up">▲</div>
+            <div id="zone-right" class="zone zone-down">▼</div>
         </div>
 
         <canvas id="gameCanvas"></canvas>
 
-        <div id="controls-container">
-            <div id="btn-up" class="btn">▲</div>
-            <div id="btn-down" class="btn">▼</div>
-        </div>
-
+        <!-- Tencent Style Main Menu Dashboard -->
         <div id="start-screen" class="screen">
-            <h1>SHINKANSEN CROSSING</h1>
-            <div class="version-tag">v1.4</div>
-            <p>Avoid the Japanese Railway Crossbucks!</p>
-            <button id="btn-start" class="menu-btn">START GAME</button>
+            <h1>SHINKANSEN RUN</h1>
+            <p style="color: #888; margin: 5px 0 15px 0;">Hyper-Casual Mobile Edition v3.0</p>
+            
+            <div class="gacha-panel">
+                <div style="font-size: 12px; color: #aaa;">ACTIVE PILOT:</div>
+                <div id="active-train-name" class="current-train-display">E5 Hayabusa (Common)</div>
+                <button id="btn-draw" class="menu-btn btn-gacha" style="font-size:14px; padding:8px;">🎰 Capsule Gacha (Cost: 10 🪙)</button>
+            </div>
+
+            <div class="btn-group">
+                <button id="btn-start" class="menu-btn btn-play">RUN</button>
+            </div>
+
+            <!-- Social Leaderboard Injection -->
+            <div class="leaderboard">
+                <div class="leaderboard-title">WeChat Friends Rankings:</div>
+                <div class="leaderboard-row"><span>1. King_of_Trains</span><span>Score: 142</span></div>
+                <div class="leaderboard-row"><span>2. SpeedRacer99</span><span>Score: 85</span></div>
+                <div class="leaderboard-row rank-me"><span>3. You (Active)</span><span>Best: <span id="pb-val">0</span></span></div>
+            </div>
         </div>
 
+        <!-- Game Over Menu Matrix with Revive Option -->
         <div id="game-over-screen" class="screen hidden">
-            <h1>GAME OVER</h1>
-            <p>Crossings Avoided: <span id="final-score">0</span></p>
-            <p style="font-size: 18px; color: #ff4757;">Reached Level <span id="final-level">1</span></p>
-            <button id="btn-restart" class="menu-btn" style="background-color: #2ed573;">PLAY AGAIN</button>
+            <h1 style="color:#ff4757;">CRASHED!</h1>
+            <p style="font-size: 20px; margin: 10px 0;">Crossings Cleared: <b id="final-score" style="color:#ffaa00;">0</b></p>
+            
+            <div class="gacha-panel" id="revive-box">
+                <p style="margin:0 0 10px 0; font-size:14px;">Save your high score streaking loop?</p>
+                <button id="btn-revive" class="menu-btn btn-ad">📺 Watch Video Ad to Revive</button>
+            </div>
+
+            <div class="btn-group">
+                <button id="btn-restart" class="menu-btn btn-play" style="background-color:#2196f3; color:white;">BACK TO YARD</button>
+            </div>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = false;
 
         const scoreVal = document.getElementById('score-val');
         const levelVal = document.getElementById('level-val');
+        const coinVal = document.getElementById('coin-val');
+        const pbVal = document.getElementById('pb-val');
         const finalScore = document.getElementById('final-score');
-        const finalLevel = document.getElementById('final-level');
+        const activeTrainName = document.getElementById('active-train-name');
+        
         const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
-        const orientationScreen = document.getElementById('orientation-screen');
-        
-        const btnUp = document.getElementById('btn-up');
-        const btnDown = document.getElementById('btn-down');
+        const touchZones = document.getElementById('touch-zones');
+        const reviveBox = document.getElementById('revive-box');
+
         const btnStart = document.getElementById('btn-start');
         const btnRestart = document.getElementById('btn-restart');
+        const btnDraw = document.getElementById('btn-draw');
+        const btnRevive = document.getElementById('btn-revive');
+        const zoneLeft = document.getElementById('zone-left');
+        const zoneRight = document.getElementById('zone-right');
 
         let grassTopHeight, grassBottomHeight, trackZoneHeight, trackSpacing;
         let trackPositions = [];
 
-        // Check device orientation dynamically
-        function checkOrientation() {
-            if (window.innerHeight > window.innerWidth) {
-                orientationScreen.classList.remove('hidden');
-            } else {
-                orientationScreen.classList.add('hidden');
-            }
+        // Tencent Mobile Economy State
+        let totalCoins = parseInt(localStorage.getItem('t_mobile_coins')) || 0;
+        let personalBest = parseInt(localStorage.getItem('t_mobile_pb')) || 0;
+        let unlockedIds = JSON.parse(localStorage.getItem('t_mobile_fleet')) || ["E5"];
+        let activeTrainIdx = 0;
+        let hasRevivedThisRun = false;
+
+        const GACHA_POOL = [
+            { id: "E5", name: "E5 Hayabusa", rarity: "Common", primary: "%2300a896", stripe: "%23ff007f", base: "%23e5e5e5" },
+            { id: "E6", name: "E6 Komachi", rarity: "Rare", primary: "%23c21807", stripe: "%23111111", base: "%23e5e5e5" },
+            { id: "DY", name: "Doctor Yellow", rarity: "SSR 🔥", primary: "%23f1c40f", stripe: "%232980b9", base: "%2334495e" }
+        ];
+
+        const trainImages = {};
+        const crossbuckImg = new Image();
+        crossbuckImg.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M 15,5 L 50,40 L 85,5 L 95,15 L 60,50 L 95,85 L 85,95 L 50,60 L 15,95 L 5,85 L 40,50 L 5,15 Z" fill="%23f1c40f"/><path d="M 18,10 L 50,42 L 82,10 L 90,18 L 58,50 L 90,82 L 82,90 L 50,58 L 18,90 L 10,82 L 42,50 L 10,18 Z" fill="%23111111"/></svg>`;
+
+        function buildTrainSVGs() {
+            GACHA_POOL.forEach(t => {
+                const img = new Image();
+                img.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80">
+                    <path d="M 0,10 L 150,10 Q 210,12 230,30 L 265,50 Q 280,56 280,63 L 280,65 L 0,65 Z" fill="${t.primary}"/>
+                    <path d="M 215,36 Q 230,34 242,42 L 235,46 Z" fill="%231a252f"/>
+                    <rect x="0" y="61" width="280" height="4" fill="${t.stripe}"/>
+                    <path d="M 0,65 L 275,65 Q 278,72 270,74 L 0,74 Z" fill="${t.base}"/>
+                </svg>`;
+                trainImages[t.id] = img;
+            });
         }
+        buildTrainSVGs();
+
+        function syncUI() {
+            coinVal.textContent = totalCoins;
+            pbVal.textContent = personalBest;
+            const active = GACHA_POOL[activeTrainIdx];
+            activeTrainName.textContent = `${active.name} (${active.rarity})`;
+        }
+
+        // Capsule Box Pull Event System
+        btnDraw.addEventListener('click', () => {
+            if (totalCoins >= 10) {
+                totalCoins -= 10;
+                // Randomized Luck Gacha Roll Matrix
+                const rand = Math.random();
+                let rolledIdx = 0; 
+                if (rand > 0.85) rolledIdx = 2;       // 15% SSR Chance
+                else if (rand > 0.50) rolledIdx = 1;  // 35% Rare Chance
+
+                const rolledTrain = GACHA_POOL[rolledIdx];
+                if (!unlockedIds.includes(rolledTrain.id)) {
+                    unlockedIds.push(rolledTrain.id);
+                    localStorage.setItem('t_mobile_fleet', JSON.stringify(unlockedIds));
+                }
+                activeTrainIdx = rolledIdx; // Auto equip roll
+                localStorage.setItem('t_mobile_coins', totalCoins);
+                syncUI();
+                alert(`🎰 GACHA CAPSULE OPENED:\nYou won the ${rolledTrain.name} [${rolledTrain.rarity}]!`);
+            } else {
+                alert("Not enough 🪙! Run more tracks to collect currency.");
+            }
+        });
 
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            checkOrientation();
-            calculateLayout();
-        }
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('orientationchange', resizeCanvas);
-
-        function calculateLayout() {
             grassTopHeight = canvas.height * 0.25;
             grassBottomHeight = canvas.height * 0.25;
             trackZoneHeight = canvas.height - grassTopHeight - grassBottomHeight;
@@ -263,253 +242,166 @@
             ];
 
             if(player) {
-                player.x = 80;
-                player.height = Math.floor(trackSpacing * 0.55);
-                player.width = player.height * 2.8; 
+                player.x = 40; // Pulled closer to edge for mobile readability
+                player.height = Math.floor(trackSpacing * 0.45); 
+                player.width = player.height * 3.2; 
+                player.y = trackPositions[player.currentTrack] - (player.height / 2);
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Core Game Loops Variables
+        let gameActive = false; let isCrashing = false;
+        let score = 0; let currentLevel = 1;
+        let obstacles = []; let juiceParticles = [];
+        let spawnTimer = 0; let baseSpeed = 3.5; let gameSpeed = baseSpeed;
+        let spawnInterval = 110; let levelUpFlashTimer = 0;
+
+        const player = { currentTrack: 1, x: 40, y: 0, width: 90, height: 25 };
+
+        function movePlayerTrack(direction) {
+            let target = player.currentTrack + direction;
+            if (target >= 0 && target <= 3 && !isCrashing) {
+                player.currentTrack = target;
                 player.y = trackPositions[player.currentTrack] - (player.height / 2);
             }
         }
 
-        const TRAIN_DATABASE = [
-            {
-                id: "E5",
-                name: "E5 Series Hayabusa",
-                primaryColor: "#00a896", 
-                stripeColor: "#ff007f",  
-                baseColor: "#e5e5e5"    
-            }
-        ];
-        
-        let selectedTrainIndex = 0;
-        let gameActive = false;
-        let score = 0;
-        let currentLevel = 1;
-        let obstacles = [];
-        let bushes = [];
-        let spawnTimer = 0;
-        
-        let baseSpeed = 3.2;      
-        let gameSpeed = baseSpeed;
-        let spawnInterval = 120;  
-        let levelUpFlashTimer = 0; 
+        // Mobile Split-Screen Tap Inputs Hook Mapping
+        zoneLeft.addEventListener('touchstart', (e) => { e.preventDefault(); movePlayerTrack(-1); });
+        zoneRight.addEventListener('touchstart', (e) => { e.preventDefault(); movePlayerTrack(1); });
+        // Mouse Fallbacks for testing
+        zoneLeft.addEventListener('mousedown', () => movePlayerTrack(-1));
+        zoneRight.addEventListener('mousedown', () => movePlayerTrack(1));
 
-        const player = {
-            width: 110, 
-            height: 30,
-            currentTrack: 1, 
-            x: 80,
-            y: 0
-        };
-
-        // Ultra high-fidelity granular pixel matrix system (1000x micro scale translation)
-        function drawPixelTrain(x, y, w, h, trainConfig) {
-            // Highly micro-fractional matrix unit based on rendering plane boundaries
-            let p = h / 240; 
-            
-            // 1. Sleek upper aerodynamic nose profile chassis structure
-            ctx.fillStyle = trainConfig.primaryColor;
-            ctx.fillRect(x, y + (30 * p), w - (100 * p), 90 * p);
-            ctx.fillRect(x + w - (100 * p), y + (40 * p), 30 * p, 80 * p);
-            ctx.fillRect(x + w - (70 * p), y + (55 * p), 25 * p, 65 * p);
-            ctx.fillRect(x + w - (45 * p), y + (70 * p), 20 * p, 50 * p);
-            ctx.fillRect(x + w - (25 * p), y + (85 * p), 15 * p, 35 * p);
-            ctx.fillRect(x + w - (10 * p), y + (100 * p), 10 * p, 20 * p);
-            
-            // 2. Micro-thin Shinkansen accent stripe line running across length
-            ctx.fillStyle = trainConfig.stripeColor;
-            ctx.fillRect(x, y + (120 * p), w, 12 * p);
-
-            // 3. Lower bottom silver hull underbelly shroud
-            ctx.fillStyle = trainConfig.baseColor;
-            ctx.fillRect(x, y + (132 * p), w - (15 * p), 88 * p);
-            
-            // 4. Ultra-fine micro black rolling wheel-truck configurations
-            ctx.fillStyle = "#111";
-            ctx.fillRect(x + (40 * p), y + (220 * p), 55 * p, 15 * p);
-            ctx.fillRect(x + (150 * p), y + (220 * p), 55 * p, 15 * p);
-            ctx.fillRect(x + w - (140 * p), y + (220 * p), 55 * p, 15 * p);
-
-            // 5. Sleek curved aerodynamic cockpit windshield module
-            ctx.fillStyle = "#1a252f";
-            ctx.fillRect(x + w - (130 * p), y + (50 * p), 35 * p, 18 * p);
-            ctx.fillRect(x + w - (95 * p), y + (62 * p), 15 * p, 10 * p);
-
-            // 6. Clean high-resolution aligned square passenger windows grid
-            ctx.fillStyle = "#2c3e50";
-            let winW = 30 * p;
-            let winH = 30 * p;
-            let gap = 20 * p;
-            for(let sx = x + (30 * p); sx < x + w - (190 * p); sx += (winW + gap)) {
-                ctx.fillRect(sx, y + (50 * p), winW, winH);
-            }
-        }
-
-        // 3x Size Floating Pixelated "X" Crossbuck (Enlarged for toddlers)
-        function drawPixelCrossbuck(x, y, size) {
-            let p = size / 40; 
-            
-            ctx.save();
-            ctx.translate(x + size/2, y + size/2);
-            
-            // High-resolution extra-wide yellow structural backing
-            ctx.fillStyle = "#f1c40f";
-            for (let i = -16; i <= 16; i++) {
-                ctx.fillRect((i * p) - (2 * p), (i * p) - (2 * p), 5 * p, 5 * p);
-                ctx.fillRect((i * p) - (2 * p), (-i * p) - (2 * p), 5 * p, 5 * p);
-            }
-
-            // High-resolution distinct black warning centers
-            ctx.fillStyle = "#111111";
-            for (let i = -16; i <= 16; i++) {
-                ctx.fillRect((i * p) - p, (i * p) - p, 3 * p, 3 * p);
-                ctx.fillRect((i * p) - p, (-i * p) - p, 3 * p, 3 * p);
-            }
-            
-            ctx.restore();
-        }
-
-        btnUp.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!gameActive) return;
-            if (player.currentTrack > 0) {
-                player.currentTrack--;
-                player.y = trackPositions[player.currentTrack] - (player.height / 2);
-            }
-        }, { passive: false });
-
-        btnDown.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!gameActive) return;
-            if (player.currentTrack < 3) {
-                player.currentTrack++;
-                player.y = trackPositions[player.currentTrack] - (player.height / 2);
-            }
-        }, { passive: false });
-
-        btnStart.addEventListener('touchstart', (e) => {
-            e.preventDefault();
+        btnStart.addEventListener('click', () => {
             startScreen.classList.add('hidden');
+            touchZones.classList.remove('hidden');
+            hasRevivedThisRun = false;
             resetGame();
-        }, { passive: false });
+        });
 
-        btnRestart.addEventListener('touchstart', (e) => {
-            e.preventDefault();
+        btnRestart.addEventListener('click', () => {
             gameOverScreen.classList.add('hidden');
-            resetGame();
-        }, { passive: false });
+            startScreen.classList.remove('hidden');
+            touchZones.classList.add('hidden');
+            syncUI();
+        });
+
+        // Monetized Revive Lifeline Mechanics
+        btnRevive.addEventListener('click', () => {
+            alert("📺 Loading Ad Capsule... Complete! Obstacle cleared!");
+            obstacles = []; // Wipe current items
+            isCrashing = false;
+            gameActive = true;
+            hasRevivedThisRun = true;
+            gameOverScreen.classList.add('hidden');
+            touchZones.classList.remove('hidden');
+            animate();
+        });
 
         function resetGame() {
-            score = 0;
-            currentLevel = 1;
-            obstacles = [];
-            bushes = [];
-            gameSpeed = baseSpeed;
-            spawnTimer = 0;
-            levelUpFlashTimer = 0;
+            score = 0; currentLevel = 1; isCrashing = false;
+            obstacles = []; juiceParticles = [];
+            gameSpeed = baseSpeed; spawnTimer = 0; levelUpFlashTimer = 0;
             player.currentTrack = 1;
-            scoreVal.textContent = score;
-            levelVal.textContent = currentLevel;
-            calculateLayout();
+            scoreVal.textContent = score; levelVal.textContent = currentLevel;
+            resizeCanvas();
             gameActive = true;
             animate();
         }
 
         function animate() {
-            if (!gameActive) return;
+            if (!gameActive && !isCrashing) return;
 
-            // Environmental maps frame clears
-            ctx.fillStyle = "#2ecc71"; 
-            ctx.fillRect(0, 0, canvas.width, grassTopHeight);
-            ctx.fillRect(0, canvas.height - grassBottomHeight, canvas.width, grassBottomHeight);
+            // Simple Mobile Parallax Backdrop Layout Rendering
+            ctx.fillStyle = "#1e272e"; ctx.fillRect(0, 0, canvas.width, canvas.height); // Night mode look
+            ctx.fillStyle = "#2f3640"; ctx.fillRect(0, grassTopHeight, canvas.width, trackZoneHeight);
             
-            ctx.fillStyle = "#bdc3c7"; 
-            ctx.fillRect(0, grassTopHeight, canvas.width, trackZoneHeight);
+            ctx.fillStyle = "#718093";
+            for(let i = 0; i < 4; i++) ctx.fillRect(0, trackPositions[i] - 1, canvas.width, 2);
 
-            ctx.fillStyle = "#7f8c8d";
-            for(let i = 0; i < 4; i++) {
-                ctx.fillRect(0, trackPositions[i] - 2, canvas.width, 4);
+            let speedFactor = isCrashing ? 0 : gameSpeed;
+
+            // Ambient Speed Wind Trails
+            if (Math.random() < 0.2 && !isCrashing) {
+                juiceParticles.push({ x: canvas.width, y: Math.random()*canvas.height, vx: -speedFactor*2, vy: 0, size: Math.random()*20+10, color: "rgba(255,255,255,0.1)" });
+            }
+            for(let p = juiceParticles.length-1; p >= 0; p--) {
+                juiceParticles[p].x += juiceParticles[p].vx;
+                ctx.fillStyle = juiceParticles[p].color;
+                ctx.fillRect(juiceParticles[p].x, juiceParticles[p].y, juiceParticles[p].size, 1);
+                if(juiceParticles[p].x < 0) juiceParticles.splice(p, 1);
             }
 
-            // Scroll bushes background decoration
-            if (Math.random() < 0.02) {
-                let isTop = Math.random() > 0.5;
-                bushes.push({
-                    x: canvas.width,
-                    y: isTop ? Math.random() * (grassTopHeight - 30) : canvas.height - grassBottomHeight + 10 + Math.random() * (grassBottomHeight - 40),
-                    size: Math.random() * (35 - 20) + 20
-                });
-            }
-            
-            ctx.fillStyle = "#27ae60"; 
-            for(let b = bushes.length - 1; b >= 0; b--) {
-                bushes[b].x -= gameSpeed;
-                ctx.fillRect(bushes[b].x, bushes[b].y, bushes[b].size, bushes[b].size * 0.8);
-                if (bushes[b].x + bushes[b].size < 0) bushes.splice(b, 1);
-            }
+            // Draw Equipped Gacha Shinkansen
+            const currentTrainID = GACHA_POOL[activeTrainIdx].id;
+            ctx.drawImage(trainImages[currentTrainID], player.x, player.y, player.width, player.height);
 
-            // Draw micro high-res train
-            drawPixelTrain(player.x, player.y, player.width, player.height, TRAIN_DATABASE[selectedTrainIndex]);
-
-            // Obstacle processing loops
-            spawnTimer++;
+            // Obstacle Process Engine Matrix
+            if (!isCrashing) spawnTimer++;
             if (spawnTimer >= spawnInterval) {
-                let randomTrack = Math.floor(Math.random() * 4);
-                // 3x Larger Dimensions applied here explicitly to size bounds configuration
-                let size = Math.floor(trackSpacing * 1.15); 
-                obstacles.push({
-                    x: canvas.width,
-                    y: trackPositions[randomTrack] - (size / 2),
-                    size: size,
-                    track: randomTrack
-                });
+                let track = Math.floor(Math.random() * 4);
+                let size = Math.floor(trackSpacing * 0.85);
+                obstacles.push({ x: canvas.width, y: trackPositions[track] - (size/2), size: size, track: track });
                 spawnTimer = 0;
             }
 
             for (let i = obstacles.length - 1; i >= 0; i--) {
-                let obs = obstacles[i];
-                obs.x -= gameSpeed;
+                obstacles[i].x -= speedFactor;
+                ctx.drawImage(crossbuckImg, obstacles[i].x, obstacles[i].y, obstacles[i].size, obstacles[i].size);
 
-                // Draw 3x upscaled crossing marker
-                drawPixelCrossbuck(obs.x, obs.y, obs.size);
-
-                // Tight hitbox boundaries mapping
-                let edgePadding = obs.size * 0.15;
+                let padding = obstacles[i].size * 0.15;
                 if (
-                    player.currentTrack === obs.track &&
-                    player.x + player.width > obs.x + edgePadding &&
-                    player.x < obs.x + obs.size - edgePadding
+                    !isCrashing &&
+                    player.currentTrack === obstacles[i].track &&
+                    player.x + player.width > obstacles[i].x + padding &&
+                    player.x < obstacles[i].x + obstacles[i].size - padding
                 ) {
-                    gameActive = false;
-                    finalScore.textContent = score;
-                    finalLevel.textContent = currentLevel;
-                    gameOverScreen.classList.remove('hidden');
-                    return;
+                    isCrashing = true;
+                    
+                    setTimeout(() => {
+                        gameActive = false;
+                        touchZones.classList.add('hidden');
+                        
+                        // Check if personal best broken
+                        if (score > personalBest) {
+                            personalBest = score;
+                            localStorage.setItem('t_mobile_pb', personalBest);
+                        }
+
+                        // Add coins directly to wallet
+                        totalCoins += score;
+                        localStorage.setItem('t_mobile_coins', totalCoins);
+                        
+                        finalScore.textContent = score;
+                        
+                        // Hide revive button option if already spent during this layout run
+                        if (hasRevivedThisRun) reviveBox.classList.add('hidden');
+                        else reviveBox.classList.remove('hidden');
+
+                        gameOverScreen.classList.remove('hidden');
+                    }, 800);
                 }
 
-                if (obs.x + obs.size < 0) {
+                if (obstacles[i].x + obstacles[i].size < 0) {
                     obstacles.splice(i, 1);
                     score++;
                     scoreVal.textContent = score;
 
-                    if (score > 0 && score % 20 === 0) {
+                    if (score > 0 && score % 15 === 0) {
                         currentLevel++;
                         levelVal.textContent = currentLevel;
-                        gameSpeed = gameSpeed * 1.07; 
-                        levelUpFlashTimer = 90; 
+                        gameSpeed *= 1.08;
+                        levelUpFlashTimer = 60;
                     }
                 }
             }
 
             if (levelUpFlashTimer > 0) {
                 levelUpFlashTimer--;
-                ctx.fillStyle = "#f1c40f";
-                ctx.font = "bold 40px sans-serif";
-                ctx.textAlign = "center";
-                ctx.shadowColor = "#000";
-                ctx.shadowBlur = 4;
-                ctx.fillText("LEVEL UP! SPEED +7%", canvas.width / 2, canvas.height / 2);
-                ctx.shadowBlur = 0; 
-                ctx.textAlign = "left";
+                ctx.fillStyle = "#ffaa00"; ctx.font = "bold 40px sans-serif"; ctx.textAlign = "center";
+                ctx.fillText("⚡ SPEED UP ⚡", canvas.width / 2, canvas.height / 2); ctx.textAlign = "left";
             }
 
             requestAnimationFrame(animate);
@@ -517,6 +409,7 @@
 
         window.addEventListener('load', () => {
             resizeCanvas();
+            syncUI();
         });
     </script>
 </body>
