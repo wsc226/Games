@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Crossing Control</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100dvh;overflow:hidden;background:#1a1c24;
+  font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  user-select:none;-webkit-user-select:none;}
+
+#spotter{position:relative;width:100%;height:30dvh;
+  background:linear-gradient(180deg,#5a7a3a,#4a6830 40%,#3d5a28);
+  overflow:hidden;border-bottom:3px solid #2a2a20;}
+#gateArea{position:relative;width:100%;height:52dvh;overflow:hidden;background:#6a7a56;}
+#controls{width:100%;height:18dvh;background:linear-gradient(180deg,#1e2028,#14161c);
+  border-top:2px solid #333;display:flex;align-items:center;justify-content:space-between;padding:0 16px;}
+#spotterSvg,#gateSvg{width:100%;height:100%;display:block}
+
+/* Title */
+#titleCard{position:fixed;inset:0;z-index:200;background:linear-gradient(180deg,#1a1c24,#0e1018);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;transition:opacity .6s;}
+#titleCard.hidden{opacity:0;pointer-events:none}
+.tc-x{font-size:80px;font-weight:900;color:#fff;text-shadow:2px 2px 0 #333;line-height:1}
+.tc-t{font-size:22px;font-weight:800;color:#FFD700;letter-spacing:6px;text-transform:uppercase}
+.tc-s{font-size:14px;color:rgba(255,255,255,.45);letter-spacing:2px;margin-top:16px;animation:pls 2s ease-in-out infinite}
+@keyframes pls{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* Vocab */
+#vFlash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:150;pointer-events:none;
+  font-size:60px;font-weight:900;letter-spacing:6px;text-shadow:3px 3px 0 rgba(0,0,0,.3);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;}
+#vFlash.show{transform:translate(-50%,-50%) scale(1);opacity:1}
+#vFlash.ok{color:#2ecc71}#vFlash.bad{color:#e74c3c}#vFlash.inf{color:#3498db}#vFlash.stp{color:#e74c3c}
+
+/* Honk */
+#honk{position:fixed;top:42%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:160;pointer-events:none;
+  width:200px;height:150px;transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;}
+#honk.show{transform:translate(-50%,-50%) scale(1);opacity:1}
+.hStar{position:absolute;inset:0;background:#FFD700;
+  clip-path:polygon(50% 0%,63% 28%,98% 20%,72% 45%,95% 72%,65% 60%,50% 95%,35% 60%,5% 72%,28% 45%,2% 20%,37% 28%);}
+.hTxt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:38px;font-weight:900;color:#c62828;letter-spacing:3px;}
+
+/* Controls */
+.sBox{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px}
+.sLbl{font-size:10px;color:#888;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.sNum{font-size:34px;font-weight:900;color:#FFD700;line-height:1;font-variant-numeric:tabular-nums}
+.cBtn{width:clamp(80px,18vw,100px);height:clamp(80px,14dvh,100px);border-radius:50%;
+  border:4px solid rgba(255,255,255,.15);color:#fff;font-size:15px;font-weight:800;letter-spacing:2px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:transform .08s,filter .2s,opacity .3s;-webkit-tap-highlight-color:transparent;text-transform:uppercase;}
+.cBtn:active:not(.lk){transform:scale(.9)}
+.cBtn.lk{opacity:.3;filter:grayscale(.6);cursor:default}
+.bC{background:radial-gradient(circle at 40% 35%,#ef5350,#c62828);box-shadow:0 4px 18px rgba(198,40,40,.5)}
+.bO{background:radial-gradient(circle at 40% 35%,#66bb6a,#2e7d32);box-shadow:0 4px 18px rgba(46,125,50,.5)}
+.bC.glow{animation:gR 1s ease-in-out infinite}
+.bO.glow{animation:gG 1s ease-in-out infinite}
+@keyframes gR{0%,100%{box-shadow:0 4px 18px rgba(198,40,40,.5)}50%{box-shadow:0 4px 40px rgba(239,83,80,.9),0 0 50px rgba(239,83,80,.3)}}
+@keyframes gG{0%,100%{box-shadow:0 4px 18px rgba(46,125,50,.5)}50%{box-shadow:0 4px 40px rgba(102,187,106,.9),0 0 50px rgba(102,187,106,.3)}}
+.rP{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:60px}
+.stk{display:flex;gap:5px}
+.sd{width:14px;height:14px;border-radius:50%;background:#333;border:2px solid #555;transition:background .3s,border-color .3s}
+.sd.hit{background:#e74c3c;border-color:#ef5350}
+.mB{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.08);border-radius:16px;
+  padding:3px 8px;cursor:pointer;border:none;color:#fff;font-size:10px;font-weight:700;letter-spacing:1px;}
+.mB.lk{opacity:.4;cursor:default}
+.mDt{width:8px;height:8px;border-radius:50%;transition:background .3s}
+.mDt.easy{background:#66bb6a}.mDt.normal{background:#ff9800}
+
+.gLbl{position:absolute;bottom:19dvh;left:50%;transform:translateX(-50%);
+  font-size:12px;font-weight:800;color:rgba(255,255,255,.3);letter-spacing:4px;z-index:10;}
+.sW{position:absolute;top:6px;right:10px;font-size:20px;font-weight:900;letter-spacing:3px;
+  opacity:0;transition:opacity .3s;text-shadow:1px 1px 0 rgba(0,0,0,.4);}
+.sW.show{opacity:1}
+#sf{position:absolute;inset:0;z-index:100;background:rgba(231,76,60,.4);opacity:0;pointer-events:none;transition:opacity .15s;}
+#sf.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="titleCard"><div class="tc-x">✕</div><div class="tc-t">Railroad Crossing</div><div class="tc-s">TAP TO START</div></div>
+
+<div id="spotter">
+  <svg id="spotterSvg" viewBox="0 0 768 300" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="tSp" width="24" height="40" patternUnits="userSpaceOnUse">
+        <rect x="2" y="16" width="20" height="8" fill="#5a4a30" rx="1"/>
+      </pattern>
+    </defs>
+    <rect width="768" height="300" fill="#4a6830"/>
+    <rect y="115" width="768" height="70" fill="#5a5040" opacity=".5"/>
+    <rect y="115" width="768" height="70" fill="url(#tSp)" opacity=".6"/>
+    <line x1="0" y1="140" x2="768" y2="140" stroke="#999" stroke-width="3.5"/>
+    <line x1="0" y1="160" x2="768" y2="160" stroke="#999" stroke-width="3.5"/>
+    <!-- Road (grey strip with double yellow center line) -->
+    <rect x="366" y="100" width="36" height="100" fill="rgba(150,150,150,.3)" rx="3"/>
+    <line x1="382" y1="102" x2="382" y2="198" stroke="#e8b500" stroke-width="1.5"/>
+    <line x1="386" y1="102" x2="386" y2="198" stroke="#e8b500" stroke-width="1.5"/>
+    <!-- Left signal mast (5x larger) -->
+    <g transform="translate(265,60)">
+      <rect x="-5" y="72" width="10" height="85" fill="#555" rx="2"/>
+      <rect x="-22" y="-20" width="44" height="85" rx="10" fill="#1a1a1a" stroke="#555" stroke-width="1"/>
+      <circle id="spSR_L" cx="0" cy="-2" r="10" fill="#3a1010"/>
+      <circle id="spSY_L" cx="0" cy="22" r="10" fill="#3a3010"/>
+      <circle id="spSG_L" cx="0" cy="46" r="10" fill="#103a10"/>
+    </g>
+    <!-- Right signal mast (5x larger) -->
+    <g transform="translate(503,60)">
+      <rect x="-5" y="72" width="10" height="85" fill="#555" rx="2"/>
+      <rect x="-22" y="-20" width="44" height="85" rx="10" fill="#1a1a1a" stroke="#555" stroke-width="1"/>
+      <circle id="spSR_R" cx="0" cy="-2" r="10" fill="#3a1010"/>
+      <circle id="spSY_R" cx="0" cy="22" r="10" fill="#3a3010"/>
+      <circle id="spSG_R" cx="0" cy="46" r="10" fill="#103a10"/>
+    </g>
+    <g id="spT" transform="translate(-200,125)"></g>
+  </svg>
+  <div class="sW" id="sW"></div>
+</div>
+
+<div id="gateArea">
+  <svg id="gateSvg" viewBox="0 0 768 520" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#7ec8f0"/><stop offset="100%" stop-color="#b0dae8"/>
+      </linearGradient>
+      <linearGradient id="rdG" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#707070"/><stop offset="50%" stop-color="#909090"/><stop offset="100%" stop-color="#707070"/>
+      </linearGradient>
+      <pattern id="gSt" width="20" height="10" patternUnits="userSpaceOnUse">
+        <rect width="10" height="10" fill="#e00"/><rect x="10" width="10" height="10" fill="#fff"/>
+      </pattern>
+    </defs>
+    <rect width="768" height="155" fill="url(#sky)"/>
+    <rect y="155" width="768" height="365" fill="#7a8a60"/>
+    <rect x="310" y="0" width="148" height="520" fill="url(#rdG)"/>
+    <line x1="312" y1="0" x2="312" y2="520" stroke="#eee" stroke-width="2" opacity=".5"/>
+    <line x1="456" y1="0" x2="456" y2="520" stroke="#eee" stroke-width="2" opacity=".5"/>
+    <!-- Double yellow center line -->
+    <line x1="382" y1="0" x2="382" y2="520" stroke="#e8b500" stroke-width="2.5"/>
+    <line x1="386" y1="0" x2="386" y2="520" stroke="#e8b500" stroke-width="2.5"/>
+    <rect y="235" width="768" height="50" fill="#6a5540"/>
+    <g id="tT"></g>
+    <line x1="0" y1="248" x2="768" y2="248" stroke="#aaa" stroke-width="4"/>
+    <line x1="0" y1="272" x2="768" y2="272" stroke="#aaa" stroke-width="4"/>
+    <rect x="314" y="237" width="140" height="46" fill="#888" rx="2"/>
+    <!-- Rails visible on road surface -->
+    <line x1="314" y1="248" x2="454" y2="248" stroke="#999" stroke-width="3"/>
+    <line x1="314" y1="272" x2="454" y2="272" stroke="#999" stroke-width="3"/>
+    <!-- RR advance warning signs (yellow circle with cross and RR) -->
+    <!-- Above crossing (right side of road) -->
+    <g transform="translate(470,100)">
+      <circle r="22" fill="#FFD700" stroke="#333" stroke-width="2"/>
+      <line x1="-12" y1="-12" x2="12" y2="12" stroke="#111" stroke-width="3"/>
+      <line x1="12" y1="-12" x2="-12" y2="12" stroke="#111" stroke-width="3"/>
+      <text x="-14" y="4" font-size="10" font-weight="900" fill="#111" font-family="Arial">R</text>
+      <text x="5" y="4" font-size="10" font-weight="900" fill="#111" font-family="Arial">R</text>
+    </g>
+    <!-- Below crossing (left side of road) -->
+    <g transform="translate(298,420)">
+      <circle r="22" fill="#FFD700" stroke="#333" stroke-width="2"/>
+      <line x1="-12" y1="-12" x2="12" y2="12" stroke="#111" stroke-width="3"/>
+      <line x1="12" y1="-12" x2="-12" y2="12" stroke="#111" stroke-width="3"/>
+      <text x="-14" y="4" font-size="10" font-weight="900" fill="#111" font-family="Arial">R</text>
+      <text x="5" y="4" font-size="10" font-weight="900" fill="#111" font-family="Arial">R</text>
+    </g>
+    <!-- Gate arms (rendered FIRST = behind crossbucks and posts) -->
+    <g transform="translate(460,165)">
+      <g id="gN" transform="rotate(90)">
+        <rect x="-148" y="-5" width="148" height="10" fill="url(#gSt)" rx="3"/>
+        <circle r="6" fill="#333"/><rect x="-148" y="-3" width="8" height="6" fill="#fff" rx="1"/>
+      </g>
+    </g>
+    <g transform="translate(308,306)">
+      <g id="gS" transform="rotate(-90)">
+        <rect y="-5" width="148" height="10" fill="url(#gSt)" rx="3"/>
+        <circle r="6" fill="#333"/><rect x="140" y="-3" width="8" height="6" fill="#fff" rx="1"/>
+      </g>
+    </g>
+    <!-- Posts + crossbucks + flashing lights (rendered AFTER = in front of bars) -->
+    <g transform="translate(462,140)">
+      <rect x="-4" y="-2" width="8" height="105" fill="#333" rx="2"/>
+      <line x1="-16" y1="-16" x2="16" y2="16" stroke="#fff" stroke-width="5"/>
+      <line x1="16" y1="-16" x2="-16" y2="16" stroke="#fff" stroke-width="5"/>
+      <circle id="fN1" cx="-14" cy="0" r="7" fill="#3a0000"/>
+      <circle id="fN2" cx="14" cy="0" r="7" fill="#3a0000"/>
+    </g>
+    <g transform="translate(306,286)">
+      <rect x="-4" y="-2" width="8" height="105" fill="#333" rx="2"/>
+      <line x1="-16" y1="-16" x2="16" y2="16" stroke="#fff" stroke-width="5"/>
+      <line x1="16" y1="-16" x2="-16" y2="16" stroke="#fff" stroke-width="5"/>
+      <circle id="fS1" cx="-14" cy="0" r="7" fill="#3a0000"/>
+      <circle id="fS2" cx="14" cy="0" r="7" fill="#3a0000"/>
+    </g>
+    <!-- Signal masts (above track, short stems) -->
+    <g id="sigL" transform="translate(240,120)">
+      <rect x="-6" y="46" width="12" height="50" fill="#555" rx="2"/>
+      <rect x="-27" y="-46" width="54" height="88" rx="12" fill="#1a1a1a" stroke="#555" stroke-width="1"/>
+      <circle id="gSR_L" cx="0" cy="-26" r="11" fill="#3a1010"/>
+      <circle id="gSY_L" cx="0" cy="0" r="11" fill="#3a3010"/>
+      <circle id="gSG_L" cx="0" cy="26" r="11" fill="#103a10"/>
+    </g>
+    <g id="sigR" transform="translate(528,120)">
+      <rect x="-6" y="46" width="12" height="50" fill="#555" rx="2"/>
+      <rect x="-27" y="-46" width="54" height="88" rx="12" fill="#1a1a1a" stroke="#555" stroke-width="1"/>
+      <circle id="gSR_R" cx="0" cy="-26" r="11" fill="#3a1010"/>
+      <circle id="gSY_R" cx="0" cy="0" r="11" fill="#3a3010"/>
+      <circle id="gSG_R" cx="0" cy="26" r="11" fill="#103a10"/>
+    </g>
+    <g id="cG"></g>
+    <g id="cT"></g>
+  </svg>
+  <div id="sf"></div>
+</div>
+<div class="gLbl">GATE</div>
+
+<div id="controls">
+  <div class="sBox"><div class="sLbl">Score</div><div class="sNum" id="sV">0</div></div>
+  <div style="display:flex;gap:14px;align-items:center">
+    <button class="cBtn bC" id="bC">CLOSE</button>
+    <button class="cBtn bO" id="bO">OPEN</button>
+  </div>
+  <div class="rP">
+    <div class="stk"><div class="sd" id="d0"></div><div class="sd" id="d1"></div><div class="sd" id="d2"></div></div>
+    <button class="mB" id="mB"><div class="mDt easy" id="mD"></div><span id="mL">EASY</span></button>
+  </div>
+</div>
+
+<div id="vFlash"></div>
+<div id="honk"><div class="hStar"></div><div class="hTxt">HONK!</div></div>
+
+<script>
+const TM={easy:{gL:8,yL:12,rP:8,gap:6},normal:{gL:6,yL:8,rP:6,gap:3}};
+const GD=1.5,HG=4,SP=4.0;
+
+// ═══════════════════════════════════════
+// TRAIN ROSTER
+// ═══════════════════════════════════════
+const R=[
+  {id:'UP',  w:35,tp:'f',nm:'Union Pacific',  bc:'#EDAE00',ac:'#C41E3A'},
+  {id:'BNSF',w:25,tp:'f',nm:'BNSF',           bc:'#E8751A',ac:'#1a1a1a'},
+  {id:'CPKC',w:15,tp:'f',nm:'Canadian Pacific',bc:'#D32F2F',ac:'#fff'},
+  {id:'E5',  w:3.6,tp:'s',nm:'E5 Hayabusa',   bc:'#00B09A',ac:'#E91E8C',lc:'#C8C8C8'},
+  {id:'E6',  w:3.6,tp:'s',nm:'E6 Komachi',     bc:'#FFFFFF',ac:'#C62828',lc:'#E8E8E8'},
+  {id:'E7',  w:3.6,tp:'s',nm:'E7 Kagayaki',    bc:'#FFFFFF',ac:'#1A56B0',lc:'#D8D8D8',s2:'#C88A32'},
+  {id:'E8',  w:3.6,tp:'s',nm:'E8 Tsubasa',     bc:'#FFFFFF',ac:'#6A1B9A',lc:'#E8E8E8',s2:'#D4851F'},
+  {id:'DRY', w:3.6,tp:'s',nm:'Dr. Yellow',     bc:'#FFD600',ac:'#1565C0',lc:'#B0B0B0'},
+  {id:'N7',  w:3.6,tp:'s',nm:'N700S',          bc:'#F2F2F2',ac:'#1565C0',lc:'#C8C8C8'},
+  {id:'S5',  w:3.6,tp:'s',nm:'500 Series',     bc:'#E0E0E0',ac:'#283593',lc:'#B8B8B8'}
+];
+
+const FCT=[
+  {t:'box',  c:['#8B4513','#D2691E','#A0522D','#556B2F','#8B0000','#483D8B','#696969','#2F4F4F']},
+  {t:'tank', c:['#222','#555','#888','#ddd','#1a3a5a']},
+  {t:'hop',  c:['#555','#8B4513','#2F4F4F','#777']},
+  {t:'flat', c:['#555','#777','#333']}
+];
+
+// ═══════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════
+const AC=window.AudioContext||window.webkitAudioContext;
+let ax;function ea(){if(!ax)ax=new AC();if(ax.state==='suspended')ax.resume();}
+function tn(f,d,t='sine',v=.12,r=.02){if(!ax)return;const o=ax.createOscillator(),g=ax.createGain(),n=ax.currentTime;
+  o.type=t;o.frequency.value=f;g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(v,n+r);
+  g.gain.linearRampToValueAtTime(0,n+d);o.connect(g);g.connect(ax.destination);o.start();o.stop(n+d+.01);}
+const SFX={
+  bell(){if(!ax)return;const n=ax.currentTime;for(let i=0;i<6;i++){const o=ax.createOscillator(),g=ax.createGain();
+    o.type='sine';o.frequency.value=i%2?1400:1200;g.gain.setValueAtTime(0,n+i*.15);
+    g.gain.linearRampToValueAtTime(.07,n+i*.15+.02);g.gain.linearRampToValueAtTime(0,n+i*.15+.12);
+    o.connect(g);g.connect(ax.destination);o.start(n+i*.15);o.stop(n+i*.15+.15);}},
+  gD(){tn(200,1.5,'sawtooth',.03);tn(150,1.5,'square',.015);},
+  gU(){tn(250,1.5,'sawtooth',.03);tn(180,1.5,'square',.015);},
+  rum(d){if(!ax)return;const b=ax.createBuffer(1,ax.sampleRate*d,ax.sampleRate),dt=b.getChannelData(0);
+    for(let i=0;i<dt.length;i++)dt[i]=(Math.random()*2-1)*.06;
+    const s=ax.createBufferSource(),g=ax.createGain(),fl=ax.createBiquadFilter(),n=ax.currentTime;
+    s.buffer=b;fl.type='lowpass';fl.frequency.value=120;
+    g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(.1,n+.3);
+    g.gain.setValueAtTime(.1,n+d-.3);g.gain.linearRampToValueAtTime(0,n+d);
+    s.connect(fl);fl.connect(g);g.connect(ax.destination);s.start();s.stop(n+d);},
+  scr(){if(!ax)return;const o=ax.createOscillator(),g=ax.createGain(),n=ax.currentTime;
+    o.type='sawtooth';o.frequency.setValueAtTime(2500,n);o.frequency.exponentialRampToValueAtTime(200,n+.5);
+    g.gain.setValueAtTime(.08,n);g.gain.linearRampToValueAtTime(0,n+.5);
+    o.connect(g);g.connect(ax.destination);o.start();o.stop(n+.6);},
+  hnk(){tn(340,.22,'square',.08,.01);setTimeout(()=>tn(280,.28,'square',.06,.01),100);},
+  pt(){tn(523,.1,'sine',.1);setTimeout(()=>tn(659,.1,'sine',.1),100);setTimeout(()=>tn(784,.15,'sine',.1),200);},
+  rst(){tn(400,.12,'triangle',.06);setTimeout(()=>tn(300,.12,'triangle',.06),140);setTimeout(()=>tn(220,.2,'triangle',.06),280);}
+};
+let bellI=null;
+function stBell(){spBell();SFX.bell();bellI=setInterval(SFX.bell,900);}
+function spBell(){if(bellI){clearInterval(bellI);bellI=null;}}
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let mode='easy',score=0,strk=0,gate='open',phase='idle',sig='off';
+let cTr=null,tD=1,rOK=false,started=false,lkd=false;
+let honking=false,hkI=null,hkT=null,flOn=false,flI=null,carI=null,aId=null,aId2=null;
+
+const $=id=>document.getElementById(id);
+const bC=$('bC'),bO=$('bO'),sV=$('sV'),gN=$('gN'),gS=$('gS');
+const vf=$('vFlash'),hb=$('honk'),sf=$('sf'),sw=$('sW');
+
+// ═══════════════════════════════════════
+// SCENE INIT
+// ═══════════════════════════════════════
+function initScene(){
+  let t='';for(let x=0;x<768;x+=16)t+=`<rect x="${x}" y="240" width="8" height="28" fill="#6a5030" rx="1"/>`;
+  $('tT').innerHTML=t;
+}
+
+// ═══════════════════════════════════════
+// GATE (JS animated)
+// ═══════════════════════════════════════
+let gAN=90,gAS=-90,gAI=null;
+function sgA(n,s){gAN=n;gAS=s;gN.setAttribute('transform',`rotate(${n})`);gS.setAttribute('transform',`rotate(${s})`);}
+function agA(tn,ts,cb){
+  const sn=gAN,ss=gAS,st=performance.now(),dur=GD*1000;
+  function step(now){const t=Math.min((now-st)/dur,1);const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+    sgA(sn+(tn-sn)*e,ss+(ts-ss)*e);if(t<1)gAI=requestAnimationFrame(step);else{gAI=null;cb&&cb();}}
+  if(gAI)cancelAnimationFrame(gAI);gAI=requestAnimationFrame(step);
+}
+function initGate(){sgA(90,-90);}
+
+function closeG(){
+  if(gate!=='open')return;ea();gate='closing';lkB();SFX.gD();showV('CLOSE','inf');
+  agA(0,0,()=>{gate='closed';ulB();updH();});
+}
+function openG(){
+  if(gate!=='closed')return;ea();
+  if(phase==='atCrossing'){trigS();return;}
+  gate='opening';lkB();SFX.gU();
+  agA(90,-90,()=>{
+    gate='open';ulB();
+    if(phase==='waitReopen'&&rOK)scPt();
+    if(phase==='waitReopen'||phase==='cleared'){stopHnk();endR();}
+    else if(phase==='stopped'){stopHnk();clrTr();setSig('off');endR();}
+    else if(phase==='idle'||phase==='signalSet'){stopHnk();}
+    resCars();
+    if(phase!=='waitReopen')showV('OPEN','ok');
+    updH();
+  });
+}
+function lkB(){bC.classList.add('lk');bO.classList.add('lk');bC.classList.remove('glow');bO.classList.remove('glow');}
+function ulB(){bC.classList.remove('lk');bO.classList.remove('lk');}
+
+// ═══════════════════════════════════════
+// SIGNAL
+// ═══════════════════════════════════════
+function setSig(s){sig=s;
+  // All signal masts in both panels (left and right sides)
+  ['L','R'].forEach(side=>{
+    $('gSR_'+side).setAttribute('fill',s==='red'?'#ff2020':'#3a1010');
+    $('gSY_'+side).setAttribute('fill',s==='yellow'?'#ffcc00':'#3a3010');
+    $('gSG_'+side).setAttribute('fill',s==='green'?'#00dd00':'#103a10');
+    $('spSR_'+side).setAttribute('fill',s==='red'?'#ff2020':'#3a1010');
+    $('spSY_'+side).setAttribute('fill',s==='yellow'?'#ffcc00':'#3a3010');
+    $('spSG_'+side).setAttribute('fill',s==='green'?'#00dd00':'#103a10');
+  });
+  if(s==='red'){sw.textContent='STOP';sw.style.color='#e74c3c';sw.classList.add('show');}
+  else if(s==='yellow'){sw.textContent='CAUTION';sw.style.color='#f0a020';sw.classList.add('show');}
+  else if(s==='green'){sw.textContent='CLEAR';sw.style.color='#2ecc71';sw.classList.add('show');}
+  else sw.classList.remove('show');
+}
+
+// Flashing
+function stFl(){if(flOn)return;flOn=true;let k=0;
+  flI=setInterval(()=>{k++;const a=k%2===0;
+    const on='#ff0000',off='#3a0000';
+    $('fN1').setAttribute('fill',a?on:off);$('fN2').setAttribute('fill',a?off:on);
+    $('fS1').setAttribute('fill',a?on:off);$('fS2').setAttribute('fill',a?off:on);
+    // Add glow via filter
+    $('fN1').setAttribute('style',a?'filter:drop-shadow(0 0 6px #ff0000)':'');
+    $('fN2').setAttribute('style',a?'':'filter:drop-shadow(0 0 6px #ff0000)');
+    $('fS1').setAttribute('style',a?'filter:drop-shadow(0 0 6px #ff0000)':'');
+    $('fS2').setAttribute('style',a?'':'filter:drop-shadow(0 0 6px #ff0000)');
+  },400);}
+function spFl(){flOn=false;if(flI){clearInterval(flI);flI=null;}
+  ['fN1','fN2','fS1','fS2'].forEach(i=>{$(i).setAttribute('fill','#3a0000');$(i).setAttribute('style','');});}
+
+// ═══════════════════════════════════════
+// CAR SYSTEM (with queuing)
+// ═══════════════════════════════════════
+const carsG=$('cG');let cars=[],carId=0;
+const CC=['#2196F3','#f44336','#4CAF50','#FF9800','#9C27B0','#00BCD4','#795548','#E91E63'];
+const CAR_H=38,CAR_GAP=8;
+
+function spawnCar(){
+  const lane=Math.random()<.5?0:1;
+  const col=CC[Math.floor(Math.random()*CC.length)];
+  const id='c'+(carId++);
+  const lx=lane===0?340:408;
+  const sy=lane===0?540:-50;
+  const dr=lane===0?-1:1;
+  const sp=1.2+Math.random()*.4;
+  const ns='http://www.w3.org/2000/svg';
+  const g=document.createElementNS(ns,'g');g.id=id;
+  g.setAttribute('transform',`translate(${lx},${sy})`);
+  g.innerHTML=`<rect width="28" height="${CAR_H}" fill="${col}" rx="6"/>
+    <rect x="3" y="${dr>0?3:28}" width="22" height="8" fill="rgba(150,210,255,.6)" rx="2"/>
+    <rect x="3" y="${dr>0?28:3}" width="22" height="5" fill="rgba(255,150,150,.4)" rx="2"/>`;
+  carsG.appendChild(g);
+  cars.push({el:g,id,x:lx,y:sy,dir:dr,sp,lane,stp:false});
+}
+
+function updateCars(){
+  const bl=gate==='closed'||gate==='closing';
+  const gateN=118, gateS=326;
+
+  // Sort cars per lane for queuing
+  const lane0=cars.filter(c=>c.lane===0).sort((a,b)=>a.y-b.y); // going up, lower y = further along
+  const lane1=cars.filter(c=>c.lane===1).sort((a,b)=>a.y-b.y); // going down, lower y = further along
+
+  for(let i=cars.length-1;i>=0;i--){
+    const c=cars[i];
+    if(!c.stp){
+      let ny=c.y+c.dir*c.sp;
+      if(bl){
+        // Check gate stop
+        if(c.dir===1 && c.y<gateN && ny>=gateN){ny=gateN;c.stp=true;}
+        if(c.dir===-1 && c.y>gateS && ny<=gateS){ny=gateS;c.stp=true;}
+      }
+      // Check queuing behind other stopped cars
+      if(c.dir===1){ // going down
+        const ahead=lane1.filter(o=>o.id!==c.id && o.y>c.y && o.y<c.y+CAR_H+CAR_GAP+c.sp*2 && o.stp);
+        if(ahead.length>0){
+          const nearest=ahead.reduce((a,b)=>a.y<b.y?a:b);
+          const stopAt=nearest.y-CAR_H-CAR_GAP;
+          if(ny>=stopAt){ny=stopAt;c.stp=true;}
+        }
+      }
+      if(c.dir===-1){ // going up
+        const ahead=lane0.filter(o=>o.id!==c.id && o.y<c.y && o.y>c.y-CAR_H-CAR_GAP-c.sp*2 && o.stp);
+        if(ahead.length>0){
+          const nearest=ahead.reduce((a,b)=>a.y>b.y?a:b);
+          const stopAt=nearest.y+CAR_H+CAR_GAP;
+          if(ny<=stopAt){ny=stopAt;c.stp=true;}
+        }
+      }
+      c.y=ny;
+    } else if(!bl){c.stp=false;}
+    c.el.setAttribute('transform',`translate(${c.x},${c.y})`);
+    if(c.y<-60||c.y>600){c.el.remove();cars.splice(i,1);}
+  }
+}
+function resCars(){cars.forEach(c=>c.stp=false);}
+function stCars(){spawnCar();carI=setInterval(()=>{if(cars.length<6)spawnCar();},2200);}
+
+// ═══════════════════════════════════════
+// VOCAB & HONK
+// ═══════════════════════════════════════
+let vT=null;
+function showV(w,c){if(vT)clearTimeout(vT);vf.textContent=w;vf.className=c+' show';
+  vT=setTimeout(()=>vf.classList.remove('show'),1200);}
+function startHnk(){if(honking)return;honking=true;hb.classList.add('show');SFX.hnk();
+  hkI=setInterval(SFX.hnk,1200);}
+function stopHnk(){honking=false;hb.classList.remove('show');
+  if(hkI){clearInterval(hkI);hkI=null;}if(hkT){clearTimeout(hkT);hkT=null;}}
+
+// ═══════════════════════════════════════
+// SCORE
+// ═══════════════════════════════════════
+function scPt(){score++;strk=0;sV.textContent=score;SFX.pt();showV('OPEN','ok');updSt();}
+function trigS(){strk++;sf.classList.add('on');setTimeout(()=>sf.classList.remove('on'),300);
+  SFX.scr();showV('DANGER','bad');updSt();
+  if(strk>=3)setTimeout(()=>{score=0;strk=0;sV.textContent=0;updSt();SFX.rst();},800);}
+function updSt(){for(let i=0;i<3;i++)$('d'+i).classList.toggle('hit',i<strk);}
+function updH(){if(mode!=='easy'){bC.classList.remove('glow');bO.classList.remove('glow');return;}
+  bC.classList.remove('glow');bO.classList.remove('glow');
+  if(gate==='open'&&phase==='approaching'&&sig!=='red')bC.classList.add('glow');
+  if(gate==='closed'&&(phase==='waitReopen'||phase==='cleared'))bO.classList.add('glow');}
+
+// ═══════════════════════════════════════
+// DETAILED TRAIN SVG GENERATORS
+// All drawn FACING RIGHT (nose on right).
+// Mirror for right-to-left movement.
+// Height: 0-60, nose extends right.
+// ═══════════════════════════════════════
+
+function svgLoco(t){
+  const c=t.bc,a=t.ac;
+  // Detailed US diesel locomotive facing right
+  // Cab on left, long hood extending right, headlight on right end
+  return `<g>
+    <!-- Frame/undercarriage -->
+    <rect x="2" y="44" width="136" height="6" fill="#2a2a2a" rx="1"/>
+    <rect x="6" y="49" width="24" height="4" fill="#1a1a1a" rx="1"/>
+    <rect x="48" y="49" width="24" height="4" fill="#1a1a1a" rx="1"/>
+    <rect x="90" y="49" width="24" height="4" fill="#1a1a1a" rx="1"/>
+    <!-- Wheels (3 axle trucks) -->
+    <circle cx="12" cy="55" r="6" fill="#1a1a1a"/><circle cx="12" cy="55" r="3.5" fill="#333"/>
+    <circle cx="24" cy="55" r="6" fill="#1a1a1a"/><circle cx="24" cy="55" r="3.5" fill="#333"/>
+    <circle cx="54" cy="55" r="6" fill="#1a1a1a"/><circle cx="54" cy="55" r="3.5" fill="#333"/>
+    <circle cx="66" cy="55" r="6" fill="#1a1a1a"/><circle cx="66" cy="55" r="3.5" fill="#333"/>
+    <circle cx="96" cy="55" r="6" fill="#1a1a1a"/><circle cx="96" cy="55" r="3.5" fill="#333"/>
+    <circle cx="108" cy="55" r="6" fill="#1a1a1a"/><circle cx="108" cy="55" r="3.5" fill="#333"/>
+    <!-- Main body -->
+    <rect x="4" y="8" width="132" height="38" fill="${c}" rx="3"/>
+    <!-- Cab (left end) -->
+    <rect x="4" y="2" width="38" height="44" fill="${c}" rx="2"/>
+    <rect x="8" y="5" width="14" height="14" fill="#3a5a7a" rx="2"/>
+    <rect x="24" y="5" width="14" height="14" fill="#3a5a7a" rx="2"/>
+    <!-- Hood (raised section) -->
+    <rect x="42" y="4" width="94" height="6" fill="${c}" rx="2" opacity=".85"/>
+    <!-- Radiator grilles -->
+    <rect x="48" y="14" width="22" height="20" fill="${a}" rx="1" opacity=".65"/>
+    <rect x="74" y="14" width="22" height="20" fill="${a}" rx="1" opacity=".65"/>
+    <rect x="100" y="14" width="22" height="20" fill="${a}" rx="1" opacity=".65"/>
+    <!-- Grille lines -->
+    ${[0,1,2].map(g=>[16,20,24,28].map(y=>`<line x1="${48+g*26+2}" y1="${y}" x2="${48+g*26+20}" y2="${y}" stroke="rgba(0,0,0,.2)" stroke-width=".5"/>`).join('')).join('')}
+    <!-- Walkway -->
+    <line x1="42" y1="8" x2="136" y2="8" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>
+    <!-- Exhaust stacks -->
+    <rect x="58" y="0" width="5" height="5" fill="#444" rx="1"/>
+    <rect x="88" y="0" width="5" height="5" fill="#444" rx="1"/>
+    <!-- Headlight (right = front) -->
+    <circle cx="134" cy="18" r="4" fill="#FFD700" opacity=".9"/>
+    <circle cx="134" cy="18" r="2" fill="#fff" opacity=".6"/>
+    <!-- Number boards -->
+    <rect x="126" y="12" width="8" height="5" fill="#fff" rx="1" opacity=".6"/>
+    <!-- Steps/handrails at ends -->
+    <line x1="4" y1="8" x2="4" y2="44" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+    <line x1="136" y1="8" x2="136" y2="44" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+    <!-- Running board stripe -->
+    <rect x="4" y="38" width="132" height="3" fill="${a}" opacity=".4" rx="1"/>
+  </g>`;
+}
+
+function svgFCar(tp,col){
+  const base=`<rect x="2" y="44" width="76" height="5" fill="#2a2a2a" rx="1"/>
+    <rect x="6" y="48" width="18" height="4" fill="#1a1a1a" rx="1"/>
+    <rect x="56" y="48" width="18" height="4" fill="#1a1a1a" rx="1"/>
+    <circle cx="10" cy="55" r="5.5" fill="#1a1a1a"/><circle cx="10" cy="55" r="3" fill="#333"/>
+    <circle cx="20" cy="55" r="5.5" fill="#1a1a1a"/><circle cx="20" cy="55" r="3" fill="#333"/>
+    <circle cx="60" cy="55" r="5.5" fill="#1a1a1a"/><circle cx="60" cy="55" r="3" fill="#333"/>
+    <circle cx="70" cy="55" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="55" r="3" fill="#333"/>`;
+  if(tp==='tank') return `<g>${base}
+    <rect x="4" y="26" width="72" height="20" fill="${col}" rx="10"/>
+    <ellipse cx="40" cy="20" rx="34" ry="16" fill="${col}"/>
+    <ellipse cx="40" cy="18" rx="28" ry="10" fill="rgba(255,255,255,.1)"/>
+    <line x1="15" y1="14" x2="15" y2="40" stroke="rgba(0,0,0,.1)" stroke-width="1"/>
+    <line x1="65" y1="14" x2="65" y2="40" stroke="rgba(0,0,0,.1)" stroke-width="1"/>
+    </g>`;
+  if(tp==='hop') return `<g>${base}
+    <polygon points="6,8 74,8 78,44 2,44" fill="${col}"/>
+    <line x1="40" y1="8" x2="40" y2="44" stroke="rgba(0,0,0,.08)" stroke-width="1"/>
+    <line x1="22" y1="8" x2="14" y2="44" stroke="rgba(0,0,0,.06)" stroke-width="1"/>
+    <line x1="58" y1="8" x2="66" y2="44" stroke="rgba(0,0,0,.06)" stroke-width="1"/>
+    <rect x="6" y="6" width="68" height="3" fill="${col}" rx="1" opacity=".8"/>
+    </g>`;
+  if(tp==='flat') return `<g>${base}
+    <rect x="4" y="34" width="72" height="12" fill="${col}" rx="1"/>
+    <rect x="8" y="22" width="24" height="14" fill="#8a6a3a" rx="1" opacity=".7"/>
+    <rect x="36" y="26" width="20" height="10" fill="#6a8a5a" rx="1" opacity=".7"/>
+    </g>`;
+  // boxcar
+  return `<g>${base}
+    <rect x="4" y="6" width="72" height="40" fill="${col}" rx="2"/>
+    <rect x="4" y="4" width="72" height="4" fill="${col}" rx="1" opacity=".8"/>
+    <line x1="40" y1="8" x2="40" y2="42" stroke="rgba(0,0,0,.12)" stroke-width="1"/>
+    <rect x="36" y="18" width="8" height="14" fill="rgba(0,0,0,.15)" rx="1"/>
+    </g>`;
+}
+
+// ─── SHINKANSEN (clipPath-based, clean silhouettes) ───
+let clipN=0;
+function svgShin(t){
+  const b=t.bc,a=t.ac,lo=t.lc||'#ccc',s2=t.s2||null;
+  const bodyW=140;
+  // Nose silhouettes: closed paths in local coords (0,0)=body joint top, facing right
+  const NOSE={
+    E5:{len:110,path:'M0,4 C35,5 70,14 95,28 C105,34 110,40 112,46 L112,50 C112,53 108,54 100,54 L0,54 Z'},
+    E6:{len:87, path:'M0,4 C25,5 50,12 68,22 C78,28 84,33 86,38 L86,44 C84,50 74,54 60,54 L0,54 Z'},
+    E7:{len:95, path:'M0,4 C28,5 55,12 74,22 C85,28 91,33 93,38 L93,44 C91,50 80,54 64,54 L0,54 Z'},
+    E8:{len:90, path:'M0,4 C26,5 52,12 70,22 C81,28 87,33 89,38 L89,44 C87,50 76,54 61,54 L0,54 Z'},
+    DRY:{len:80,path:'M0,4 C22,4 45,9 60,17 C70,23 77,30 79,37 L79,44 C77,50 68,54 54,54 L0,54 Z'},
+    N7:{len:115,path:'M0,4 C32,4 62,9 86,18 C100,24 110,30 113,36 L113,42 C110,48 96,53 76,54 L0,54 Z'},
+    S5:{len:122,path:'M0,4 C40,5 80,13 104,22 C114,26 120,28.5 121,30 L121,31 C120,33 114,36 104,40 C80,49 40,54 0,54 Z'}
+  }[t.id];
+  const cid='nc'+(clipN++);
+  let s=`<g>`;
+  // Body section
+  s+=`<rect x="0" y="4" width="${bodyW}" height="26" fill="${b}" rx="1"/>`;
+  s+=`<rect x="0" y="28" width="${bodyW}" height="5" fill="${a}"/>`;
+  if(s2)s+=`<rect x="0" y="24" width="${bodyW}" height="3" fill="${s2}"/>`;
+  s+=`<rect x="0" y="33" width="${bodyW}" height="21" fill="${lo}" rx="1"/>`;
+  s+=`<rect x="0" y="4" width="${bodyW}" height="2.5" fill="rgba(255,255,255,.25)"/>`;
+  for(let i=0;i<9;i++)s+=`<rect x="${8+i*14}" y="10" width="9" height="11" fill="#3a6a8a" rx="2" opacity=".7"/>`;
+  // Doors
+  s+=`<rect x="46" y="8" width="6" height="25" fill="rgba(0,0,0,.08)" rx="1"/>`;
+  s+=`<rect x="96" y="8" width="6" height="25" fill="rgba(0,0,0,.08)" rx="1"/>`;
+  // Nose section (silhouette + clipped livery bands = nothing escapes the outline)
+  s+=`<g transform="translate(${bodyW},0)">`;
+  s+=`<defs><clipPath id="${cid}"><path d="${NOSE.path}"/></clipPath></defs>`;
+  s+=`<path d="${NOSE.path}" fill="${b}"/>`;
+  s+=`<g clip-path="url(#${cid})">`;
+  s+=`<rect x="0" y="33" width="${NOSE.len+2}" height="30" fill="${lo}"/>`;
+  s+=`<rect x="0" y="28" width="${NOSE.len+2}" height="5" fill="${a}"/>`;
+  if(s2)s+=`<rect x="0" y="24" width="${NOSE.len+2}" height="3" fill="${s2}"/>`;
+  s+=`</g>`;
+  // Outline for definition
+  s+=`<path d="${NOSE.path}" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="1"/>`;
+  // Cab window canted along the slope
+  s+=`<path d="M10,9 Q26,12 36,18 L32,25 Q24,18 9,15 Z" fill="#22303e" opacity=".85"/>`;
+  // Headlight near tip
+  s+=`<circle cx="${NOSE.len-10}" cy="${t.id==='S5'?30:44}" r="3" fill="#fff" opacity=".85"/>`;
+  s+=`</g>`;
+  // Undercarriage + wheels
+  s+=`<rect x="0" y="54" width="${bodyW+30}" height="4" fill="#444" rx="1"/>`;
+  for(let i=0;i<4;i++)s+=`<circle cx="${18+i*36}" cy="60" r="5" fill="#1a1a1a"/><circle cx="${18+i*36}" cy="60" r="2.5" fill="#333"/>`;
+  // Pantograph
+  s+=`<g transform="translate(100,0)"><rect x="-1" y="-4" width="2" height="6" fill="#666"/><line x1="-6" y1="-6" x2="6" y2="-6" stroke="#666" stroke-width="1.5"/></g>`;
+  s+=`</g>`;
+  return s;
+}
+
+function svgShinMid(t,w){
+  const b=t.bc,a=t.ac,lo=t.lc||'#ccc',s2=t.s2||null;
+  let s=`<g>
+    <rect y="4" width="${w}" height="26" fill="${b}" rx="1"/>
+    <rect y="28" width="${w}" height="5" fill="${a}"/>
+    ${s2?`<rect y="24" width="${w}" height="3" fill="${s2}"/>`:''}
+    <rect y="33" width="${w}" height="21" fill="${lo}" rx="1"/>
+    <rect y="4" width="${w}" height="2.5" fill="rgba(255,255,255,.25)"/>
+    <rect y="54" width="${w}" height="4" fill="#444" rx="1"/>`;
+  const wn=Math.floor(w/13);
+  for(let i=0;i<wn;i++) s+=`<rect x="${4+i*12}" y="10" width="8" height="11" fill="#3a6a8a" rx="2" opacity=".7"/>`;
+  for(let i=0;i<Math.ceil(w/35);i++) s+=`<circle cx="${14+i*30}" cy="60" r="5" fill="#1a1a1a"/><circle cx="${14+i*30}" cy="60" r="2.5" fill="#333"/>`;
+  s+=`<rect x="${Math.floor(w/3)}" y="8" width="6" height="25" fill="rgba(0,0,0,.08)" rx="1"/>`;
+  s+=`<rect x="${Math.floor(w*2/3)}" y="8" width="6" height="25" fill="rgba(0,0,0,.08)" rx="1"/>`;
+  s+=`</g>`;return s;
+}
+
+// ═══════════════════════════════════════
+// BUILD FULL TRAIN ASSEMBLY
+// Facing right by default. Mirror for dir=-1.
+// ═══════════════════════════════════════
+function pickTr(){
+  let tw=R.reduce((s,t)=>s+t.w,0),r=Math.random()*tw;
+  for(const t of R){r-=t.w;if(r<=0){
+    const tr={...t};
+    if(tr.tp==='f'){tr._nc=3+Math.floor(Math.random()*6);tr._tw=143+tr._nc*83;}
+    else{const lw={E5:250,E6:227,E7:235,E8:230,DRY:220,N7:255,S5:262}[tr.id]||230;
+      tr._tw=lw+3+2*108+lw+3;tr._lw=lw;}
+    return tr;
+  }}
+  const tr={...R[0]};tr._nc=5;tr._tw=143+5*83;return tr;
+}
+
+function buildTr(t,dir){
+  let parts=[],xo=0,gap=3;
+  if(t.tp==='f'){
+    // Freight cars FIRST (trailing, leftmost), locomotive LAST (leading, rightmost)
+    for(let i=0;i<t._nc;i++){
+      const ct=FCT[Math.floor(Math.random()*FCT.length)];
+      const co=ct.c[Math.floor(Math.random()*ct.c.length)];
+      parts.push({s:svgFCar(ct.t,co),x:xo,w:80});xo+=83;
+    }
+    parts.push({s:svgLoco(t),x:xo,w:140});xo+=143;
+  } else {
+    const lw=t._lw||230;
+    // Tail nose (mirrored, trailing) FIRST, then mid cars, then lead nose LAST
+    const tailSvg=`<g transform="scale(-1,1) translate(${-lw},0)">${svgShin(t)}</g>`;
+    parts.push({s:tailSvg,x:xo,w:lw});xo+=lw+gap;
+    for(let i=0;i<2;i++){parts.push({s:svgShinMid(t,105),x:xo,w:105});xo+=108;}
+    parts.push({s:svgShin(t),x:xo,w:lw});xo+=lw+gap;
+  }
+  t._tw=xo;
+
+  let h='';
+  if(dir===-1){
+    // Going right-to-left: mirror so nose faces left
+    h=`<g transform="scale(-1,1) translate(${-xo},0)">`;
+    parts.forEach(p=>h+=`<g transform="translate(${p.x},0)">${p.s}</g>`);
+    h+=`</g>`;
+  } else {
+    // Going left-to-right: nose faces right (as drawn)
+    parts.forEach(p=>h+=`<g transform="translate(${p.x},0)">${p.s}</g>`);
+  }
+  return h;
+}
+
+function buildSpTr(t,dir){
+  // Use actual train SVG at small scale for spotter panel
+  // Spotter panel viewBox is 768x300, train area ~30px tall
+  // Scale the 60px tall train down to ~28px
+  const sc=0.45;
+  const svg=buildTr(t,dir);
+  return `<g transform="scale(${sc})">${svg}</g>`;
+}
+
+function passT(t){if(t.tp==='s')return SP;return 2.5+((t._nc||3)-3)*.5;}
+
+// ═══════════════════════════════════════
+// ANIMATIONS (synchronized panels)
+// ═══════════════════════════════════════
+function animBoth(t,dir,lead,onArrive){
+  const spG=$('spT');
+  const cG=$('cT');
+  const tw=t._tw||300;
+  const sc=.7;
+  const trainY=218;
+
+  // Build spotter train (already handles direction in buildTr)
+  spG.innerHTML=buildSpTr(t,dir);
+  const spTw=tw*0.45; // scaled width for spotter
+  const spSx=dir===1?-spTw:768, spEx=384;
+
+  // Build crossing train — HIDDEN initially
+  cG.innerHTML=buildTr(t,dir);
+  cG.setAttribute('opacity','0');
+  const cSx=dir===1?-tw*sc-10:768+10;
+  const cEx=dir===1?384-tw*sc/2:384-tw*sc/2;
+
+  const st=performance.now();
+  let cRevealed=false;
+
+  function step(now){
+    const el=(now-st)/1000;
+    const p=Math.min(el/lead,1);
+
+    // Spotter — linear
+    const spX=spSx+(spEx-spSx)*p;
+    spG.setAttribute('transform',`translate(${spX},128)`);
+
+    // Crossing — enters at 30% of lead time
+    const cDelay=lead*.3;
+    if(el>cDelay){
+      if(!cRevealed){cG.setAttribute('opacity','1');cRevealed=true;}
+      const cp=Math.min((el-cDelay)/(lead-cDelay),1);
+      const cx=cSx+(cEx-cSx)*cp;
+      cG.setAttribute('transform',`translate(${cx},${trainY}) scale(${sc})`);
+    }
+
+    if(p<1) aId=requestAnimationFrame(step);
+    else onArrive();
+  }
+  aId=requestAnimationFrame(step);
+}
+
+function animPass(t,dir,dur,cb){
+  // Continue train through crossing after gate check passes
+  const cG=$('cT');
+  const spG=$('spT');
+  const tw=t._tw||300;
+  const sc=.7;
+  const trainY=218;
+  const sx=dir===1?384-tw*sc/2:384-tw*sc/2;
+  const ex=dir===1?768+10:-tw*sc-10;
+  // Spotter also continues through
+  const spSx=384;
+  const spTw=tw*0.45;
+  const spEx=dir===1?768+spTw:-spTw;
+  const st=performance.now();
+  SFX.rum(dur);
+
+  function step(now){
+    const p=Math.min((now-st)/1000/dur,1);
+    const x=sx+(ex-sx)*p;
+    cG.setAttribute('transform',`translate(${x},${trainY}) scale(${sc})`);
+    // Spotter continues too
+    const spX=spSx+(spEx-spSx)*p;
+    spG.setAttribute('transform',`translate(${spX},128)`);
+    if(p<1) aId2=requestAnimationFrame(step);
+    else{cG.innerHTML='';spG.innerHTML='';cb&&cb();}
+  }
+  aId2=requestAnimationFrame(step);
+}
+
+function clrTr(){
+  if(aId){cancelAnimationFrame(aId);aId=null;}
+  if(aId2){cancelAnimationFrame(aId2);aId2=null;}
+  $('spT').innerHTML='';$('cT').innerHTML='';
+}
+
+// ═══════════════════════════════════════
+// ROUND LOGIC
+// ═══════════════════════════════════════
+function startR(){
+  if(lkd)return;lkd=true;rOK=false;stopHnk();
+  const sr=Math.random();
+  const s=sr<.33?'red':sr<.66?'yellow':'green';
+  cTr=pickTr();tD=Math.random()<.5?1:-1;
+  phase='signalSet';setSig(s);updH();
+
+  setTimeout(()=>{
+    phase='approaching';
+    const tm=TM[mode];
+    let lead=s==='red'?tm.rP:s==='yellow'?tm.yL:tm.gL;
+    if(s!=='red'){stFl();stBell();}
+    updH();
+
+    if(s==='red'){
+      // Red: train appears in BOTH panels, stops at signal in gate scene
+      const spG=$('spT');
+      const cG=$('cT');
+      const tw=cTr._tw||300;
+      const sc=.7;
+      const trainY=218;
+
+      // Build trains for both panels
+      spG.innerHTML=buildSpTr(cTr,tD);
+      cG.innerHTML=buildTr(cTr,tD);
+      cG.setAttribute('opacity','0');
+
+      const spTw=tw*0.45;
+      const spSx=tD===1?-spTw:768;
+      // Spotter stop: nose at the approaching signal mast
+      // dir=1: nose is at RIGHT end → group_x + spTw = 265 → group_x = 265-spTw
+      // dir=-1: nose is at LEFT end (mirrored) → group_x = 503
+      const spEx=tD===1?265-spTw:503;
+
+      // Gate scene: train stops at the signal mast (x=240 or x=528)
+      const sigX=tD===1?240:528;
+      const cSx=tD===1?-tw*sc-10:768+10;
+      // Stop position: nose near signal
+      const cStopX=tD===1?sigX-tw*sc+30:sigX-30;
+
+      // Spotter: stop near spotter signal mast (x=280 or x=488)
+      const spSigX=tD===1?280:488;
+
+      const st=performance.now();
+      let cRevealed=false;
+
+      function step(now){
+        const el=(now-st)/1000;
+        const p=Math.min(el/lead,1);
+        // Ease out — decelerate
+        const e=1-Math.pow(1-p,2);
+
+        spG.setAttribute('transform',`translate(${spSx+(spEx-spSx)*e},128)`);
+
+        // Crossing — enters at 20%
+        const cDelay=lead*.2;
+        if(el>cDelay){
+          if(!cRevealed){cG.setAttribute('opacity','1');cRevealed=true;}
+          const cp=Math.min((el-cDelay)/(lead-cDelay),1);
+          const ce=1-Math.pow(1-cp,2); // ease out
+          const cx=cSx+(cStopX-cSx)*ce;
+          cG.setAttribute('transform',`translate(${cx},${trainY}) scale(${sc})`);
+        }
+
+        if(p<1) aId=requestAnimationFrame(step);
+        else{
+          phase='stopped';showV('STOP','stp');spFl();spBell();
+          // Fade out train after 2s
+          setTimeout(()=>{
+            cG.style.transition='opacity 1s';cG.style.opacity='0';
+            spG.style.transition='opacity 1s';spG.style.opacity='0';
+            setTimeout(()=>{
+              clrTr();
+              cG.style.transition='';cG.style.opacity='';
+              spG.style.transition='';spG.style.opacity='';
+            },1100);
+          },2000);
+          if(gate==='closed'||gate==='closing'){
+            hkT=setTimeout(()=>{if(gate==='closed'&&phase==='stopped')startHnk();},HG*1000);
+          } else {
+            setTimeout(()=>{setSig('off');endR();},3500);
+          }
+        }
+      }
+      aId=requestAnimationFrame(step);
+    } else {
+      // Green/Yellow: synchronized both panels
+      animBoth(cTr,tD,lead,()=>{
+        // Train has arrived at crossing
+        if(gate==='closed'){
+          phase='atCrossing';rOK=true;
+          const pt=passT(cTr);
+          animPass(cTr,tD,pt,()=>{
+            phase='waitReopen';spFl();spBell();clrTr();setSig('off');
+            updH();
+            hkT=setTimeout(()=>{if(phase==='waitReopen'&&gate==='closed')startHnk();},HG*1000);
+          });
+        } else {
+          phase='atCrossing';rOK=false;
+          trigS();spFl();spBell();
+          setTimeout(()=>{clrTr();setSig('off');endR();},1500);
+        }
+      });
+    }
+  },1200);
+}
+
+function endR(){
+  phase='idle';lkd=false;rOK=false;cTr=null;
+  setSig('off');updH();bC.classList.remove('glow');bO.classList.remove('glow');
+  setTimeout(()=>{if(started&&phase==='idle')startR();},TM[mode].gap*1000);
+}
+
+// Mode
+$('mB').addEventListener('click',()=>{if(phase!=='idle')return;
+  mode=mode==='easy'?'normal':'easy';$('mD').className='mDt '+mode;$('mL').textContent=mode.toUpperCase();updH();});
+
+// Buttons
+function wB(b,fn){let td=false;
+  b.addEventListener('touchstart',e=>{e.preventDefault();td=true;fn();},{passive:false});
+  b.addEventListener('click',()=>{if(td){td=false;return;}fn();});}
+wB(bC,()=>{if(!bC.classList.contains('lk'))closeG();});
+wB(bO,()=>{if(!bO.classList.contains('lk'))openG();});
+
+// Game loop
+function loop(){updateCars();requestAnimationFrame(loop);}
+
+// Init
+initScene();initGate();setSig('off');updSt();
+const tc=$('titleCard');
+function go(){ea();tc.classList.add('hidden');
+  setTimeout(()=>{tc.style.display='none';started=true;stCars();loop();
+    setTimeout(()=>startR(),TM[mode].gap*1000);},600);}
+tc.addEventListener('click',go);
+tc.addEventListener('touchstart',e=>{e.preventDefault();go();},{passive:false});
+</script>
+</body>
+</html>
