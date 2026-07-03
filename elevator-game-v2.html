@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Little Captain — Elevator</title>
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #1a0f08; }
+    #root { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js" crossorigin></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+
+/* ───────────────────────── Floor data ───────────────────────── */
+const SKIPPED = new Set([13, 14, 24, 34]);
+const FLOORS = [];
+for (let f = 5; f <= 41; f++) if (!SKIPPED.has(f)) FLOORS.push(f);
+// Three independent columns, each going bottom→top:
+//   Left  : 5–17  (skip 13,14)  → 11 floors
+//   Middle: 18–29 (skip 24)     → 11 floors
+//   Right : 30–41 (skip 34)     → 11 floors
+const LEFT_COL  = FLOORS.filter(f => f <= 17);
+const MID_COL   = FLOORS.filter(f => f >= 18 && f <= 29);
+const RIGHT_COL = FLOORS.filter(f => f >= 30);
+// Each row: [left[i], mid[i], right[i]] — built bottom-to-top, then reversed for render
+const ROWS = LEFT_COL.map((f, i) => [f, MID_COL[i], RIGHT_COL[i]]).reverse();
+
+const HOME = 5;
+const STEP_MS = 750;       // time per floor while moving
+const DOOR_ANIM_MS = 1100; // door open/close animation
+const DOOR_OPEN_MS = 10000;
+const PERSON_FADE_MS = 2000;
+const IDLE_RETURN_MS = 10000;
+const RANDOM_CALL_MS = 20000;
+
+/* ───────────────────────── Dot-matrix LED display ─────────────
+   Classic 5x7 digit font, each "on" cell doubled into a 2x2 block
+   of bulbs → renders at 10 bulbs wide × 14 bulbs tall per digit. */
+const FONT5x7 = {
+  0: ["01110","10001","10011","10101","11001","10001","01110"],
+  1: ["00100","01100","00100","00100","00100","00100","01110"],
+  2: ["01110","10001","00001","00010","00100","01000","11111"],
+  3: ["11111","00010","00100","00010","00001","10001","01110"],
+  4: ["00010","00110","01010","10010","11111","00010","00010"],
+  5: ["11111","10000","11110","00001","00001","10001","01110"],
+  6: ["00110","01000","10000","11110","10001","10001","01110"],
+  7: ["11111","00001","00010","00100","01000","01000","01000"],
+  8: ["01110","10001","10001","01110","10001","10001","01110"],
+  9: ["01110","10001","10001","01111","00001","00010","01100"],
+};
+function digitMatrix(d) {
+  if (d === null || d === undefined) return Array.from({ length: 14 }, () => Array(10).fill(0));
+  const rows = FONT5x7[d];
+  const m = [];
+  rows.forEach((row) => {
+    const expanded = [];
+    for (const ch of row) { const v = ch === "1" ? 1 : 0; expanded.push(v, v); }
+    m.push(expanded, expanded.slice());
+  });
+  return m;
+}
+// 7×7 arrow glyphs, lower-res to sit beside the taller digits
+const ARROW_UP   = [
+  "0001000","0011100","0111110","1111111",
+  "0001000","0001000","0001000","0001000",
+  "0001000","0001000","0001000","0001000",
+  "0000000","0000000",
+];
+const ARROW_DOWN = [
+  "0000000","0000000",
+  "0001000","0001000","0001000","0001000",
+  "0001000","0001000","0001000","0001000",
+  "1111111","0111110","0011100","0001000",
+];
+function arrowMatrix(dir) {
+  const rows = dir === "up" ? ARROW_UP : dir === "down" ? ARROW_DOWN : Array(14).fill("0000000");
+  return rows.map((row) => row.split("").map((c) => (c === "1" ? 1 : 0)));
+}
+function DotGrid({ matrix, lit }) {
+  const cols = matrix[0].length;
+  return (
+    <div className="eg-dotgrid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+      {matrix.flatMap((row, r) =>
+        row.map((on, c) => (
+          <span key={`${r}-${c}`} className={`eg-dot ${on && lit ? "on" : ""}`} />
+        ))
+      )}
+    </div>
+  );
+}
+const UP_GLYPH = arrowMatrix("up");
+const DOWN_GLYPH = arrowMatrix("down");
+const IDLE_GLYPH = arrowMatrix(null);
+function ArrowDisplay({ direction, power }) {
+  if (!power || !direction) {
+    return (
+      <div className="eg-arrowwrap">
+        <DotGrid matrix={IDLE_GLYPH} lit={false} />
+      </div>
+    );
+  }
+  const glyph = direction === "down" ? DOWN_GLYPH : UP_GLYPH;
+  return (
+    <div className="eg-arrowwrap">
+      <div className={`eg-arrowtrack ${direction === "down" ? "flow-down" : "flow-up"}`}>
+        <DotGrid matrix={glyph} lit={true} />
+        <DotGrid matrix={glyph} lit={true} />
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────── Sounds (Web Audio) ───────────────── */
+function useSounds() {
+  const ctxRef = useRef(null);
+  const ctx = () => {
+    if (!ctxRef.current) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      ctxRef.current = new AC();
+    }
+    if (ctxRef.current.state === "suspended") ctxRef.current.resume();
+    return ctxRef.current;
+  };
+  const tone = (freq, dur, type = "sine", gain = 0.18, when = 0) => {
+    try {
+      const ac = ctx();
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(gain, ac.currentTime + when);
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + when + dur);
+      o.connect(g).connect(ac.destination);
+      o.start(ac.currentTime + when);
+      o.stop(ac.currentTime + when + dur + 0.05);
+    } catch (e) {}
+  };
+  return {
+    click: () => tone(2200, 0.06, "square", 0.05),
+    ding: () => {
+      // classic elevator arrival "ding-dong" — two bell strikes with harmonics
+      tone(932, 0.9, "sine", 0.22);        // ding (Bb5)
+      tone(1864, 0.5, "sine", 0.07);       //  + shimmer harmonic
+      tone(740, 1.1, "sine", 0.22, 0.45);  // dong (F#5)
+      tone(1480, 0.6, "sine", 0.06, 0.45); //  + shimmer harmonic
+    },
+    bell: () => { for (let i = 0; i < 4; i++) tone(1567, 0.25, "triangle", 0.22, i * 0.28); },
+    deny: () => tone(220, 0.15, "sine", 0.08),
+    power: (on) => (on ? tone(523, 0.3, "sine", 0.15) : tone(196, 0.4, "sine", 0.15)),
+  };
+}
+
+/* ───────────────────────── Component ────────────────────────── */
+function ElevatorGame() {
+  const [power, setPower] = useState(true);
+  const [floor, setFloor] = useState(HOME);
+  const [queue, setQueue] = useState([]);          // floors waiting to be served
+  const [phase, setPhase] = useState("idle");      // idle|moving|opening|open|closing
+  const [direction, setDirection] = useState(null); // 'up'|'down'|null
+  const [personVisible, setPersonVisible] = useState(false);
+  const [bellFlash, setBellFlash] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [pinMode, setPinMode] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState(false);
+
+  const S = useSounds();
+  const timers = useRef([]);
+  const later = useCallback((fn, ms) => {
+    const id = setTimeout(fn, ms);
+    timers.current.push(id);
+    return id;
+  }, []);
+  const clearTimers = useCallback(() => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+  }, []);
+
+  /* refs so timers always see fresh values */
+  const ref = useRef({});
+  ref.current = { power, floor, queue, phase, direction };
+
+  /* ── core: decide what to do when stationary with doors closed ── */
+  const dispatch = useCallback(() => {
+    const { power, floor, queue, direction } = ref.current;
+    if (!power) return;
+    if (queue.length === 0) {
+      setDirection(null);
+      setPhase("idle");
+      return;
+    }
+    const above = queue.filter((f) => f > floor);
+    const below = queue.filter((f) => f < floor);
+    let dir = direction;
+    if (dir === "up" && above.length === 0) dir = below.length ? "down" : null;
+    else if (dir === "down" && below.length === 0) dir = above.length ? "up" : null;
+    else if (!dir) dir = above.length ? "up" : below.length ? "down" : null;
+    if (!dir) {
+      // queued floor equals current floor
+      setQueue((q) => q.filter((f) => f !== floor));
+      arrive();
+      return;
+    }
+    setDirection(dir);
+    setPhase("moving");
+  }, []);
+
+  /* ── arrival: ding, person, door cycle ── */
+  const arrive = useCallback(() => {
+    S.ding();
+    setPhase("opening");
+    setPersonVisible(true);
+    later(() => {
+      setPhase("open");
+      later(() => setPersonVisible(false), PERSON_FADE_MS);
+      later(() => {
+        if (ref.current.phase === "open") closeDoors();
+      }, DOOR_OPEN_MS);
+    }, DOOR_ANIM_MS);
+  }, []);
+
+  const closeDoors = useCallback(() => {
+    setPhase("closing");
+    setPersonVisible(false);
+    later(() => dispatch(), DOOR_ANIM_MS);
+  }, [dispatch]);
+
+  /* ── movement loop: one floor per step ──
+     The effect depends on `floor`, so each step re-arms the next one.
+     (The old phase-toggle trick could get batched by React into a no-op,
+     which froze the elevator after the first step.) */
+  useEffect(() => {
+    if (phase !== "moving" || !power) return;
+    const id = setTimeout(() => {
+      const { floor, direction, queue } = ref.current;
+      const idx = FLOORS.indexOf(floor);
+      const nextIdx = direction === "up" ? idx + 1 : idx - 1;
+      if (nextIdx < 0 || nextIdx >= FLOORS.length) { dispatch(); return; }
+      const next = FLOORS[nextIdx];
+      setFloor(next);
+      if (queue.includes(next)) {
+        setQueue((q) => q.filter((f) => f !== next));
+        arrive();
+      }
+      // otherwise: floor changed → this effect re-runs → next step
+    }, STEP_MS);
+    return () => clearTimeout(id);
+  }, [phase, floor, power, dispatch, arrive]);
+
+  /* ── idle: 10s → return home; 20s → random call ── */
+  useEffect(() => {
+    if (phase !== "idle" || !power) return;
+    const ids = [];
+    if (floor !== HOME) {
+      ids.push(setTimeout(() => setQueue((q) => (q.includes(HOME) ? q : [...q, HOME])), IDLE_RETURN_MS));
+    }
+    ids.push(
+      setTimeout(() => {
+        const options = FLOORS.filter((f) => f !== ref.current.floor);
+        const pick = options[Math.floor(Math.random() * options.length)];
+        setQueue((q) => (q.includes(pick) ? q : [...q, pick]));
+      }, RANDOM_CALL_MS)
+    );
+    return () => ids.forEach(clearTimeout);
+  }, [phase, power, floor]);
+
+  /* ── when idle and queue gains floors, start ── */
+  useEffect(() => {
+    if (power && phase === "idle" && queue.length > 0) dispatch();
+  }, [queue, phase, power, dispatch]);
+
+  /* ── interactions ── */
+  const pressFloor = (f) => {
+    if (!power) return;
+    S.click();
+    if (f === floor && phase !== "moving") {
+      if (phase === "idle") arrive(); // courtesy: reopen at current floor
+      return;
+    }
+    setQueue((q) => (q.includes(f) ? q : [...q, f]));
+  };
+
+  const stationary = power && (phase === "idle" || phase === "opening" || phase === "open" || phase === "closing");
+
+  const pressOpen = () => {
+    if (!stationary) { S.deny(); return; }
+    S.click();
+    if (phase === "closing" || phase === "idle") arrive();
+    // if already open, the 10s timer simply continues
+  };
+  const pressClose = () => {
+    if (!stationary) { S.deny(); return; }
+    S.click();
+    if (phase === "open") closeDoors();
+  };
+  const pressBell = () => {
+    if (!power) return;
+    S.bell();
+    setBellFlash(true);
+    later(() => setBellFlash(false), 1200);
+  };
+
+  /* ── admin: power + reset ── */
+  const fullReset = () => {
+    clearTimers();
+    setQueue([]);
+    setFloor(HOME);
+    setDirection(null);
+    setPhase("idle");
+    setPersonVisible(false);
+  };
+  const togglePower = () => {
+    S.power(!power);
+    if (power) {
+      clearTimers();
+      setPower(false);
+      setQueue([]);
+      setDirection(null);
+      setPersonVisible(false);
+      setPhase("idle");
+    } else {
+      setPower(true);
+      setFloor(HOME);
+      setPhase("idle");
+    }
+    setAdminOpen(false);
+  };
+  const submitPinDigit = (d) => {
+    const next = (pin + d).slice(0, 3);
+    setPin(next);
+    setPinError(false);
+    if (next.length === 3) {
+      if (next === "911") {
+        S.ding();
+        fullReset();
+        setPin("");
+        setPinMode(false);
+        setAdminOpen(false);
+      } else {
+        S.deny();
+        setPinError(true);
+        setTimeout(() => { setPin(""); setPinError(false); }, 700);
+      }
+    }
+  };
+
+  const doorsApart = phase === "open" || phase === "opening";
+
+  return (
+    <div className="eg-root">
+      <style>{css}</style>
+
+      <button className="eg-gear" onClick={() => { setAdminOpen(true); setPinMode(false); setPin(""); }} aria-label="Settings">
+        ⚙
+      </button>
+
+      {/* ── Left: elevator car ── */}
+      <div className="eg-shaft">
+        <div className="eg-frame">
+          <div className="eg-lintel">
+            <div className={`eg-lcd ${power ? "" : "off"}`}>
+              <ArrowDisplay direction={direction} power={power} />
+              <DotGrid matrix={digitMatrix(power ? (floor >= 10 ? Math.floor(floor / 10) : null) : null)} lit={power} />
+              <DotGrid matrix={digitMatrix(power ? floor % 10 : null)} lit={power} />
+            </div>
+          </div>
+          <div className="eg-doorway">
+            <div className="eg-cab" />
+            <div className={`eg-door left ${doorsApart ? "open" : ""}`} />
+            <div className={`eg-door right ${doorsApart ? "open" : ""}`} />
+            {personVisible && (
+              <div className={`eg-person ${phase === "open" ? "fading" : ""}`}>
+                <svg viewBox="0 0 60 130" width="74" height="160">
+                  <circle cx="30" cy="20" r="14" fill="#3d2c20" />
+                  <rect x="14" y="38" width="32" height="52" rx="14" fill="#5b4634" />
+                  <rect x="18" y="92" width="9" height="34" rx="4.5" fill="#3d2c20" />
+                  <rect x="33" y="92" width="9" height="34" rx="4.5" fill="#3d2c20" />
+                </svg>
+              </div>
+            )}
+          </div>
+        </div>
+        {bellFlash && <div className="eg-bellflash">🔔</div>}
+      </div>
+
+      {/* ── Right: copper panel ── */}
+      <div className={`eg-panel ${power ? "" : "dark"}`}>
+        <div className="eg-spec">
+          <span>載重 1150 KG</span>
+          <span>乘客 16 人</span>
+        </div>
+
+        <div className="eg-grid">
+          {ROWS.map((row, ri) => (
+            <div className="eg-row" key={ri}>
+              {row.map((f) => (
+                <button
+                  key={f}
+                  className={`eg-btn ${queue.includes(f) ? "lit" : ""}`}
+                  onClick={() => pressFloor(f)}
+                  aria-label={`Floor ${f}`}
+                >
+                  <span className="eg-btn-ring-brass" />
+                  <span className="eg-btn-ring" />
+                  <span className="eg-btn-cap">
+                    <span className="eg-btn-label">{f}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div className="eg-controls">
+          <button
+            className={`eg-ctl ${stationary ? "" : "disabled"}`}
+            onClick={pressOpen}
+            aria-label="Open doors"
+          >
+            ◄|►
+          </button>
+          <button
+            className={`eg-ctl ${stationary ? "" : "disabled"}`}
+            onClick={pressClose}
+            aria-label="Close doors"
+          >
+            ►|◄
+          </button>
+          <button
+            className={`eg-ctl bell ${bellFlash ? "flashing" : ""}`}
+            onClick={pressBell}
+            aria-label="Alarm bell"
+          >
+            🔔
+          </button>
+        </div>
+      </div>
+
+      {/* ── Admin overlay ── */}
+      {adminOpen && (
+        <div className="eg-overlay" onClick={() => { setAdminOpen(false); setPinMode(false); setPin(""); }}>
+          <div className="eg-modal" onClick={(e) => e.stopPropagation()}>
+            {!pinMode ? (
+              <>
+                <div className="eg-modal-title">Elevator Controls</div>
+                <button className="eg-modal-btn" onClick={togglePower}>
+                  {power ? "⏻  Turn Off" : "⏻  Turn On"}
+                </button>
+                <button className="eg-modal-btn" onClick={() => setPinMode(true)} disabled={!power}>
+                  ↺  Reset (PIN required)
+                </button>
+                <button className="eg-modal-btn quiet" onClick={() => setAdminOpen(false)}>
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="eg-modal-title">Enter PIN</div>
+                <div className={`eg-pin-dots ${pinError ? "err" : ""}`}>
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className={pin.length > i ? "full" : ""} />
+                  ))}
+                </div>
+                <div className="eg-pinpad">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, "", 0, "⌫"].map((k, i) =>
+                    k === "" ? (
+                      <span key={i} />
+                    ) : (
+                      <button
+                        key={i}
+                        className="eg-pinkey"
+                        onClick={() =>
+                          k === "⌫" ? setPin((p) => p.slice(0, -1)) : submitPinDigit(String(k))
+                        }
+                      >
+                        {k}
+                      </button>
+                    )
+                  )}
+                </div>
+                <button className="eg-modal-btn quiet" onClick={() => { setPinMode(false); setPin(""); }}>
+                  Back
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───────────────────────── Styles ───────────────────────────── */
+const css = `
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.eg-root{
+  width:100vw;height:100dvh;overflow:hidden;display:flex;
+  background:linear-gradient(160deg,#241910 0%,#3a2917 50%,#241910 100%);
+  font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;
+  user-select:none;position:relative;
+}
+
+/* ── shaft / car ── */
+.eg-shaft{flex:1 1 42%;display:flex;align-items:center;justify-content:center;position:relative;padding:14px}
+.eg-frame{
+  width:100%;max-width:300px;border-radius:10px;padding:12px 14px 10px;
+  background:linear-gradient(165deg,#c89058 0%,#9c6a38 45%,#b9824c 70%,#8a5a30 100%);
+  box-shadow:inset 0 1px 0 rgba(255,235,200,.5),0 10px 30px rgba(0,0,0,.55);
+}
+.eg-lintel{display:flex;justify-content:center;margin-bottom:10px}
+.eg-lcd{
+  padding:8px 12px;border-radius:6px;
+  background:#0a0a0a;box-shadow:inset 0 0 14px #000,0 1px 0 rgba(255,235,200,.35);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.eg-dotgrid{display:grid;gap:1px}
+.eg-dot{
+  width:4px;height:4px;border-radius:50%;
+  background:#102015;box-shadow:inset 0 0 1px rgba(0,0,0,.7);
+  transition:background .1s,box-shadow .1s;
+}
+.eg-dot.on{
+  background:#3dff6e;
+  box-shadow:0 0 3px 1px rgba(61,255,110,.95),0 0 7px 2px rgba(61,255,110,.55);
+}
+.eg-arrowwrap{width:34px;height:69px;overflow:hidden;position:relative;flex:none}
+.eg-arrowtrack{display:flex;flex-direction:column;gap:0}
+.eg-arrowtrack.flow-up{animation:egFlowUp 1.2s linear infinite}
+.eg-arrowtrack.flow-down{animation:egFlowDown 1.2s linear infinite}
+@keyframes egFlowUp{from{transform:translateY(0)}to{transform:translateY(-69px)}}
+@keyframes egFlowDown{from{transform:translateY(-69px)}to{transform:translateY(0)}}
+
+.eg-doorway{
+  position:relative;height:430px;border-radius:6px;overflow:hidden;
+  border:4px solid #6e4824;box-shadow:inset 0 0 18px rgba(0,0,0,.6);
+}
+.eg-cab{position:absolute;inset:0;background:
+  linear-gradient(180deg,#efe6d2 0%,#d9c9a8 60%,#b09a72 100%)}
+.eg-door{
+  position:absolute;top:0;bottom:0;width:50%;
+  background:linear-gradient(100deg,#b9b6ae 0%,#e8e6df 18%,#9d9a92 38%,#d8d5cd 58%,#8f8c84 80%,#c7c4bc 100%);
+  transition:transform ${DOOR_ANIM_MS}ms cubic-bezier(.5,0,.3,1);
+  box-shadow:inset 0 0 10px rgba(0,0,0,.25);
+}
+.eg-door.left{left:0;border-right:2px solid #55524c}
+.eg-door.right{right:0;border-left:2px solid #55524c}
+.eg-door.left.open{transform:translateX(-101%)}
+.eg-door.right.open{transform:translateX(101%)}
+.eg-person{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);transition:opacity .9s}
+.eg-person.fading{animation:egFade ${PERSON_FADE_MS}ms forwards}
+@keyframes egFade{0%,55%{opacity:1}100%{opacity:0}}
+.eg-bellflash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:90px;animation:egBell .3s 4;pointer-events:none}
+@keyframes egBell{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
+
+/* ── panel ── */
+.eg-panel{
+  flex:1 1 58%;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:12px 10px 10px;position:relative;height:100%;min-height:0;
+  background:linear-gradient(170deg,#d09a5e 0%,#a06f3c 30%,#c08c52 55%,#8a5c30 85%,#a87844 100%);
+  box-shadow:inset 2px 0 6px rgba(255,235,200,.25),inset -4px 0 14px rgba(0,0,0,.35);
+  transition:filter .6s;
+}
+.eg-panel.dark{filter:brightness(.32) saturate(.5)}
+.eg-spec{
+  flex:0 0 auto;
+  display:flex;gap:18px;background:rgba(245,238,222,.92);border-radius:4px;
+  padding:5px 14px;font-size:13px;font-weight:600;color:#3a2c1a;letter-spacing:1px;
+  box-shadow:0 1px 3px rgba(0,0,0,.4);
+}
+.eg-grid{
+  display:flex;flex-direction:column;gap:18px;flex:1 1 auto;min-height:0;
+  justify-content:flex-start;align-items:center;width:100%;
+  overflow-y:auto;padding:4px 0;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.eg-grid::-webkit-scrollbar{display:none}
+.eg-row{display:flex;gap:20px;justify-content:center;flex:0 0 auto}
+.eg-btn{
+  position:relative;width:42px;height:42px;border:none;border-radius:50%;cursor:pointer;
+  background:none;padding:0;display:flex;align-items:center;justify-content:center;
+}
+/* Two genuine hollow rings (border-based, not box-shadow fills) so the
+   stacking order is unambiguous: lime sits at a smaller fixed diameter,
+   brass at a larger one — no overlap trickery, no phantom third ring. */
+.eg-btn-ring,
+.eg-btn-ring-brass{
+  position:absolute;top:50%;left:50%;border-radius:50%;box-sizing:border-box;
+  transform:translate(-50%,-50%);opacity:0;pointer-events:none;
+  transition:opacity .25s,border-color .25s;
+}
+.eg-btn-ring{ width:50px;height:50px;border:3px solid transparent; }
+.eg-btn.lit .eg-btn-ring{
+  opacity:1;border-color:#aaff33;
+  box-shadow:0 0 3px 0px rgba(170,255,51,.85);
+  animation:egRingPulse 1.4s ease-in-out infinite;
+}
+@keyframes egRingPulse{
+  0%,100%{border-color:#aaff33;box-shadow:0 0 3px 0px rgba(170,255,51,.85)}
+  50%{border-color:#c4ff66;box-shadow:0 0 4px 0px rgba(170,255,51,1)}
+}
+.eg-btn-ring-brass{ width:58px;height:58px;border:3px solid transparent; }
+.eg-btn.lit .eg-btn-ring-brass{
+  opacity:1;border-color:#c89a3f;
+  box-shadow:0 1px 1px rgba(0,0,0,.3);
+}
+.eg-btn-cap{
+  width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 30%,#f2efe8 0%,#c9c5bc 45%,#8e8a81 100%);
+  box-shadow:inset 0 -3px 5px rgba(0,0,0,.35),inset 0 2px 3px rgba(255,255,255,.6),0 2px 4px rgba(0,0,0,.45);
+  transition:transform .12s;
+}
+.eg-btn:active .eg-btn-cap{transform:scale(.92)}
+.eg-btn-label{
+  color:#3a342c;font-weight:700;font-size:16px;
+  text-shadow:0 1px 0 rgba(255,255,255,.5);font-variant-numeric:tabular-nums;
+}
+.eg-controls{flex:0 0 auto;display:flex;gap:22px;padding:4px 0 2px}
+.eg-ctl{
+  width:64px;height:52px;border:none;border-radius:26px;cursor:pointer;font-size:17px;font-weight:800;
+  color:#42321e;background:radial-gradient(circle at 35% 30%,#f2efe8 0%,#c9c5bc 50%,#8e8a81 100%);
+  box-shadow:inset 0 -2px 5px rgba(0,0,0,.3),0 2px 5px rgba(0,0,0,.45);
+}
+.eg-ctl:active{transform:scale(.95)}
+.eg-ctl.disabled{opacity:.42;cursor:not-allowed}
+.eg-ctl.bell{font-size:22px}
+.eg-ctl.bell.flashing{background:radial-gradient(circle at 35% 30%,#fff3c0 0%,#ffcf45 55%,#c98a00 100%);
+  box-shadow:0 0 16px 5px rgba(255,200,60,.85)}
+.eg-gear{
+  position:fixed;top:8px;left:8px;width:32px;height:32px;border:none;border-radius:50%;
+  background:rgba(20,14,8,.4);color:rgba(255,240,215,.5);font-size:16px;cursor:pointer;z-index:20;
+}
+
+/* ── admin overlay ── */
+.eg-overlay{position:fixed;inset:0;background:rgba(10,6,2,.66);display:flex;align-items:center;justify-content:center;z-index:50}
+.eg-modal{
+  width:280px;background:linear-gradient(170deg,#f5ecdc,#e2d3b8);border-radius:14px;padding:20px;
+  display:flex;flex-direction:column;gap:10px;box-shadow:0 18px 50px rgba(0,0,0,.6);
+}
+.eg-modal-title{text-align:center;font-weight:800;font-size:17px;color:#4a3318;letter-spacing:.5px;margin-bottom:4px}
+.eg-modal-btn{
+  border:none;border-radius:10px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;
+  background:linear-gradient(180deg,#c89858,#9a6f3a);color:#fff8ea;
+  box-shadow:0 2px 5px rgba(0,0,0,.3);
+}
+.eg-modal-btn:disabled{opacity:.45}
+.eg-modal-btn.quiet{background:none;box-shadow:none;color:#7a6244}
+.eg-pin-dots{display:flex;gap:14px;justify-content:center;padding:6px 0}
+.eg-pin-dots span{width:16px;height:16px;border-radius:50%;border:2px solid #8a6a3c;background:transparent}
+.eg-pin-dots span.full{background:#8a6a3c}
+.eg-pin-dots.err span{border-color:#c0392b;background:#c0392b;animation:egShake .25s 2}
+@keyframes egShake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.eg-pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.eg-pinkey{
+  height:52px;border:none;border-radius:10px;font-size:20px;font-weight:700;cursor:pointer;
+  background:#fff;color:#4a3318;box-shadow:0 1px 3px rgba(0,0,0,.25);
+}
+.eg-pinkey:active{transform:scale(.95)}
+
+/* portrait iPad: stack shaft above panel? No — keep side-by-side, it fits 768px.
+   But tighten for narrow widths */
+@media (max-width:740px){
+  .eg-btn,.eg-btn-cap{width:36px;height:36px}
+  .eg-btn-ring{width:43px;height:43px}
+  .eg-btn-ring-brass{width:50px;height:50px}
+  .eg-btn-label{font-size:14px}
+  .eg-row{gap:14px}
+  .eg-grid{gap:12px}
+  .eg-doorway{height:340px}
+}
+`;
+
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<ElevatorGame />);
+  </script>
+</body>
+</html>
