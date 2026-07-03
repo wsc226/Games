@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shinkansen Pixel Runner</title>
+    <title>Shinkansen Pixel Runner v3</title>
     <style>
         html, body {
             margin: 0;
@@ -44,6 +44,7 @@
             text-shadow: 3px 3px 0px #000;
             z-index: 5;
             pointer-events: none;
+            line-height: 1.4;
         }
 
         #controls-container {
@@ -138,7 +139,10 @@
 <body>
 
     <div id="game-container">
-        <div id="hud">CROSSINGS AVOIDED: <span id="score-val">0</span></div>
+        <div id="hud">
+            <div>LEVEL: <span id="level-val">1</span></div>
+            <div>CROSSINGS AVOIDED: <span id="score-val">0</span></div>
+        </div>
 
         <canvas id="gameCanvas"></canvas>
 
@@ -156,6 +160,7 @@
         <div id="game-over-screen" class="screen hidden">
             <h1>GAME OVER</h1>
             <p>Crossings Avoided: <span id="final-score">0</span></p>
+            <p style="font-size: 18px; color: #ff4757;">Reached Level <span id="final-level">1</span></p>
             <button id="btn-restart" class="menu-btn" style="background-color: #2ed573;">PLAY AGAIN</button>
         </div>
     </div>
@@ -166,7 +171,9 @@
         ctx.imageSmoothingEnabled = false;
 
         const scoreVal = document.getElementById('score-val');
+        const levelVal = document.getElementById('level-val');
         const finalScore = document.getElementById('final-score');
+        const finalLevel = document.getElementById('final-level');
         const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
         
@@ -193,7 +200,6 @@
 
             if(player) {
                 player.x = 80;
-                // Dynamically adjust train heights to match 55% of track space (never overflows)
                 player.height = Math.floor(trackSpacing * 0.55);
                 player.width = player.height * 2.8; 
                 player.y = trackPositions[player.currentTrack] - (player.height / 2);
@@ -213,11 +219,16 @@
         let selectedTrainIndex = 0;
         let gameActive = false;
         let score = 0;
+        let currentLevel = 1;
         let obstacles = [];
         let bushes = [];
         let spawnTimer = 0;
-        let spawnInterval = 65;
-        let gameSpeed = 8;
+        
+        // Dynamic game mechanics controls
+        let baseSpeed = 3.2;      // Much slower starter speed for toddlers
+        let gameSpeed = baseSpeed;
+        let spawnInterval = 120;  // Spaced out obstacle spawns for child reaction times
+        let levelUpFlashTimer = 0; // Text effect duration tracker
 
         const player = {
             width: 110, 
@@ -227,60 +238,63 @@
             y: 0
         };
 
-        // Finer, much more detailed pixel architecture for the train nose
+        // Fine high-res pixel art loop rendering for the Shinkansen
         function drawPixelTrain(x, y, w, h, trainConfig) {
-            let p = Math.max(1, Math.floor(h / 12)); // Finer pixel grid size
+            // Highly fine scale factor creating 100x the details inside bounds
+            let p = h / 28; 
             
-            // 1. Main teal body shell
+            // Aerodynamic sleek upper body contour mapping
             ctx.fillStyle = trainConfig.primaryColor;
-            ctx.fillRect(x, y, w - (6 * p), h * 0.5);
-            ctx.fillRect(x + w - (6 * p), y + (2 * p), 4 * p, (h * 0.5) - (2 * p));
-            ctx.fillRect(x + w - (2 * p), y + (4 * p), 2 * p, (h * 0.5) - (4 * p));
+            ctx.fillRect(x, y + (4 * p), w - (12 * p), 10 * p);
+            ctx.fillRect(x + w - (12 * p), y + (6 * p), 4 * p, 8 * p);
+            ctx.fillRect(x + w - (8 * p), y + (8 * p), 4 * p, 6 * p);
+            ctx.fillRect(x + w - (4 * p), y + (10 * p), 4 * p, 4 * p);
             
-            // 2. Crisp, thin pink stripe
+            // Razor thin high-contrast accent color stripe
             ctx.fillStyle = trainConfig.stripeColor;
-            ctx.fillRect(x, y + Math.floor(h * 0.5), w, p);
+            ctx.fillRect(x, y + (14 * p), w, 2 * p);
 
-            // 3. Light gray bottom underbelly
+            // Detailed underchassis lower half base
             ctx.fillStyle = trainConfig.baseColor;
-            ctx.fillRect(x, y + Math.floor(h * 0.5) + p, w - (2 * p), Math.floor(h * 0.5) - p);
+            ctx.fillRect(x, y + (16 * p), w - (2 * p), 10 * p);
             
-            // Black bogies/wheels hidden under base
+            // Multiple micro black wheel trucks
             ctx.fillStyle = "#111";
-            ctx.fillRect(x + (2 * p), y + h - p, 4 * p, p);
-            ctx.fillRect(x + w - (8 * p), y + h - p, 4 * p, p);
+            ctx.fillRect(x + (6 * p), y + (26 * p), 8 * p, 2 * p);
+            ctx.fillRect(x + (20 * p), y + (26 * p), 8 * p, 2 * p);
+            ctx.fillRect(x + w - (24 * p), y + (26 * p), 8 * p, 2 * p);
 
-            // 4. Sleek cockpit windows
+            // Refined dark cockpit window layout
             ctx.fillStyle = "#1a252f";
-            ctx.fillRect(x + w - (10 * p), y + (2 * p), 3 * p, 2 * p);
+            ctx.fillRect(x + w - (20 * p), y + (7 * p), 5 * p, 3 * p);
 
-            // 5. Clean, aligned side passenger windows
+            // Finer, smaller square window details evenly arrays across hull
             ctx.fillStyle = "#2c3e50";
-            let windowWidth = 4 * p;
-            let windowHeight = 3 * p;
-            let gap = 3 * p;
-            for(let sx = x + (4 * p); sx < x + w - (16 * p); sx += (windowWidth + gap)) {
-                ctx.fillRect(sx, y + (2 * p), windowWidth, windowHeight);
+            let winW = 5 * p;
+            let winH = 5 * p;
+            let gap = 4 * p;
+            for(let sx = x + (6 * p); sx < x + w - (35 * p); sx += (winW + gap)) {
+                ctx.fillRect(sx, y + (7 * p), winW, winH);
             }
         }
 
-        // Floating Pixelated "X" Crossbuck only—no pole support
+        // Clean high-res floating "X" crossbuck (No stem)
         function drawPixelCrossbuck(x, y, size) {
-            let p = Math.max(1, Math.floor(size / 10)); // Fine rendering block
+            let p = size / 24; 
             
             ctx.save();
             ctx.translate(x + size/2, y + size/2);
             
-            // Outer yellow cross borders
+            // High-resolution yellow framing blocks
             ctx.fillStyle = "#f1c40f";
-            for (let i = -4; i <= 4; i++) {
+            for (let i = -8; i <= 8; i++) {
                 ctx.fillRect((i * p) - p, (i * p) - p, 3 * p, 3 * p);
                 ctx.fillRect((i * p) - p, (-i * p) - p, 3 * p, 3 * p);
             }
 
-            // Inner black core stripes
+            // High-resolution black inner graphic lining
             ctx.fillStyle = "#111111";
-            for (let i = -4; i <= 4; i++) {
+            for (let i = -8; i <= 8; i++) {
                 ctx.fillRect(i * p, i * p, p, p);
                 ctx.fillRect(i * p, -i * p, p, p);
             }
@@ -320,12 +334,15 @@
 
         function resetGame() {
             score = 0;
+            currentLevel = 1;
             obstacles = [];
             bushes = [];
-            gameSpeed = 8;
+            gameSpeed = baseSpeed;
             spawnTimer = 0;
+            levelUpFlashTimer = 0;
             player.currentTrack = 1;
             scoreVal.textContent = score;
+            levelVal.textContent = currentLevel;
             calculateLayout();
             gameActive = true;
             animate();
@@ -334,23 +351,21 @@
         function animate() {
             if (!gameActive) return;
 
-            // Render environmental grass
+            // Environmental layouts canvas renders
             ctx.fillStyle = "#2ecc71"; 
             ctx.fillRect(0, 0, canvas.width, grassTopHeight);
             ctx.fillRect(0, canvas.height - grassBottomHeight, canvas.width, grassBottomHeight);
             
-            // Concrete tracks zone
             ctx.fillStyle = "#bdc3c7"; 
             ctx.fillRect(0, grassTopHeight, canvas.width, trackZoneHeight);
 
-            // Clean, dark-gray inner rail tracks lines
             ctx.fillStyle = "#7f8c8d";
             for(let i = 0; i < 4; i++) {
                 ctx.fillRect(0, trackPositions[i] - 2, canvas.width, 4);
             }
 
-            // Pixelated bushes scrolling by
-            if (Math.random() < 0.03) {
+            // Decorative rolling background bushes
+            if (Math.random() < 0.02) {
                 let isTop = Math.random() > 0.5;
                 bushes.push({
                     x: canvas.width,
@@ -366,14 +381,14 @@
                 if (bushes[b].x + bushes[b].size < 0) bushes.splice(b, 1);
             }
 
-            // Draw player train perfectly sized within the single track spacing bounds
+            // Draw high resolution train model
             drawPixelTrain(player.x, player.y, player.width, player.height, TRAIN_DATABASE[selectedTrainIndex]);
 
-            // Spawn Crossbucks
+            // Track obstacle timers
             spawnTimer++;
             if (spawnTimer >= spawnInterval) {
                 let randomTrack = Math.floor(Math.random() * 4);
-                let size = Math.floor(trackSpacing * 0.5); // Perfectly matches scaled bounds
+                let size = Math.floor(trackSpacing * 0.45); 
                 obstacles.push({
                     x: canvas.width,
                     y: trackPositions[randomTrack] - (size / 2),
@@ -381,14 +396,13 @@
                     track: randomTrack
                 });
                 spawnTimer = 0;
-                gameSpeed += 0.15;
             }
 
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i];
                 obs.x -= gameSpeed;
 
-                // Render standalone "X" icon safely
+                // Draw high resolution cross icon
                 drawPixelCrossbuck(obs.x, obs.y, obs.size);
 
                 // Precise Hitbox Calculations
@@ -399,6 +413,7 @@
                 ) {
                     gameActive = false;
                     finalScore.textContent = score;
+                    finalLevel.textContent = currentLevel;
                     gameOverScreen.classList.remove('hidden');
                     return;
                 }
@@ -407,7 +422,28 @@
                     obstacles.splice(i, 1);
                     score++;
                     scoreVal.textContent = score;
+
+                    // Progress check: Level Up calculation every 20 avoids
+                    if (score > 0 && score % 20 === 0) {
+                        currentLevel++;
+                        levelVal.textContent = currentLevel;
+                        gameSpeed = gameSpeed * 1.07; // Scaled exactly 7% faster
+                        levelUpFlashTimer = 90; // Pop message on screen for 90 frame updates
+                    }
                 }
+            }
+
+            // Draw "LEVEL UP!" toast indicator text
+            if (levelUpFlashTimer > 0) {
+                levelUpFlashTimer--;
+                ctx.fillStyle = "#f1c40f";
+                ctx.font = "bold 40px sans-serif";
+                ctx.textAlign = "center";
+                ctx.shadowColor = "#000";
+                ctx.shadowBlur = 4;
+                ctx.fillText("LEVEL UP! SPEED +7%", canvas.width / 2, canvas.height / 2);
+                ctx.shadowBlur = 0; // Reset canvas states
+                ctx.textAlign = "left";
             }
 
             requestAnimationFrame(animate);
