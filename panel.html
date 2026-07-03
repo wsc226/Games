@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Shinkansen LED Panel</title>
+<style>
+  :root{
+    --casing:#c9ccd1;        /* silver bezel */
+    --casing-dark:#8d9096;
+    --screen-bg:#0a0a12;     /* panel dark */
+    --ui-bg:rgba(14,16,22,.94);
+    --ui-line:rgba(255,255,255,.12);
+    --ui-text:#e7ebf2;
+    --ui-dim:#8b93a3;
+    --accent:#7fc4ff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-user-select:none;user-select:none;}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 40%,#15151c 0%,#000 80%);}
+
+  /* The physical unit: silver bezel around the dark screen */
+  #unit{position:relative;border-radius:18px;
+    background:linear-gradient(180deg,var(--casing) 0%,var(--casing-dark) 100%);
+    padding:clamp(8px,1.6vmin,20px);
+    box-shadow:0 18px 50px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.6);}
+  #screen{position:relative;border-radius:9px;background:var(--screen-bg);overflow:hidden;
+    box-shadow:inset 0 0 24px rgba(0,0,0,.9);}
+  canvas{display:block;}
+
+  /* Romaji caption strip below the panel (bilingual mode) */
+  #caption{position:absolute;left:0;right:0;bottom:-2px;transform:translateY(100%);
+    text-align:center;color:#9fb6cf;font-size:clamp(11px,1.5vmin,16px);
+    letter-spacing:.14em;font-weight:600;padding-top:10px;text-transform:uppercase;
+    opacity:0;transition:opacity .4s;pointer-events:none;}
+  #caption.show{opacity:1;}
+  #caption b{color:#ffe27a;}
+
+  /* Gear button */
+  #gear{position:fixed;top:16px;right:16px;width:46px;height:46px;border-radius:50%;
+    background:rgba(20,22,30,.6);border:1px solid var(--ui-line);color:#cfd6e2;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:30;
+    backdrop-filter:blur(6px);transition:opacity .5s,transform .2s;font-size:20px;}
+  #gear:hover{transform:rotate(35deg);}
+  #gear.hidden{opacity:0;pointer-events:none;}
+
+  /* Settings drawer */
+  #panel{position:fixed;top:0;right:0;height:100%;width:min(380px,90vw);z-index:40;
+    background:var(--ui-bg);backdrop-filter:blur(14px);border-left:1px solid var(--ui-line);
+    transform:translateX(100%);transition:transform .32s cubic-bezier(.2,.7,.3,1);
+    color:var(--ui-text);overflow-y:auto;padding:22px 20px 60px;}
+  #panel.open{transform:translateX(0);}
+  #panel h1{font-size:15px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 4px;color:#fff;}
+  #panel .sub{font-size:12px;color:var(--ui-dim);margin:0 0 22px;}
+  .group{margin:0 0 22px;}
+  .group>label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ui-dim);margin-bottom:9px;}
+  .seg{display:flex;flex-wrap:wrap;gap:6px;}
+  .seg button{flex:1 1 auto;min-width:54px;padding:9px 8px;border-radius:9px;cursor:pointer;
+    background:rgba(255,255,255,.05);border:1px solid var(--ui-line);color:#c4ccda;
+    font-size:12.5px;font-weight:600;transition:all .15s;}
+  .seg button.on{background:var(--accent);border-color:var(--accent);color:#06121f;}
+  select,input[type=text]{width:100%;padding:11px 12px;border-radius:9px;font-size:14px;
+    background:rgba(255,255,255,.05);border:1px solid var(--ui-line);color:#fff;}
+  input[type=text]::placeholder{color:#6b7385;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .toggle{display:flex;align-items:center;justify-content:space-between;
+    padding:11px 0;border-top:1px solid var(--ui-line);}
+  .toggle span{font-size:13.5px;color:#cdd4e0;}
+  .sw{width:46px;height:27px;border-radius:14px;background:#3a3f4b;position:relative;cursor:pointer;transition:.2s;flex:0 0 auto;}
+  .sw.on{background:var(--accent);}
+  .sw::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;
+    background:#fff;transition:.2s;}
+  .sw.on::after{left:22px;}
+  .note{font-size:11.5px;color:var(--ui-dim);line-height:1.5;margin-top:4px;}
+  .btn-primary{width:100%;padding:13px;border-radius:10px;border:none;cursor:pointer;
+    background:var(--accent);color:#06121f;font-weight:700;font-size:14px;letter-spacing:.04em;margin-top:6px;}
+  .btn-ghost{width:100%;padding:12px;border-radius:10px;cursor:pointer;margin-top:9px;
+    background:transparent;border:1px solid var(--ui-line);color:#c4ccda;font-weight:600;font-size:13px;}
+  .divider{height:1px;background:var(--ui-line);margin:22px 0;}
+  #closeX{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;
+    background:rgba(255,255,255,.06);border:1px solid var(--ui-line);color:#cdd4e0;cursor:pointer;font-size:16px;}
+  .hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:25;
+    color:#6b7280;font-size:12px;letter-spacing:.08em;transition:opacity .6s;text-align:center;}
+  .hint.hidden{opacity:0;}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="unit">
+    <div id="screen"><canvas id="led"></canvas></div>
+    <div id="caption"></div>
+  </div>
+</div>
+
+<button id="gear" aria-label="Settings">⚙</button>
+<div class="hint" id="hint">tap the screen to begin · ⚙ for settings</div>
+
+<div id="panel" role="dialog" aria-label="Settings">
+  <button id="closeX" aria-label="Close">✕</button>
+  <h1>Shinkansen Panel</h1>
+  <p class="sub">In-carriage destination display</p>
+
+  <div class="group">
+    <label>Input mode</label>
+    <div class="seg" id="seg-mode">
+      <button data-v="auto" class="on">Auto run</button>
+      <button data-v="manual">Manual</button>
+    </div>
+    <p class="note" id="modeNote">Auto run cycles realistic trains across the network on a simulated timetable.</p>
+  </div>
+
+  <!-- MANUAL EDITOR -->
+  <div id="manualBox" style="display:none">
+    <div class="group">
+      <label>Service</label>
+      <select id="mService"></select>
+    </div>
+    <div class="group">
+      <label>Destination</label>
+      <select id="mDest"></select>
+    </div>
+    <div class="group">
+      <label>Next stop</label>
+      <select id="mNext"></select>
+    </div>
+    <div class="group">
+      <label>Train number</label>
+      <input type="text" id="mNum" placeholder="e.g. 655" inputmode="numeric">
+    </div>
+    <button class="btn-primary" id="applyManual">Show on panel</button>
+    <div class="divider"></div>
+  </div>
+
+  <!-- AUTO SETTINGS -->
+  <div id="autoBox">
+    <div class="group">
+      <label>Lines in rotation</label>
+      <div class="seg" id="seg-lines"></div>
+    </div>
+    <div class="group">
+      <label>Pace</label>
+      <div class="seg" id="seg-speed">
+        <button data-v="slow">Slow</button>
+        <button data-v="med" class="on">Medium</button>
+        <button data-v="fast">Fast</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="group">
+    <label>Transition</label>
+    <div class="seg" id="seg-trans">
+      <button data-v="scan" class="on">LED scan</button>
+      <button data-v="wipe">Wipe</button>
+      <button data-v="fade">Fade</button>
+      <button data-v="cut">Cut</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <label>Glow intensity</label>
+    <div class="seg" id="seg-bloom">
+      <button data-v="low">Low</button>
+      <button data-v="med" class="on">Medium</button>
+      <button data-v="high">High</button>
+    </div>
+  </div>
+
+  <div class="toggle"><span>Romaji caption</span><div class="sw on" id="sw-romaji"></div></div>
+  <div class="toggle"><span>LED clock (corner)</span><div class="sw" id="sw-clock"></div></div>
+  <div class="toggle"><span>Dim after idle</span><div class="sw on" id="sw-dim"></div></div>
+
+  <button class="btn-ghost" id="fsBtn">Enter full screen</button>
+  <p class="note" style="margin-top:14px">On iPad: add to Home Screen and open from there for a true full-screen display. Keep the screen awake in Settings ▸ Display ▸ Auto-Lock ▸ Never.</p>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   SHINKANSEN LED PANEL  —  192 × 64 dot-matrix simulator
+   Single file. Japanese text is rendered to an offscreen
+   canvas in the system CJK font, then sampled into the grid,
+   so any station name in the data drives the display.
+   ============================================================ */
+
+const GW = 192, GH = 64;                 // grid dots
+const RED_W = 70;                        // width of the service/number block
+const JP_FONT = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP","Meiryo","MS Gothic",sans-serif';
+
+const COL = {
+  white:  [168,216,255],   // blue-white characters
+  yellow: [255,221,90],    // next-stop
+  dim:    [22,26,40],      // unlit dot
+  redbg:  [206,18,18],
+};
+
+/* ---- Service types: name, romaji, block colour, line membership ---- */
+const SERVICES = {
+  nozomi:  {jp:'のぞみ', rj:'NOZOMI',  bg:[0,48,135]},
+  hikari:  {jp:'ひかり', rj:'HIKARI',  bg:[206,18,18]},
+  kodama:  {jp:'こだま', rj:'KODAMA',  bg:[0,120,60]},
+  mizuho:  {jp:'みずほ', rj:'MIZUHO',  bg:[107,33,168]},
+  sakura:  {jp:'さくら', rj:'SAKURA',  bg:[194,24,91]},
+  tsubame: {jp:'つばめ', rj:'TSUBAME', bg:[255,102,0]},
+  kagayaki:{jp:'かがやき',rj:'KAGAYAKI',bg:[26,35,126]},
+  hakutaka:{jp:'はくたか',rj:'HAKUTAKA',bg:[184,134,11]},
+  tsurugi: {jp:'つるぎ', rj:'TSURUGI', bg:[0,105,92]},
+  hayabusa:{jp:'はやぶさ',rj:'HAYABUSA',bg:[27,94,32]},
+  komachi: {jp:'こまち', rj:'KOMACHI', bg:[183,28,28]},
+  yamabiko:{jp:'やまびこ',rj:'YAMABIKO',bg:[2,119,189]},
+  toki:    {jp:'とき',   rj:'TOKI',    bg:[245,127,23]},
+  tanigawa:{jp:'たにがわ',rj:'TANIGAWA',bg:[0,131,143]},
+};
+
+/* ---- Stations: [kanji, romaji] ---- */
+const S = (jp,rj)=>({jp,rj});
+const LINES = {
+  tokaido:{ name:'Tōkaidō', services:['nozomi','hikari','kodama'], stations:[
+    S('東京','Tokyo'),S('品川','Shinagawa'),S('新横浜','Shin-Yokohama'),S('小田原','Odawara'),
+    S('熱海','Atami'),S('三島','Mishima'),S('新富士','Shin-Fuji'),S('静岡','Shizuoka'),
+    S('掛川','Kakegawa'),S('浜松','Hamamatsu'),S('豊橋','Toyohashi'),S('三河安城','Mikawa-Anjō'),
+    S('名古屋','Nagoya'),S('岐阜羽島','Gifu-Hashima'),S('米原','Maibara'),S('京都','Kyoto'),S('新大阪','Shin-Osaka')]},
+  sanyo:{ name:'San\u2019yō', services:['nozomi','hikari','kodama','mizuho','sakura'], stations:[
+    S('新大阪','Shin-Osaka'),S('新神戸','Shin-Kobe'),S('西明石','Nishi-Akashi'),S('姫路','Himeji'),
+    S('相生','Aioi'),S('岡山','Okayama'),S('新倉敷','Shin-Kurashiki'),S('福山','Fukuyama'),
+    S('新尾道','Shin-Onomichi'),S('三原','Mihara'),S('東広島','Higashi-Hiroshima'),S('広島','Hiroshima'),
+    S('新岩国','Shin-Iwakuni'),S('徳山','Tokuyama'),S('新山口','Shin-Yamaguchi'),S('厚狭','Asa'),
+    S('新下関','Shin-Shimonoseki'),S('小倉','Kokura'),S('博多','Hakata')]},
+  kyushu:{ name:'Kyūshū', services:['mizuho','sakura','tsubame'], stations:[
+    S('博多','Hakata'),S('新鳥栖','Shin-Tosu'),S('久留米','Kurume'),S('筑後船小屋','Chikugo-Funagoya'),
+    S('新大牟田','Shin-Ōmuta'),S('新玉名','Shin-Tamana'),S('熊本','Kumamoto'),S('新八代','Shin-Yatsushiro'),
+    S('新水俣','Shin-Minamata'),S('出水','Izumi'),S('川内','Sendai'),S('鹿児島中央','Kagoshima-Chūō')]},
+  tohoku:{ name:'Tōhoku', services:['hayabusa','yamabiko','komachi'], stations:[
+    S('東京','Tokyo'),S('上野','Ueno'),S('大宮','Ōmiya'),S('小山','Oyama'),S('宇都宮','Utsunomiya'),
+    S('那須塩原','Nasu-Shiobara'),S('郡山','Kōriyama'),S('福島','Fukushima'),S('仙台','Sendai'),
+    S('古川','Furukawa'),S('一ノ関','Ichinoseki'),S('北上','Kitakami'),S('盛岡','Morioka'),
+    S('いわて沼宮内','Iwate-Numakunai'),S('二戸','Ninohe'),S('八戸','Hachinohe'),S('新青森','Shin-Aomori')]},
+  hokuriku:{ name:'Hokuriku', services:['kagayaki','hakutaka','tsurugi'], stations:[
+    S('東京','Tokyo'),S('上野','Ueno'),S('大宮','Ōmiya'),S('高崎','Takasaki'),S('長野','Nagano'),
+    S('飯山','Iiyama'),S('上越妙高','Jōetsu-Myōkō'),S('糸魚川','Itoigawa'),S('富山','Toyama'),
+    S('金沢','Kanazawa'),S('小松','Komatsu'),S('福井','Fukui'),S('敦賀','Tsuruga')]},
+  joetsu:{ name:'Jōetsu', services:['toki','tanigawa'], stations:[
+    S('東京','Tokyo'),S('上野','Ueno'),S('大宮','Ōmiya'),S('高崎','Takasaki'),S('越後湯沢','Echigo-Yuzawa'),
+    S('長岡','Nagaoka'),S('燕三条','Tsubame-Sanjō'),S('新潟','Niigata')]},
+};
+
+/* Stop patterns for Tōkaidō/San'yō express services (indices into station list).
+   Other lines: all listed stations are stops. */
+const STOP_PATTERNS = {
+  tokaido:{ nozomi:[0,1,2,12,15,16], hikari:[0,1,2,5,7,9,12,15,16], kodama:'all' },
+  sanyo:{   nozomi:[0,1,5,11,17,18], mizuho:[0,1,5,11,18], sakura:[0,1,3,5,11,18], hikari:[0,1,3,5,7,11,18], kodama:'all' },
+};
+
+/* ============================ ENGINE ============================ */
+const cvs = document.getElementById('led');
+const ctx = cvs.getContext('2d');
+let DPR=1, cell=6, off=document.createElement('canvas'), offc=off.getContext('2d');
+let bgCanvas=document.createElement('canvas'), bgc=bgCanvas.getContext('2d');
+let sprites={};               // colour-key -> glow sprite canvas
+let grid;                     // Uint8 colour-index buffer (current displayed frame)
+const PAL=[];                 // palette list, index 0 = unlit
+
+function paletteIndex(rgb){
+  const key=rgb.join(',');
+  for(let i=0;i<PAL.length;i++) if(PAL[i].key===key) return i;
+  PAL.push({key,rgb}); return PAL.length-1;
+}
+const I_OFF = paletteIndex(COL.dim);
+
+/* ---- layout / sizing ---- */
+function fit(){
+  const pad = 0; // unit padding handled in CSS
+  const availW = window.innerWidth*0.92, availH = window.innerHeight*0.86;
+  let w = availW, h = w*GH/GW;
+  if(h>availH){ h=availH; w=h*GW/GH; }
+  cell = Math.max(3, w/GW);
+  DPR = Math.min(window.devicePixelRatio||1, 2.5);
+  const pxW = Math.round(GW*cell), pxH = Math.round(GH*cell);
+  cvs.style.width=pxW+'px'; cvs.style.height=pxH+'px';
+  cvs.width=Math.round(pxW*DPR); cvs.height=Math.round(pxH*DPR);
+  buildSprites();
+  buildBg(pxW,pxH);
+  drawFrame(true);
+}
+
+/* pre-render a soft glow dot per palette colour */
+function buildSprites(){
+  sprites={};
+  const r = cell*DPR;
+  const size = Math.ceil(r*1.9);
+  const bloomMul = {low:1.15, med:1.5, high:1.95}[settings.bloom];
+  PAL.forEach((p,idx)=>{
+    if(idx===I_OFF) return;
+    const c=document.createElement('canvas'); c.width=c.height=size;
+    const x=c.getContext('2d');
+    const cx=size/2, cy=size/2;
+    const [R,G,B]=p.rgb;
+    // outer bloom
+    let g=x.createRadialGradient(cx,cy,0,cx,cy,size/2);
+    g.addColorStop(0,`rgba(${R},${G},${B},${0.9})`);
+    g.addColorStop(0.42,`rgba(${R},${G},${B},${0.45*bloomMul})`);
+    g.addColorStop(1,`rgba(${R},${G},${B},0)`);
+    x.fillStyle=g; x.fillRect(0,0,size,size);
+    // bright core (the LED itself)
+    const cr=r*0.40;
+    let g2=x.createRadialGradient(cx,cy,0,cx,cy,cr);
+    g2.addColorStop(0,`rgba(${Math.min(255,R+90)},${Math.min(255,G+90)},${Math.min(255,B+90)},1)`);
+    g2.addColorStop(0.6,`rgba(${R},${G},${B},1)`);
+    g2.addColorStop(1,`rgba(${R},${G},${B},0.65)`);
+    x.fillStyle=g2; x.beginPath(); x.arc(cx,cy,cr,0,7); x.fill();
+    sprites[idx]=c;
+  });
+}
+
+/* static dark dot grid background */
+function buildBg(pxW,pxH){
+  bgCanvas.width=Math.round(pxW*DPR); bgCanvas.height=Math.round(pxH*DPR);
+  bgc.setTransform(1,0,0,1,0,0);
+  bgc.fillStyle='#07070d'; bgc.fillRect(0,0,bgCanvas.width,bgCanvas.height);
+  const r=cell*DPR, dr=Math.max(0.8,r*0.30);
+  bgc.fillStyle='rgba(60,66,92,0.22)';
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){
+    bgc.beginPath();
+    bgc.arc(x*r+r/2, y*r+r/2, dr, 0, 7);
+    bgc.fill();
+  }
+}
+
+/* ---- frame rendering: each composed state is rendered ONCE to an
+   offscreen canvas, then transitions just blit bitmaps. This keeps
+   per-animation-frame cost to 2 drawImage calls instead of ~12,000,
+   which matters on iPad 9th gen. ---- */
+let curFrame=null;   // canvas of the currently displayed frame
+let redBlockCols = RED_W; // kept for composePanel bookkeeping
+
+function renderToCanvas(buf, redRGB){
+  const r=cell*DPR;
+  const c=document.createElement('canvas');
+  c.width=cvs.width; c.height=cvs.height;
+  const x=c.getContext('2d');
+  x.drawImage(bgCanvas,0,0);
+  const redCols = redRGB ? RED_W : 0;
+  if(redCols){
+    const [R,G,B]=redRGB;
+    x.fillStyle=`rgba(${R},${G},${B},0.28)`;
+    x.fillRect(0,0, redCols*r, GH*r);
+    // unlit dots inside the service block glow faintly in the block colour
+    x.fillStyle=`rgba(${R},${G},${B},0.55)`;
+    const dr=Math.max(0.8,r*0.30);
+    for(let y=0;y<GH;y++){
+      const row=y*GW;
+      for(let px=0;px<redCols;px++){
+        if(buf[row+px]===I_OFF){ x.beginPath(); x.arc(px*r+r/2,y*r+r/2,dr,0,7); x.fill(); }
+      }
+    }
+  }
+  for(let y=0;y<GH;y++){
+    const row=y*GW;
+    for(let px=0;px<GW;px++){
+      const v=buf[row+px]; if(v===I_OFF) continue;
+      const sp=sprites[v]; if(!sp) continue;
+      x.drawImage(sp, px*r+r/2-sp.width/2, y*r+r/2-sp.height/2);
+    }
+  }
+  return c;
+}
+function blit(){ ctx.setTransform(1,0,0,1,0,0); if(curFrame) ctx.drawImage(curFrame,0,0); }
+/* re-render current state (after resize / bloom change / clock tick) */
+function drawFrame(){
+  if(!grid) return;
+  curFrame=renderToCanvas(grid,currentRedRGB);
+  blit();
+}
+
+/* ---- text → cells : the heart of automatic rendering ---- */
+/* Returns a flat Uint8 (1/0) array of size cols*rows for the string,
+   auto-fitting font size to the box. */
+function textCells(text, cols, rows, opts={}){
+  off.width=cols; off.height=rows;
+  offc.setTransform(1,0,0,1,0,0);
+  offc.clearRect(0,0,cols,rows);
+  offc.fillStyle='#000'; offc.fillRect(0,0,cols,rows);
+  offc.fillStyle='#fff';
+  offc.textBaseline='middle';
+  offc.textAlign = opts.align||'center';
+  let size = Math.floor(rows*(opts.fill||0.92));
+  const weight = opts.weight||'700';
+  const fontAt = s=>`${weight} ${s}px ${JP_FONT}`;
+  offc.font=fontAt(size);
+  // shrink to fit width
+  let w=offc.measureText(text).width;
+  const maxW = cols*(opts.maxW||0.94);
+  if(w>maxW){ size=Math.max(6,Math.floor(size*maxW/w)); offc.font=fontAt(size); }
+  // letter spacing support (manual draw) for kana labels
+  const x = opts.align==='left' ? Math.round(cols*0.04)
+          : opts.align==='right'? Math.round(cols*0.96)
+          : cols/2;
+  const y = Math.round(rows/2)+ (opts.dy||0);
+  if(opts.spacing){
+    drawSpaced(text, x, y, opts.spacing, opts.align||'center', cols);
+  } else {
+    offc.fillText(text, x, y);
+  }
+  const img=offc.getImageData(0,0,cols,rows).data;
+  const out=new Uint8Array(cols*rows);
+  const thr=opts.threshold||120;
+  for(let i=0;i<cols*rows;i++){ out[i]= img[i*4] > thr ? 1:0; }
+  return out;
+}
+function drawSpaced(text,cx,cy,sp,align,cols){
+  const chars=[...text];
+  let total=0; chars.forEach(c=>total+=offc.measureText(c).width+sp); total-=sp;
+  let sx = align==='center'? cx-total/2 : (align==='left'? cols*0.04 : cols*0.96-total);
+  offc.textAlign='left';
+  chars.forEach(c=>{ offc.fillText(c,sx,cy); sx+=offc.measureText(c).width+sp; });
+}
+
+/* stamp a cell-array into the grid buffer at (ox,oy) with a colour */
+function stamp(cells, cols, rows, ox, oy, colorRGB, target){
+  const ci=paletteIndex(colorRGB);
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+    if(cells[y*cols+x]){
+      const gx=ox+x, gy=oy+y;
+      if(gx>=0&&gx<GW&&gy>=0&&gy<GH) target[gy*GW+gx]=ci;
+    }
+  }
+}
+
+/* ---- compose a full panel into a fresh buffer ---- */
+let currentRedRGB = COL.redbg;
+function composePanel(state){
+  const buf=new Uint8Array(GW*GH).fill(I_OFF);
+  currentRedRGB = state.redRGB || COL.redbg;
+  redBlockCols = state.redRGB ? RED_W : 0;
+
+  if(state.redRGB){
+    // service name (big, top of red block)
+    const svcCells=textCells(state.serviceJP, RED_W-6, 30, {maxW:0.96});
+    stamp(svcCells, RED_W-6, 30, 3, 3, COL.white, buf);
+    // train number (below)
+    if(state.number){
+      const numCells=textCells(state.number, RED_W-10, 24, {maxW:0.9, weight:'700'});
+      stamp(numCells, RED_W-10, 24, 5, 36, COL.white, buf);
+    }
+  }
+
+  const rx = state.redRGB ? RED_W+4 : 4;
+  const rw = GW - rx - 2;
+
+  // destination (large kanji, top)
+  const destCells=textCells(state.destJP, rw, 34, {maxW:0.92});
+  stamp(destCells, rw, 34, rx, 2, COL.white, buf);
+
+  // bottom row : 次は + next stop (or status)
+  if(state.bottomLabel){
+    const lbl=textCells(state.bottomLabel, 40, 24, {align:'center',maxW:0.95});
+    stamp(lbl,40,24, rx, 38, COL.white, buf);
+  }
+  if(state.bottomName){
+    const startX = rx + (state.bottomLabel?44:0);
+    const nameCells=textCells(state.bottomName, GW-startX-3, 24, {maxW:0.96});
+    stamp(nameCells, GW-startX-3, 24, startX, 38, state.bottomRGB||COL.yellow, buf);
+  }
+  return buf;
+}
+
+/* ---- clock overlay ---- */
+function stampClock(buf){
+  if(!settings.clock) return;
+  const t=new Date();
+  const hh=String(t.getHours()).padStart(2,'0');
+  const mm=String(t.getMinutes()).padStart(2,'0');
+  const txt=hh+':'+mm;
+  const cells=textCells(txt, 40, 14, {maxW:0.96, weight:'700'});
+  stamp(cells, 40, 14, GW-44, 1, COL.white, buf);
+}
+
+/* ============================ TRANSITIONS ============================ */
+let animating=false;
+function showBuffer(nextBuf, mode){
+  stampClock(nextBuf);
+  const next=renderToCanvas(nextBuf,currentRedRGB);
+  const done=()=>{ grid=nextBuf; curFrame=next; blit(); };
+  if(!curFrame||!grid){ done(); return Promise.resolve(); }
+  mode = mode || settings.trans;
+  if(mode==='cut'){ done(); return Promise.resolve(); }
+  animating=true;
+  const prev=curFrame;
+  return new Promise(res=>{
+    const dur = mode==='scan'?520:420;
+    const t0=performance.now();
+    const W=cvs.width, H=cvs.height, r=cell*DPR;
+    function step(now){
+      const p=Math.min(1,(now-t0)/dur);
+      ctx.setTransform(1,0,0,1,0,0);
+      if(mode==='wipe'){
+        ctx.drawImage(prev,0,0);
+        const e=Math.round(p*W);
+        if(e>0) ctx.drawImage(next, 0,0,e,H, 0,0,e,H);
+      } else if(mode==='scan'){
+        ctx.drawImage(prev,0,0);
+        const e=Math.round(p*H);
+        if(e>0) ctx.drawImage(next, 0,0,W,e, 0,0,W,e);
+        if(p<1){ ctx.fillStyle='rgba(180,215,255,0.18)'; ctx.fillRect(0,Math.max(0,e-r),W,r*1.5); }
+      } else { /* fade: simple bitmap crossfade */
+        ctx.drawImage(prev,0,0);
+        ctx.globalAlpha=p; ctx.drawImage(next,0,0); ctx.globalAlpha=1;
+      }
+      if(p<1) requestAnimationFrame(step);
+      else { done(); animating=false; res(); }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+/* blink the BOTTOM LINE only (まもなく + station) — destination and
+   service block stay lit, matching real panel behaviour. */
+function blinkState(state, times, onTime, offTime){
+  const full=composePanel(state);   stampClock(full);
+  const red=currentRedRGB;
+  const quiet=composePanel({...state, bottomLabel:null, bottomName:null});
+  stampClock(quiet);
+  const onCv=renderToCanvas(full,red), offCv=renderToCanvas(quiet,red);
+  return new Promise(async res=>{
+    animating=true;
+    for(let i=0;i<times;i++){
+      curFrame=onCv;  blit(); await wait(onTime);
+      curFrame=offCv; blit(); await wait(offTime);
+    }
+    grid=full; curFrame=onCv; blit();
+    animating=false; res();
+  });
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ============================ SIMULATION ============================ */
+const settings={
+  mode:'auto', speed:'med', trans:'scan', bloom:'med',
+  romaji:true, clock:false, dim:true,
+  lines:{tokaido:true,sanyo:true,kyushu:false,tohoku:true,hokuriku:false,joetsu:false},
+};
+const SPEED={slow:7000, med:4500, fast:2600};
+
+let running=false, runToken=0, lastRoute='';
+
+function activeLines(){ return Object.keys(LINES).filter(k=>settings.lines[k]); }
+
+function stopsFor(lineKey, svcKey){
+  const pat=STOP_PATTERNS[lineKey] && STOP_PATTERNS[lineKey][svcKey];
+  const all=LINES[lineKey].stations;
+  if(!pat || pat==='all') return all.map((_,i)=>i);
+  return pat.slice();
+}
+function trainNumber(svc){
+  const base={nozomi:[1,64],hikari:[460,540],kodama:[700,770],mizuho:[600,610],sakura:[540,580],
+    tsubame:[300,330],hayabusa:[1,40],yamabiko:[120,160],komachi:[1,40],kagayaki:[500,520],
+    hakutaka:[550,575],tsurugi:[1,20],toki:[300,350],tanigawa:[400,420]}[svc]||[1,99];
+  return String(base[0]+Math.floor(Math.random()*(base[1]-base[0])));
+}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+
+function setCaption(state){
+  const cap=document.getElementById('caption');
+  if(!settings.romaji || !state){ cap.classList.remove('show'); return; }
+  let html = `${state.serviceRJ||''} · for ${state.destRJ||''}`;
+  if(state.nextRJ) html += ` · next <b>${state.nextRJ}</b>`;
+  cap.innerHTML=html; cap.classList.add('show');
+}
+
+/* pick a valid train: at least 3 stops remaining, not the same route twice */
+function buildTrain(lines){
+  for(let t=0;t<12;t++){
+    const lineKey=pick(lines);
+    const svcKey=pick(LINES[lineKey].services);
+    const dir = Math.random()<0.5?1:-1;
+    let stops=stopsFor(lineKey,svcKey);
+    if(dir<0) stops=stops.slice().reverse();
+    const startIdx=Math.floor(Math.random()*Math.max(1,stops.length-3));
+    const key=lineKey+svcKey+dir;
+    if((stops.length-startIdx)>=3 && key!==lastRoute){
+      lastRoute=key;
+      return {lineKey,svcKey,stops,startIdx};
+    }
+  }
+  // fallback after 12 tries: run the first active line end to end
+  const lineKey=lines[0], svcKey=LINES[lineKey].services[0];
+  lastRoute=lineKey+svcKey+'1';
+  return {lineKey,svcKey,stops:stopsFor(lineKey,svcKey),startIdx:0};
+}
+
+async function runAuto(){
+  running=true; const me=++runToken;
+  while(running && me===runToken){
+    const lines=activeLines(); if(!lines.length){ await wait(800); continue; }
+    const {lineKey,svcKey,stops,startIdx}=buildTrain(lines);
+
+    const st=LINES[lineKey].stations;
+    const svc=SERVICES[svcKey];
+    const termIdx=stops[stops.length-1];
+    const dest=st[termIdx];
+    const num=trainNumber(svcKey);
+    const pace=SPEED[settings.speed];
+
+    for(let k=startIdx; k<stops.length-1; k++){
+      if(!running||me!==runToken) return;
+      const next=st[stops[k+1]];
+      const state={
+        serviceJP:svc.jp, serviceRJ:svc.rj, redRGB:svc.bg, number:num,
+        destJP:dest.jp, destRJ:dest.rj,
+        bottomLabel:'次は', bottomName:next.jp, bottomRGB:COL.yellow,
+        nextRJ:next.rj,
+      };
+      setCaption(state);
+      const buf=composePanel(state);
+      await showBuffer(buf);
+      await wait(pace);
+      if(!running||me!==runToken) return;
+
+      // approaching: まもなく + next, bottom line blinking
+      await blinkState({...state, bottomLabel:'まもなく'}, 3, 520, 320);
+      if(!running||me!==runToken) return;
+    }
+    // arrived at terminus
+    const term={
+      serviceJP:svc.jp, serviceRJ:svc.rj, redRGB:svc.bg, number:num,
+      destJP:dest.jp, destRJ:dest.rj,
+      bottomLabel:'まもなく', bottomName:'終点', bottomRGB:COL.yellow, nextRJ:dest.rj,
+    };
+    setCaption({...term, nextRJ:'terminus'});
+    await blinkState(term,3,520,320);
+    await wait(pace*0.7);
+  }
+}
+
+function stopAuto(){ running=false; runToken++; }
+
+/* ---- manual ---- */
+function showManual(){
+  const svcKey=document.getElementById('mService').value;
+  const svc=SERVICES[svcKey];
+  const destJP=document.getElementById('mDest').value;
+  const destRJ=document.getElementById('mDest').selectedOptions[0].dataset.rj||'';
+  const nextSel=document.getElementById('mNext');
+  const nextJP=nextSel.value; const nextRJ=nextSel.selectedOptions[0]?.dataset.rj||'';
+  const num=document.getElementById('mNum').value.trim();
+  // if next stop IS the destination, real panels show まもなく (arriving soon)
+  const approaching = nextJP===destJP;
+  const state={
+    serviceJP:svc.jp, serviceRJ:svc.rj, redRGB:svc.bg, number:num,
+    destJP:destJP, destRJ:destRJ,
+    bottomLabel:approaching?'まもなく':'次は',
+    bottomName:nextJP, bottomRGB:COL.yellow, nextRJ:nextRJ,
+  };
+  setCaption(state);
+  showBuffer(composePanel(state));
+}
+
+/* ============================ UI WIRING ============================ */
+const $=id=>document.getElementById(id);
+function segGroup(id,key,after){
+  $(id).querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{
+      $(id).querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); settings[key]=b.dataset.v; if(after)after(b.dataset.v);
+    };
+  });
+}
+segGroup('seg-speed','speed');
+segGroup('seg-trans','trans');
+segGroup('seg-bloom','bloom',()=>{buildSprites();drawFrame();});
+segGroup('seg-mode','mode',v=>{
+  $('manualBox').style.display = v==='manual'?'block':'none';
+  $('autoBox').style.display   = v==='manual'?'none':'block';
+  $('modeNote').textContent = v==='manual'
+    ? 'Set the service, destination and next stop, then show it on the panel — frozen until you change it.'
+    : 'Auto run cycles realistic trains across the network on a simulated timetable.';
+  if(v==='manual'){ stopAuto(); showManual(); } else { startRun(); }
+});
+
+/* lines toggles built dynamically */
+const segLines=$('seg-lines');
+Object.entries(LINES).forEach(([k,l])=>{
+  const b=document.createElement('button'); b.textContent=l.name; b.dataset.v=k;
+  if(settings.lines[k]) b.classList.add('on');
+  b.onclick=()=>{ settings.lines[k]=!settings.lines[k]; b.classList.toggle('on');
+    if(!activeLines().length){ settings.lines[k]=true; b.classList.add('on'); } };
+  segLines.appendChild(b);
+});
+
+function swWire(id,key,after){
+  const el=$(id);
+  el.onclick=()=>{ el.classList.toggle('on'); settings[key]=el.classList.contains('on'); if(after)after(); };
+}
+swWire('sw-romaji','romaji',()=>{ if(!settings.romaji) $('caption').classList.remove('show'); });
+swWire('sw-clock','clock',()=>{ if(grid){stampClock(grid);drawFrame();} });
+swWire('sw-dim','dim');
+
+/* populate manual selects */
+function allStationsSorted(){
+  const seen={}, out=[];
+  Object.values(LINES).forEach(l=>l.stations.forEach(s=>{ if(!seen[s.jp]){seen[s.jp]=1; out.push(s);} }));
+  return out.sort((a,b)=>a.rj.localeCompare(b.rj));
+}
+(function fillManual(){
+  const svc=$('mService');
+  Object.entries(SERVICES).forEach(([k,s])=>{ const o=document.createElement('option');o.value=k;o.textContent=`${s.jp}  ${s.rj}`;svc.appendChild(o); });
+  svc.value='hikari';
+  const stations=allStationsSorted();
+  ['mDest','mNext'].forEach(id=>{
+    const sel=$(id);
+    stations.forEach(s=>{ const o=document.createElement('option');o.value=s.jp;o.dataset.rj=s.rj;o.textContent=`${s.jp}  ${s.rj}`;sel.appendChild(o); });
+  });
+  $('mDest').value='新大阪'; $('mNext').value='浜松'; $('mNum').value='655';
+})();
+$('applyManual').onclick=showManual;
+['mService','mDest','mNext'].forEach(id=>$(id).onchange=()=>{ if(settings.mode==='manual') showManual(); });
+
+/* drawer + gear */
+function openPanel(){ $('panel').classList.add('open'); }
+function closePanel(){ $('panel').classList.remove('open'); }
+$('gear').onclick=openPanel;
+$('closeX').onclick=closePanel;
+
+/* fullscreen */
+$('fsBtn').onclick=()=>{ const el=document.documentElement;
+  (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); };
+
+/* idle dimming + wake */
+let idleT, dimmed=false;
+function wake(){
+  if(dimmed){ $('unit').style.filter=''; dimmed=false; }
+  $('gear').classList.remove('hidden');
+  clearTimeout(idleT);
+  idleT=setTimeout(()=>{
+    $('gear').classList.add('hidden');
+    if(settings.dim){ $('unit').style.filter='brightness(0.55)'; dimmed=true; }
+  }, 30000);
+}
+['pointerdown','keydown','pointermove'].forEach(e=>window.addEventListener(e,()=>{ wake(); },{passive:true}));
+
+/* screen wake lock — keeps the display on while the panel runs.
+   Safari 16.4+/Chrome. Silently no-ops where unsupported. */
+let wakeLock=null;
+async function requestWake(){
+  try{ if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen'); }
+  catch(e){ /* denied or unsupported — Auto-Lock settings still apply */ }
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible' && started) requestWake();
+});
+
+/* tap screen to start */
+let started=false;
+function startRun(){
+  stopAuto();
+  if(settings.mode==='manual'){ showManual(); return; }
+  runAuto();
+}
+$('stage').addEventListener('pointerdown',()=>{
+  if(!started){ started=true; $('hint').classList.add('hidden'); startRun(); requestWake(); wake(); }
+});
+
+/* resize */
+let rT; window.addEventListener('resize',()=>{ clearTimeout(rT); rT=setTimeout(fit,120); });
+window.addEventListener('orientationchange',()=>setTimeout(fit,250));
+
+/* boot: show the photographed train as the idle frame */
+fit();
+(function idleFrame(){
+  const svc=SERVICES.hikari;
+  const state={serviceJP:svc.jp,serviceRJ:svc.rj,redRGB:svc.bg,number:'655',
+    destJP:'新大阪',destRJ:'Shin-Osaka',bottomLabel:'次は',bottomName:'浜松',bottomRGB:COL.yellow,nextRJ:'Hamamatsu'};
+  setCaption(state);
+  grid=composePanel(state); stampClock(grid); drawFrame();
+})();
+wake();
+
+/* refresh clock each minute if shown */
+setInterval(()=>{ if(settings.clock && !animating && grid){ stampClock(grid); drawFrame(); } },20000);
+</script>
+</body>
+</html>
