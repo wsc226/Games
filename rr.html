@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Crossing Control</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -10,6 +13,28 @@ html,body{width:100%;height:100dvh;overflow:hidden;background:#1a1c24;
   font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
   user-select:none;-webkit-user-select:none;}
+
+/* ═══════════ LANDSCAPE ROTATION LOCK ═══════════ */
+#rotateLock{
+  display:none;
+  position:fixed;inset:0;z-index:500;
+  background:linear-gradient(180deg,#1a1c24,#0e1018);
+  flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+@media (orientation:landscape){
+  #rotateLock{display:flex}
+  #gameRoot{display:none}
+}
+.rl-icon{
+  width:90px;height:90px;
+  animation:rlSpin 1.8s ease-in-out infinite;
+}
+@keyframes rlSpin{
+  0%,100%{transform:rotate(0deg)}
+  45%,55%{transform:rotate(-90deg)}
+}
+.rl-word{font-size:28px;font-weight:900;color:#FFD700;letter-spacing:6px;text-transform:uppercase}
+.rl-sub{font-size:14px;color:rgba(255,255,255,.4);letter-spacing:1px;max-width:280px;text-align:center;line-height:1.5}
 
 #spotter{position:relative;width:100%;height:30dvh;
   background:linear-gradient(180deg,#5a7a3a,#4a6830 40%,#3d5a28);
@@ -80,6 +105,17 @@ html,body{width:100%;height:100dvh;overflow:hidden;background:#1a1c24;
 </style>
 </head>
 <body>
+<!-- Landscape rotation prompt -->
+<div id="rotateLock">
+  <svg class="rl-icon" viewBox="0 0 100 100">
+    <rect x="30" y="10" width="40" height="70" rx="6" fill="none" stroke="#FFD700" stroke-width="5"/>
+    <circle cx="50" cy="72" r="2.5" fill="#FFD700"/>
+  </svg>
+  <div class="rl-word">TURN</div>
+  <div class="rl-sub">Crossing Control works best held tall, like a train ticket</div>
+</div>
+
+<div id="gameRoot">
 <div id="titleCard"><div class="tc-x">✕</div><div class="tc-t">Railroad Crossing</div><div class="tc-s">TAP TO START</div></div>
 
 <div id="spotter">
@@ -904,6 +940,21 @@ wB(bO,()=>{if(!bO.classList.contains('lk'))openG();});
 // Game loop
 function loop(){updateCars();requestAnimationFrame(loop);}
 
+// Rotation safety net: if a round is mid-flight when the iPad goes
+// landscape, the overlay hides the scene but timers keep running
+// underneath. Clear the live round so nothing resolves unseen —
+// a fresh round starts cleanly once portrait returns.
+const rotateMQ=window.matchMedia('(orientation: landscape)');
+function handleRotate(mq){
+  if(mq.matches && phase!=='idle'){
+    clrTr();stopHnk();spFl();spBell();
+    lkd=false;phase='idle';rOK=false;cTr=null;
+    setSig('off');updH();bC.classList.remove('glow');bO.classList.remove('glow');
+    if(started) setTimeout(()=>{if(phase==='idle')startR();},TM[mode].gap*1000);
+  }
+}
+rotateMQ.addEventListener('change',handleRotate);
+
 // Init
 initScene();initGate();setSig('off');updSt();
 const tc=$('titleCard');
@@ -913,5 +964,6 @@ function go(){ea();tc.classList.add('hidden');
 tc.addEventListener('click',go);
 tc.addEventListener('touchstart',e=>{e.preventDefault();go();},{passive:false});
 </script>
+</div>
 </body>
 </html>
