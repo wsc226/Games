@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iPad Obstacle Dodger</title>
+    <style>
+        /* Force perfect viewport fit and disable native iOS/Chrome bouncing/scrolling */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            position: fixed; /* Extra insurance against iOS scroll bouncing */
+        }
+
+        /* Container that matches iPad 4:3 aspect ratio or fills screen beautifully */
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Canvas occupies available space without causing page overflow */
+        canvas {
+            display: block;
+            background-color: #222;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* Control HUD styling */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none; /* Let touches pass through to canvas if needed */
+        }
+
+        /* Thumb Button Controls setup */
+        #controls-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 180px; /* Comfortable height for thumbs holding iPad */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-sizing: border-box;
+            pointer-events: none; /* Allows canvas space in the middle to be touch-free */
+        }
+
+        .btn {
+            pointer-events: auto; /* Re-enable touches for the actual buttons */
+            width: 150px;
+            height: 120px;
+            background-color: rgba(255, 255, 255, 0.25);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            
+            /* Crucial mobile adjustments requested */
+            touch-action: none; 
+            -webkit-user-select: none; 
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Visual feedback on press without relying on hover states */
+        .btn:active {
+            background-color: rgba(255, 255, 255, 0.5);
+            transform: scale(0.95);
+        }
+
+        /* Overlay Screens (Game Over / Start) */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+        }
+
+        .screen h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            color: #ff4757;
+        }
+
+        .screen p {
+            font-size: 22px;
+            margin-bottom: 30px;
+            color: #f1f2f6;
+        }
+
+        .restart-btn {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            background-color: #2ed573;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        .restart-btn:active {
+            background-color: #26af5f;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="hud">Score: <span id="score-val">0</span></div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="controls-container">
+            <div id="btn-left" class="btn">LEFT</div>
+            <div id="btn-right" class="btn">RIGHT</div>
+        </div>
+
+        <div id="game-over-screen" class="screen hidden">
+            <h1>GAME OVER</h1>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <button id="btn-restart" class="restart-btn">TAP TO RESTART</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const scoreVal = document.getElementById('score-val');
+        const finalScore = document.getElementById('final-score');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        
+        const btnLeft = document.getElementById('btn-left');
+        const btnRight = document.getElementById('btn-right');
+        const btnRestart = document.getElementById('btn-restart');
+
+        // Setup dynamic canvas dimensions matching actual container space
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game State Variables
+        let gameActive = true;
+        let score = 0;
+        let obstacles = [];
+        let spawnTimer = 0;
+        let spawnInterval = 60; // Frame loop count between obstacle spawns
+        let baseSpeed = 4;
+        let speedMultiplier = 1;
+
+        // Player configuration
+        const player = {
+            width: 50,
+            height: 50,
+            x: 0,
+            y: 0,
+            speed: 10,
+            color: '#00d2d3',
+            movingLeft: false,
+            movingRight: false
+        };
+
+        // Initialize Player Location safely inside canvas bounds
+        function initPlayer() {
+            player.x = (canvas.width / 2) - (player.width / 2);
+            player.y = canvas.height - 240; // Kept safely above the bottom thumb control layout zone
+        }
+
+        // Instant Touch Event Listeners for smooth control
+        btnLeft.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            player.movingLeft = true;
+        }, { passive: false });
+
+        btnLeft.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            player.movingLeft = false;
+        }, { passive: false });
+
+        btnRight.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            player.movingRight = true;
+        }, { passive: false });
+
+        btnRight.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            player.movingRight = false;
+        }, { passive: false });
+
+        // Restart Handler with Touchstart
+        btnRestart.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            resetGame();
+        }, { passive: false });
+
+        // Obstacle Constructor
+        function Obstacle() {
+            this.width = Math.random() * (90 - 40) + 40;
+            this.height = 30;
+            this.x = Math.random() * (canvas.width - this.width);
+            this.y = -this.height;
+            this.speed = (Math.random() * (baseSpeed + 2 - baseSpeed) + baseSpeed) * speedMultiplier;
+            this.color = '#ff6b6b';
+        }
+
+        // Standard bounding box collision check
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+
+        function resetGame() {
+            score = 0;
+            obstacles = [];
+            spawnTimer = 0;
+            speedMultiplier = 1;
+            scoreVal.textContent = score;
+            initPlayer();
+            gameOverScreen.classList.add('hidden');
+            gameActive = true;
+            animate();
+        }
+
+        // Core Game Loop
+        function animate() {
+            if (!gameActive) return;
+
+            // Clear framework
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Handle instantaneous movement inputs
+            if (player.movingLeft && player.x > 0) {
+                player.x -= player.speed;
+            }
+            if (player.movingRight && player.x < canvas.width - player.width) {
+                player.x += player.speed;
+            }
+
+            // Draw Player Entity
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Spawning Mechanism
+            spawnTimer++;
+            if (spawnTimer >= spawnInterval) {
+                obstacles.push(new Obstacle());
+                spawnTimer = 0;
+                
+                // Gradually increase game speed scaling over time
+                speedMultiplier += 0.03;
+            }
+
+            // Update, draw, and track obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.y += obs.speed;
+
+                // Draw Obstacle Entity
+                ctx.fillStyle = obs.color;
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+                // Collision Detection Pass
+                if (checkCollision(player, obs)) {
+                    gameActive = false;
+                    finalScore.textContent = score;
+                    gameOverScreen.classList.remove('hidden');
+                    return;
+                }
+
+                // Despawning safely outside frame bounds & counting points
+                if (obs.y > canvas.height) {
+                    obstacles.splice(i, 1);
+                    score++;
+                    scoreVal.textContent = score;
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Bootstrap on startup
+        initPlayer();
+        animate();
+    </script>
+</body>
+</html>
