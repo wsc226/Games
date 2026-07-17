@@ -58,6 +58,51 @@
         .btn-gacha { background-color: #9c27b0; color: #fff; }
         .btn-ad { background-color: #2196f3; color: #fff; font-size: 15px; }
 
+        /* Garage Console UI */
+        .garage-panel {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px; border-radius: 12px; margin: 10px 0; width: 90%; max-width: 340px;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .garage-title {
+            font-size: 13px; color: #ffaa00; font-weight: bold; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: 1px; text-shadow: 1px 1px 0px #000;
+        }
+        .garage-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+        }
+        .garage-card {
+            background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 8px; padding: 8px; display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between; position: relative;
+            transition: all 0.2s ease;
+        }
+        .garage-card.unlocked { border-color: rgba(0, 230, 118, 0.2); }
+        .garage-card.equipped { border-color: #ffaa00; background: rgba(241, 196, 15, 0.05); }
+        .garage-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        
+        .garage-card-name { font-size: 11px; font-weight: bold; color: #fff; text-align: center; margin-bottom: 2px; }
+        .garage-card-rarity { font-size: 8px; font-weight: bold; text-transform: uppercase; padding: 2px 4px; border-radius: 3px; margin-bottom: 6px; }
+        .rarity-common { background: #555; color: #fff; }
+        .rarity-rare { background: #2196f3; color: #fff; }
+        .rarity-ssr { background: #9c27b0; color: #fff; box-shadow: 0 0 5px rgba(156,39,176,0.6); }
+
+        .garage-card-swatch {
+            width: 100%; height: 16px; border-radius: 3px; display: flex; overflow: hidden; margin-bottom: 8px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .swatch-segment { flex: 1; height: 100%; }
+
+        .garage-btn {
+            width: 100%; padding: 6px 0; font-size: 10px; font-weight: bold; border-radius: 4px; border: 2px solid #fff;
+            cursor: pointer; text-transform: uppercase; box-shadow: 0 2px 0px #000; transition: all 0.1s ease;
+        }
+        .garage-btn:active { transform: translateY(1px); box-shadow: 0 1px 0px #000; }
+        .btn-active { background-color: #00e676; color: #000; border-color: #fff; pointer-events: none; }
+        .btn-equip { background-color: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.4); }
+        .btn-buy { background-color: #f1c40f; color: #000; border-color: #fff; }
+
         .menu-btn:active { transform: translateY(3px); box-shadow: 0 2px 0px #000; }
 
         /* Simulated Social Leaderboard Panel */
@@ -72,11 +117,53 @@
         /* Invisible Touch Splitting Overlay Hints for One-Handed Control */
         #touch-zones {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; z-index: 1; pointer-events: auto;
+            display: flex; z-index: 4; pointer-events: auto;
         }
-        .zone { flex: 1; opacity: 0.1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 30px; color: white; font-size: 32px; font-weight: bold; pointer-events: auto;}
+        .zone {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 40px;
+            pointer-events: auto;
+        }
         .zone-up { background: linear-gradient(to right, rgba(255,255,255,0.05), transparent); }
         .zone-down { background: linear-gradient(to left, rgba(255,255,255,0.05), transparent); }
+
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.1);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        @media (hover: hover) {
+            .zone:hover .control-btn {
+                background: rgba(255, 255, 255, 0.25);
+                border-color: rgba(255, 255, 255, 0.6);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            }
+        }
+
+        .zone:active .control-btn {
+            background: rgba(0, 230, 118, 0.4);
+            border-color: #00e676;
+            color: #ffffff;
+            transform: scale(0.9);
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.6);
+        }
 
         .hidden { display: none !important; }
     </style>
@@ -92,8 +179,12 @@
 
         <!-- Touch Zones for input handling -->
         <div id="touch-zones" class="hidden">
-            <div id="zone-left" class="zone zone-up">▲</div>
-            <div id="zone-right" class="zone zone-down">▼</div>
+            <div id="zone-left" class="zone zone-up">
+                <div class="control-btn">▲</div>
+            </div>
+            <div id="zone-right" class="zone zone-down">
+                <div class="control-btn">▼</div>
+            </div>
         </div>
 
         <canvas id="gameCanvas"></canvas>
@@ -101,15 +192,22 @@
         <!-- Tencent Style Main Menu Dashboard -->
         <div id="start-screen" class="screen">
             <h1>SHINKANSEN RUN</h1>
-            <p style="color: #888; margin: 5px 0 15px 0;">Hyper-Casual Mobile Edition v3.0</p>
+            <p style="color: #888; margin: 2px 0 10px 0;">Hyper-Casual Mobile Edition v3.0</p>
             
-            <div class="gacha-panel">
+            <div class="gacha-panel" style="margin: 5px 0;">
                 <div style="font-size: 12px; color: #aaa;">ACTIVE PILOT:</div>
                 <div id="active-train-name" class="current-train-display">E5 Hayabusa (Common)</div>
                 <button id="btn-draw" class="menu-btn btn-gacha" style="font-size:14px; padding:8px;">🎰 Capsule Gacha (Cost: 10 🪙)</button>
             </div>
 
-            <div class="btn-group">
+            <div class="garage-panel">
+                <div class="garage-title">🔧 SHINKANSEN GARAGE</div>
+                <div id="garage-list" class="garage-grid">
+                    <!-- Dynamic train cards injected here -->
+                </div>
+            </div>
+
+            <div class="btn-group" style="margin-top: 5px;">
                 <button id="btn-start" class="menu-btn btn-play">RUN</button>
             </div>
 
@@ -148,6 +246,7 @@
         const pbVal = document.getElementById('pb-val');
         const finalScore = document.getElementById('final-score');
         const activeTrainName = document.getElementById('active-train-name');
+        const garageList = document.getElementById('garage-list');
         
         const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
@@ -164,17 +263,23 @@
         let grassTopHeight, grassBottomHeight, trackZoneHeight, trackSpacing;
         let trackPositions = [];
 
+        // Parallax environment arrays
+        let stars = [];
+        let parallaxBuildings = [];
+        let parallaxTrees = [];
+        let grassTufts = [];
+
         // Tencent Mobile Economy State
         let totalCoins = parseInt(localStorage.getItem('t_mobile_coins')) || 0;
         let personalBest = parseInt(localStorage.getItem('t_mobile_pb')) || 0;
         let unlockedIds = JSON.parse(localStorage.getItem('t_mobile_fleet')) || ["E5"];
-        let activeTrainIdx = 0;
+        let activeTrainIdx = parseInt(localStorage.getItem('t_mobile_active_idx')) || 0;
         let hasRevivedThisRun = false;
 
         const GACHA_POOL = [
-            { id: "E5", name: "E5 Hayabusa", rarity: "Common", primary: "%2300a896", stripe: "%23ff007f", base: "%23e5e5e5" },
-            { id: "E6", name: "E6 Komachi", rarity: "Rare", primary: "%23c21807", stripe: "%23111111", base: "%23e5e5e5" },
-            { id: "DY", name: "Doctor Yellow", rarity: "SSR 🔥", primary: "%23f1c40f", stripe: "%232980b9", base: "%2334495e" }
+            { id: "E5", name: "E5 Hayabusa", rarity: "Common", primary: "%2300a896", stripe: "%23ff007f", base: "%23e5e5e5", price: 0 },
+            { id: "E6", name: "E6 Komachi", rarity: "Rare", primary: "%23c21807", stripe: "%23111111", base: "%23e5e5e5", price: 50 },
+            { id: "DY", name: "Doctor Yellow", rarity: "SSR 🔥", primary: "%23f1c40f", stripe: "%232980b9", base: "%2334495e", price: 150 }
         ];
 
         const trainImages = {};
@@ -195,11 +300,76 @@
         }
         buildTrainSVGs();
 
+        function renderGarage() {
+            garageList.innerHTML = "";
+            GACHA_POOL.forEach((t, idx) => {
+                const isUnlocked = unlockedIds.includes(t.id);
+                const isActive = activeTrainIdx === idx;
+                
+                const card = document.createElement('div');
+                card.className = `garage-card${isUnlocked ? ' unlocked' : ''}${isActive ? ' equipped' : ''}`;
+                
+                // Color Swatches decoding
+                const primaryColor = t.primary.replace("%23", "#");
+                const stripeColor = t.stripe.replace("%23", "#");
+                const baseColor = t.base.replace("%23", "#");
+                
+                const rarityClass = t.rarity.includes("SSR") ? 'rarity-ssr' : (t.rarity.includes("Rare") ? 'rarity-rare' : 'rarity-common');
+                
+                card.innerHTML = `
+                    <div class="garage-card-name">${t.name.split(" ")[1] || t.name}</div>
+                    <div class="garage-card-rarity ${rarityClass}">${t.rarity.replace(" 🔥", "")}</div>
+                    <div class="garage-card-swatch">
+                        <div class="swatch-segment" style="background: ${primaryColor};"></div>
+                        <div class="swatch-segment" style="background: ${stripeColor}; flex: 0.15;"></div>
+                        <div class="swatch-segment" style="background: ${baseColor};"></div>
+                    </div>
+                `;
+                
+                const btn = document.createElement('button');
+                btn.className = "garage-btn";
+                
+                if (isActive) {
+                    btn.textContent = "Active";
+                    btn.classList.add("btn-active");
+                } else if (isUnlocked) {
+                    btn.textContent = "Equip";
+                    btn.classList.add("btn-equip");
+                    btn.addEventListener('click', () => {
+                        activeTrainIdx = idx;
+                        localStorage.setItem('t_mobile_active_idx', activeTrainIdx);
+                        syncUI();
+                    });
+                } else {
+                    btn.textContent = `Buy ${t.price}🪙`;
+                    btn.classList.add("btn-buy");
+                    btn.addEventListener('click', () => {
+                        if (totalCoins >= t.price) {
+                            totalCoins -= t.price;
+                            localStorage.setItem('t_mobile_coins', totalCoins);
+                            unlockedIds.push(t.id);
+                            localStorage.setItem('t_mobile_fleet', JSON.stringify(unlockedIds));
+                            activeTrainIdx = idx;
+                            localStorage.setItem('t_mobile_active_idx', activeTrainIdx);
+                            syncUI();
+                            alert(`🎉 Purchased & equipped ${t.name}!`);
+                        } else {
+                            alert(`Not enough 🪙! You need ${t.price} 🪙, but only have ${totalCoins} 🪙.`);
+                        }
+                    });
+                }
+                
+                card.appendChild(btn);
+                garageList.appendChild(card);
+            });
+        }
+
         function syncUI() {
             coinVal.textContent = totalCoins;
             pbVal.textContent = personalBest;
-            const active = GACHA_POOL[activeTrainIdx];
+            const active = GACHA_POOL[activeTrainIdx] || GACHA_POOL[0];
             activeTrainName.textContent = `${active.name} (${active.rarity})`;
+            renderGarage();
         }
 
         // Capsule Box Pull Event System
@@ -218,6 +388,7 @@
                     localStorage.setItem('t_mobile_fleet', JSON.stringify(unlockedIds));
                 }
                 activeTrainIdx = rolledIdx; // Auto equip roll
+                localStorage.setItem('t_mobile_active_idx', activeTrainIdx);
                 localStorage.setItem('t_mobile_coins', totalCoins);
                 syncUI();
                 alert(`🎰 GACHA CAPSULE OPENED:\nYou won the ${rolledTrain.name} [${rolledTrain.rarity}]!`);
@@ -225,6 +396,87 @@
                 alert("Not enough 🪙! Run more tracks to collect currency.");
             }
         });
+
+        function initEnvironment() {
+            const skyHeight = grassTopHeight * 0.65;
+            
+            // 1. Stars
+            stars = [];
+            for (let i = 0; i < 30; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * skyHeight,
+                    size: Math.random() * 1.5 + 0.5,
+                    alpha: Math.random(),
+                    twinkleSpeed: Math.random() * 0.02 + 0.005
+                });
+            }
+            
+            // 2. Parallax Buildings (Skyline)
+            parallaxBuildings = [];
+            let currentX = 0;
+            const targetWidth = canvas.width * 2.5;
+            while (currentX < targetWidth) {
+                const w = Math.random() * 60 + 50;
+                const h = Math.random() * (skyHeight * 0.5) + (skyHeight * 0.35);
+                const buildingColor = ["#1a1a2e", "#222035", "#292742"][Math.floor(Math.random() * 3)];
+                
+                const cols = Math.floor(w / 14);
+                const rows = Math.floor(h / 18);
+                const windows = [];
+                for (let r = 0; r < rows - 1; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (Math.random() > 0.4) {
+                            windows.push({ r, c });
+                        }
+                    }
+                }
+                
+                parallaxBuildings.push({
+                    x: currentX,
+                    width: w,
+                    height: h,
+                    color: buildingColor,
+                    windows: windows,
+                    cols: cols,
+                    rows: rows
+                });
+                currentX += w + Math.random() * 15;
+            }
+
+            // 3. Parallax Trees
+            parallaxTrees = [];
+            let treeX = 0;
+            while (treeX < canvas.width * 2) {
+                const size = Math.random() * 15 + 18;
+                const isTop = Math.random() > 0.5;
+                const type = Math.random() > 0.5 ? 'pine' : 'sakura';
+                const leafColor = type === 'pine' ? '#10ac84' : '#ff007f';
+                
+                parallaxTrees.push({
+                    x: treeX,
+                    isTop: isTop,
+                    size: size,
+                    type: type,
+                    color: leafColor
+                });
+                treeX += Math.random() * 80 + 40;
+            }
+
+            // 4. Grass Tufts
+            grassTufts = [];
+            for (let i = 0; i < 40; i++) {
+                const isTop = Math.random() > 0.5;
+                const tuftY = isTop 
+                    ? Math.random() * (grassTopHeight * 0.3) + (grassTopHeight * 0.7)
+                    : Math.random() * (grassBottomHeight * 0.9) + (canvas.height - grassBottomHeight * 0.95);
+                grassTufts.push({
+                    x: Math.random() * canvas.width,
+                    y: tuftY,
+                    length: Math.random() * 8 + 5
+                });
+            }
+        }
 
         function resizeCanvas() {
             canvas.width = window.innerWidth;
@@ -247,6 +499,7 @@
                 player.width = player.height * 3.2; 
                 player.y = trackPositions[player.currentTrack] - (player.height / 2);
             }
+            initEnvironment();
         }
         window.addEventListener('resize', resizeCanvas);
 
@@ -256,6 +509,7 @@
         let obstacles = []; let juiceParticles = [];
         let spawnTimer = 0; let baseSpeed = 3.5; let gameSpeed = baseSpeed;
         let spawnInterval = 110; let levelUpFlashTimer = 0;
+        let animationFrameId = null;
 
         const player = { currentTrack: 1, x: 40, y: 0, width: 90, height: 25 };
 
@@ -297,6 +551,9 @@
             hasRevivedThisRun = true;
             gameOverScreen.classList.add('hidden');
             touchZones.classList.remove('hidden');
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
             animate();
         });
 
@@ -308,20 +565,131 @@
             scoreVal.textContent = score; levelVal.textContent = currentLevel;
             resizeCanvas();
             gameActive = true;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
             animate();
         }
 
         function animate() {
-            if (!gameActive && !isCrashing) return;
-
-            // Simple Mobile Parallax Backdrop Layout Rendering
-            ctx.fillStyle = "#1e272e"; ctx.fillRect(0, 0, canvas.width, canvas.height); // Night mode look
-            ctx.fillStyle = "#2f3640"; ctx.fillRect(0, grassTopHeight, canvas.width, trackZoneHeight);
-            
-            ctx.fillStyle = "#718093";
-            for(let i = 0; i < 4; i++) ctx.fillRect(0, trackPositions[i] - 1, canvas.width, 2);
+            if (!gameActive && !isCrashing) {
+                animationFrameId = null;
+                return;
+            }
 
             let speedFactor = isCrashing ? 0 : gameSpeed;
+
+            // 1. Draw Midnight Sky
+            const skyHeight = grassTopHeight * 0.65;
+            ctx.fillStyle = "#0c0d14";
+            ctx.fillRect(0, 0, canvas.width, skyHeight);
+
+            // 2. Draw Twinkling Stars
+            stars.forEach(s => {
+                s.alpha += Math.sin(Date.now() * 0.005 + s.x) * s.twinkleSpeed;
+                s.alpha = Math.max(0.1, Math.min(1, s.alpha));
+                ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+                ctx.fillRect(s.x, s.y, s.size, s.size);
+            });
+
+            // 3. Draw Parallax Buildings (Skyline)
+            parallaxBuildings.forEach(b => {
+                if (!isCrashing) b.x -= speedFactor * 0.15;
+                if (b.x + b.width < 0) {
+                    let maxX = 0;
+                    parallaxBuildings.forEach(other => { maxX = Math.max(maxX, other.x); });
+                    b.x = maxX + b.width + Math.random() * 15;
+                }
+                const buildY = skyHeight - b.height;
+                ctx.fillStyle = b.color;
+                ctx.fillRect(b.x, buildY, b.width, b.height);
+                
+                ctx.fillStyle = "rgba(241, 196, 15, 0.75)";
+                b.windows.forEach(w => {
+                    const winX = b.x + 8 + w.c * 12;
+                    const winY = buildY + 10 + w.r * 15;
+                    if (winX + 6 < b.x + b.width) {
+                        ctx.fillRect(winX, winY, 5, 8);
+                    }
+                });
+            });
+
+            // 4. Draw Grass Fields (Top & Bottom)
+            ctx.fillStyle = "#12241d";
+            ctx.fillRect(0, skyHeight, canvas.width, grassTopHeight - skyHeight); // Top grass field
+            ctx.fillRect(0, canvas.height - grassBottomHeight, canvas.width, grassBottomHeight); // Bottom grass field
+
+            // 5. Draw Grass Tufts
+            ctx.strokeStyle = "rgba(0, 230, 118, 0.15)";
+            ctx.lineWidth = 1.5;
+            grassTufts.forEach(g => {
+                if (!isCrashing) g.x -= speedFactor;
+                if (g.x < 0) {
+                    g.x = canvas.width + Math.random() * 50;
+                }
+                ctx.beginPath();
+                ctx.moveTo(g.x, g.y);
+                ctx.lineTo(g.x - 3, g.y - g.length);
+                ctx.moveTo(g.x, g.y);
+                ctx.lineTo(g.x + 3, g.y - g.length + 2);
+                ctx.stroke();
+            });
+
+            // 6. Draw Trackside Parallax Trees
+            parallaxTrees.forEach(t => {
+                if (!isCrashing) t.x -= speedFactor * 0.45;
+                if (t.x + 40 < 0) {
+                    let maxX = 0;
+                    parallaxTrees.forEach(other => { maxX = Math.max(maxX, other.x); });
+                    t.x = maxX + Math.random() * 80 + 40;
+                }
+                const baseLineY = t.isTop ? grassTopHeight : canvas.height - grassBottomHeight;
+                const trunkX = t.x + 10;
+                ctx.fillStyle = "#5d4037";
+                if (t.isTop) {
+                    ctx.fillRect(trunkX - 2, baseLineY - 12, 4, 12);
+                    ctx.fillStyle = t.color;
+                    if (t.type === 'pine') {
+                        ctx.beginPath();
+                        ctx.moveTo(trunkX, baseLineY - t.size - 5);
+                        ctx.lineTo(trunkX - 10, baseLineY - 10);
+                        ctx.lineTo(trunkX + 10, baseLineY - 10);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(trunkX, baseLineY - 18, 9, 0, Math.PI * 2);
+                        ctx.arc(trunkX - 6, baseLineY - 14, 7, 0, Math.PI * 2);
+                        ctx.arc(trunkX + 6, baseLineY - 14, 7, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else {
+                    ctx.fillRect(trunkX - 2, baseLineY, 4, 12);
+                    ctx.fillStyle = t.color;
+                    if (t.type === 'pine') {
+                        ctx.beginPath();
+                        ctx.moveTo(trunkX, baseLineY + 5);
+                        ctx.lineTo(trunkX - 10, baseLineY + t.size + 5);
+                        ctx.lineTo(trunkX + 10, baseLineY + t.size + 5);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(trunkX, baseLineY + 12, 9, 0, Math.PI * 2);
+                        ctx.arc(trunkX - 6, baseLineY + 10, 7, 0, Math.PI * 2);
+                        ctx.arc(trunkX + 6, baseLineY + 10, 7, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            });
+
+            // 7. Draw Asphalt Track Road
+            ctx.fillStyle = "#23272a";
+            ctx.fillRect(0, grassTopHeight, canvas.width, trackZoneHeight);
+            
+            // 8. Draw Track Divider Lines
+            ctx.fillStyle = "#718093";
+            for(let i = 0; i < 4; i++) ctx.fillRect(0, trackPositions[i] - 1, canvas.width, 2);
 
             // Ambient Speed Wind Trails
             if (Math.random() < 0.2 && !isCrashing) {
@@ -362,6 +730,7 @@
                     
                     setTimeout(() => {
                         gameActive = false;
+                        isCrashing = false;
                         touchZones.classList.add('hidden');
                         
                         // Check if personal best broken
@@ -404,7 +773,7 @@
                 ctx.fillText("⚡ SPEED UP ⚡", canvas.width / 2, canvas.height / 2); ctx.textAlign = "left";
             }
 
-            requestAnimationFrame(animate);
+            animationFrameId = requestAnimationFrame(animate);
         }
 
         window.addEventListener('load', () => {
