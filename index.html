@@ -1,768 +1,152 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════════════════════════════════════════════════
-     LITTLE CAPTAIN — ELEVATOR  (v3)
-     Single-file game. Drop this file onto Netlify as-is.
-
-     QUICK GUIDE TO EDITING (search for these markers):
-       EDIT ZONE 1 — TIMING          elevator speed, door timing, idle timers
-       EDIT ZONE 2 — FLOOR SURPRISES photos & emojis behind the doors
-       EDIT ZONE 3 — SCREEN SPLIT    70/30 door-vs-panel layout
-       (PIN for reset is in the submitPinDigit function: search "911")
-     ═══════════════════════════════════════════════════════════════════ -->
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Little Captain — Elevator</title>
-  <style>
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #1a0f08; }
-    #root { width: 100%; height: 100%; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Game Launcher</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{
+    width:100%;height:100%;overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
+    background:#1a1b2e;
+    -webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wrap{
+    width:100%;height:100%;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:2.5vh 4vw;
+    gap:2vh;
+  }
+  h1{
+    font-size:3.6vh;font-weight:700;
+    color:rgba(255,255,255,.88);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    grid-template-rows:repeat(2,1fr);
+    gap:1.6vh 1.4vw;
+    width:100%;
+    max-width:960px;
+    flex:1;
+    max-height:74vh;
+  }
+  .btn{
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:1vh;
+    border-radius:1.6vh;
+    border:1px solid rgba(255,255,255,.08);
+    cursor:pointer;
+    text-decoration:none;
+    transition:transform .12s,box-shadow .12s;
+    box-shadow:0 4px 20px rgba(0,0,0,.3);
+    position:relative;
+    overflow:hidden;
+  }
+  .btn:active{
+    transform:scale(.94);
+    box-shadow:0 2px 8px rgba(0,0,0,.3);
+  }
+  .btn svg{
+    width:15vh;height:15vh;
+    stroke:rgba(255,255,255,.92);
+    stroke-width:1.6;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    fill:none;
+    filter:drop-shadow(0 1px 3px rgba(0,0,0,.2));
+  }
+  .btn .label{
+    font-size:1.7vh;font-weight:600;
+    color:rgba(255,255,255,.85);
+    text-align:center;line-height:1.25;
+    letter-spacing:.02em;
+  }
+  .btn .flag{
+    position:absolute;top:.7vh;right:.7vh;
+    font-size:2.4vh;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
+  }
+
+  .c1{background:linear-gradient(145deg,#c0392b,#962d22);}
+  .c2{background:linear-gradient(145deg,#d4a853,#b8912e);}
+  .c3{background:linear-gradient(145deg,#2980b9,#1f6691);}
+  .c4{background:linear-gradient(145deg,#8e44ad,#6c3382);}
+  .c5{background:linear-gradient(145deg,#16a085,#0e7c65);}
+  .c6{background:linear-gradient(145deg,#2c3e6e,#1e2a4a);}
+  .c7{background:linear-gradient(145deg,#e67e22,#c0691c);}
+  .c8{background:linear-gradient(145deg,#c0392b,#8e2c20);}
+  .c9{background:linear-gradient(145deg,#3498db,#2176ad);}
+
+  @media screen and (orientation:portrait){
+    .grid{
+      grid-template-columns:repeat(3,1fr);
+      grid-template-rows:repeat(3,1fr);
+      max-width:600px;
+    }
+  }
+</style>
 </head>
 <body>
-  <div id="root"></div>
+<div class="wrap">
+  <h1>Pick a Game</h1>
+  <div class="grid">
 
-  <!-- ═══ React + Babel runtime (loaded from CDN — needs internet on first load) ═══ -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js" crossorigin></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js" crossorigin></script>
+    <a class="btn c1" href="airplane.html">
+      <svg viewBox="0 0 24 24"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1L11 12l-2 3H6l-2 2 3 1 1 3 2-2v-3l3-2 3.7 7.3c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
+      <span class="label">Little Captain<br>747</span>
+    </a>
 
-  <!-- ═══ THE GAME — all logic, layout and styles live in this one script block ═══ -->
-  <script type="text/babel">
-    const { useState, useEffect, useRef, useCallback } = React;
+    <a class="btn c2" href="elevatorHK.html">
+      <span class="flag">🇭🇰</span>
+      <svg viewBox="0 0 24 24"><rect x="3" y="2" width="18" height="20" rx="2"/><line x1="12" y1="2" x2="12" y2="22"/><path d="M8 12V8l2 2 2-2v4"/><path d="M14 12V8l2 2 2-2v4"/></svg>
+      <span class="label">Elevator</span>
+    </a>
 
+    <a class="btn c3" href="elevatorJP.html">
+      <span class="flag">🇯🇵</span>
+      <svg viewBox="0 0 24 24"><rect x="3" y="2" width="18" height="20" rx="2"/><line x1="12" y1="2" x2="12" y2="22"/><path d="M8 12V8l2 2 2-2v4"/><path d="M14 12V8l2 2 2-2v4"/></svg>
+      <span class="label">Elevator</span>
+    </a>
 
-/* ───────────────────────── Floor data ───────────────────────── */
-const SKIPPED = new Set([13, 14, 24, 34]);
-const FLOORS = [];
-for (let f = 5; f <= 41; f++) if (!SKIPPED.has(f)) FLOORS.push(f);
-// Three independent columns, each going bottom→top:
-//   Left  : 5–17  (skip 13,14)  → 11 floors
-//   Middle: 18–29 (skip 24)     → 11 floors
-//   Right : 30–41 (skip 34)     → 11 floors
-const LEFT_COL  = FLOORS.filter(f => f <= 17);
-const MID_COL   = FLOORS.filter(f => f >= 18 && f <= 29);
-const RIGHT_COL = FLOORS.filter(f => f >= 30);
-// Each row: [left[i], mid[i], right[i]] — built bottom-to-top, then reversed for render
-const ROWS = LEFT_COL.map((f, i) => [f, MID_COL[i], RIGHT_COL[i]]).reverse();
+    <a class="btn c4" href="e5.html">
+      <svg viewBox="0 0 24 24"><path d="M4 15l0 4l4 0"/><path d="M20 15l0 4l-4 0"/><path d="M4 11l16 0"/><path d="M4 15l16 0"/><rect x="4" y="5" width="16" height="10" rx="2"/><circle cx="8" cy="18" r="1"/><circle cx="16" cy="18" r="1"/><path d="M9 8l2 0"/><path d="M13 8l2 0"/></svg>
+      <span class="label">Shinkansen<br>Crossing</span>
+    </a>
 
-const HOME = 5;
+    <a class="btn c5" href="mtr.html">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/><path d="M9 6v12"/><path d="M15 6v12"/><path d="M6 20l-2 2"/><path d="M18 20l2 2"/></svg>
+      <span class="label">MTR Doors</span>
+    </a>
 
-/* ╔══════════════════════════════════════════════════════════════╗
-   ║  EDIT ZONE 1 — TIMING                                         ║
-   ║  All speeds/durations in milliseconds. Safe to change.        ║
-   ╚══════════════════════════════════════════════════════════════╝ */
-const STEP_MS = 750;       // time per floor while moving (smaller = faster elevator)
-const DOOR_ANIM_MS = 1100; // door open/close animation duration
-const DOOR_OPEN_MS = 10000; // how long doors stay open at each stop
-const PERSON_FADE_MS = 2000; // person silhouette fades this long after doors open
-const IDLE_RETURN_MS = 10000; // idle time before returning to floor 5
-const RANDOM_CALL_MS = 20000; // idle time before a random floor gets "called"
+    <a class="btn c6" href="panel.html">
+      <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M6 16h.01"/><path d="M10 16h.01"/><path d="M14 16h.01"/><path d="M18 16h.01"/></svg>
+      <span class="label">Shinkansen<br>LED Panel</span>
+    </a>
 
-/* ╔══════════════════════════════════════════════════════════════╗
-   ║  EDIT ZONE 2 — FLOOR SURPRISES                                ║
-   ║                                                               ║
-   ║  FLOOR_PHOTOS: floor number → array of photos (base64 JPEG). ║
-   ║    A random photo from the array shows when doors open there. ║
-   ║    To add more photos to floor 15:                            ║
-   ║      15: [PHOTO_GRANDPARENTS_1, PHOTO_GRANDPARENTS_2],        ║
-   ║    (define each PHOTO_... constant like the one below —       ║
-   ║     paste base64 between the quotes)                          ║
-   ║                                                               ║
-   ║  FLOOR_EMOJIS: floor number → emoji shown when doors open.    ║
-   ║    Add lines like:  32: "🚂",                                 ║
-   ╚══════════════════════════════════════════════════════════════╝ */
-const PHOTO_GRANDPARENTS_1 = "data:image/jpeg;base64,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";
+    <a class="btn c7" href="rocket.html">
+      <svg viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+      <span class="label">Rocket<br>Launch</span>
+    </a>
 
-const FLOOR_PHOTOS = {
-  15: [PHOTO_GRANDPARENTS_1],
-};
+    <a class="btn c8" href="rr.html">
+      <svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M2 5h20"/><path d="M3 3l2 2-2 2"/><path d="M21 3l-2 2 2 2"/><path d="M3 17l2 2-2 2"/><path d="M21 17l-2 2 2 2"/><circle cx="12" cy="9" r="2"/><circle cx="12" cy="15" r="2"/></svg>
+      <span class="label">Crossing<br>Control</span>
+    </a>
 
-const FLOOR_EMOJIS = {
-  27: "🧳",
-};
+    <a class="btn c9" href="neon.html">
+      <svg viewBox="0 0 24 24"><line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/><line x1="15" y1="12" x2="15.01" y2="12"/><line x1="18" y1="10" x2="18.01" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/></svg>
+      <span class="label">Obstacle<br>Dodger</span>
+    </a>
 
-/* ───────────────────────── Dot-matrix LED display ─────────────
-   Classic 5x7 digit font, each "on" cell doubled into a 2x2 block
-   of bulbs → renders at 10 bulbs wide × 14 bulbs tall per digit. */
-const FONT5x7 = {
-  0: ["01110","10001","10011","10101","11001","10001","01110"],
-  1: ["00100","01100","00100","00100","00100","00100","01110"],
-  2: ["01110","10001","00001","00010","00100","01000","11111"],
-  3: ["11111","00010","00100","00010","00001","10001","01110"],
-  4: ["00010","00110","01010","10010","11111","00010","00010"],
-  5: ["11111","10000","11110","00001","00001","10001","01110"],
-  6: ["00110","01000","10000","11110","10001","10001","01110"],
-  7: ["11111","00001","00010","00100","01000","01000","01000"],
-  8: ["01110","10001","10001","01110","10001","10001","01110"],
-  9: ["01110","10001","10001","01111","00001","00010","01100"],
-};
-function digitMatrix(d) {
-  if (d === null || d === undefined) return Array.from({ length: 14 }, () => Array(10).fill(0));
-  const rows = FONT5x7[d];
-  const m = [];
-  rows.forEach((row) => {
-    const expanded = [];
-    for (const ch of row) { const v = ch === "1" ? 1 : 0; expanded.push(v, v); }
-    m.push(expanded, expanded.slice());
-  });
-  return m;
-}
-// 7×7 arrow glyphs, lower-res to sit beside the taller digits
-const ARROW_UP   = [
-  "0001000","0011100","0111110","1111111",
-  "0001000","0001000","0001000","0001000",
-  "0001000","0001000","0001000","0001000",
-  "0000000","0000000",
-];
-const ARROW_DOWN = [
-  "0000000","0000000",
-  "0001000","0001000","0001000","0001000",
-  "0001000","0001000","0001000","0001000",
-  "1111111","0111110","0011100","0001000",
-];
-function arrowMatrix(dir) {
-  const rows = dir === "up" ? ARROW_UP : dir === "down" ? ARROW_DOWN : Array(14).fill("0000000");
-  return rows.map((row) => row.split("").map((c) => (c === "1" ? 1 : 0)));
-}
-function DotGrid({ matrix, lit }) {
-  const cols = matrix[0].length;
-  return (
-    <div className="eg-dotgrid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-      {matrix.flatMap((row, r) =>
-        row.map((on, c) => (
-          <span key={`${r}-${c}`} className={`eg-dot ${on && lit ? "on" : ""}`} />
-        ))
-      )}
-    </div>
-  );
-}
-const UP_GLYPH = arrowMatrix("up");
-const DOWN_GLYPH = arrowMatrix("down");
-const IDLE_GLYPH = arrowMatrix(null);
-function ArrowDisplay({ direction, power }) {
-  if (!power || !direction) {
-    return (
-      <div className="eg-arrowwrap">
-        <DotGrid matrix={IDLE_GLYPH} lit={false} />
-      </div>
-    );
-  }
-  const glyph = direction === "down" ? DOWN_GLYPH : UP_GLYPH;
-  return (
-    <div className="eg-arrowwrap">
-      <div className={`eg-arrowtrack ${direction === "down" ? "flow-down" : "flow-up"}`}>
-        <DotGrid matrix={glyph} lit={true} />
-        <DotGrid matrix={glyph} lit={true} />
-      </div>
-    </div>
-  );
-}
-
-/* ───────────────────────── Sounds (Web Audio) ───────────────── */
-function useSounds() {
-  const ctxRef = useRef(null);
-  const ctx = () => {
-    if (!ctxRef.current) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      ctxRef.current = new AC();
-    }
-    if (ctxRef.current.state === "suspended") ctxRef.current.resume();
-    return ctxRef.current;
-  };
-  const tone = (freq, dur, type = "sine", gain = 0.18, when = 0) => {
-    try {
-      const ac = ctx();
-      const o = ac.createOscillator();
-      const g = ac.createGain();
-      o.type = type;
-      o.frequency.value = freq;
-      g.gain.setValueAtTime(gain, ac.currentTime + when);
-      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + when + dur);
-      o.connect(g).connect(ac.destination);
-      o.start(ac.currentTime + when);
-      o.stop(ac.currentTime + when + dur + 0.05);
-    } catch (e) {}
-  };
-  return {
-    click: () => tone(2200, 0.06, "square", 0.05),
-    ding: () => {
-      // classic elevator arrival "ding-dong" — two bell strikes with harmonics
-      tone(932, 0.9, "sine", 0.22);        // ding (Bb5)
-      tone(1864, 0.5, "sine", 0.07);       //  + shimmer harmonic
-      tone(740, 1.1, "sine", 0.22, 0.45);  // dong (F#5)
-      tone(1480, 0.6, "sine", 0.06, 0.45); //  + shimmer harmonic
-    },
-    bell: () => { for (let i = 0; i < 4; i++) tone(1567, 0.25, "triangle", 0.22, i * 0.28); },
-    deny: () => tone(220, 0.15, "sine", 0.08),
-    power: (on) => (on ? tone(523, 0.3, "sine", 0.15) : tone(196, 0.4, "sine", 0.15)),
-  };
-}
-
-/* ───────────────────────── Component ────────────────────────── */
-function ElevatorGame() {
-  const [power, setPower] = useState(true);
-  const [floor, setFloor] = useState(HOME);
-  const [queue, setQueue] = useState([]);          // floors waiting to be served
-  const [phase, setPhase] = useState("idle");      // idle|moving|opening|open|closing
-  const [direction, setDirection] = useState(null); // 'up'|'down'|null
-  const [personVisible, setPersonVisible] = useState(false);
-  const [doorContent, setDoorContent] = useState(null); // what's revealed when doors open
-  const [bellFlash, setBellFlash] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
-  const [pinMode, setPinMode] = useState(false);
-  const [pin, setPin] = useState("");
-  const [pinError, setPinError] = useState(false);
-
-  const S = useSounds();
-  const timers = useRef([]);
-  const later = useCallback((fn, ms) => {
-    const id = setTimeout(fn, ms);
-    timers.current.push(id);
-    return id;
-  }, []);
-  const clearTimers = useCallback(() => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-  }, []);
-
-  /* refs so timers always see fresh values */
-  const ref = useRef({});
-  ref.current = { power, floor, queue, phase, direction };
-
-  /* ── core: decide what to do when stationary with doors closed ── */
-  const dispatch = useCallback(() => {
-    const { power, floor, queue, direction } = ref.current;
-    if (!power) return;
-    if (queue.length === 0) {
-      setDirection(null);
-      setPhase("idle");
-      return;
-    }
-    const above = queue.filter((f) => f > floor);
-    const below = queue.filter((f) => f < floor);
-    let dir = direction;
-    if (dir === "up" && above.length === 0) dir = below.length ? "down" : null;
-    else if (dir === "down" && below.length === 0) dir = above.length ? "up" : null;
-    else if (!dir) dir = above.length ? "up" : below.length ? "down" : null;
-    if (!dir) {
-      // queued floor equals current floor
-      setQueue((q) => q.filter((f) => f !== floor));
-      arrive();
-      return;
-    }
-    setDirection(dir);
-    setPhase("moving");
-  }, []);
-
-  /* ── arrival: ding, surprise reveal, door cycle ──
-     `atFloor` is passed explicitly because when called right after
-     setFloor() the ref hasn't refreshed yet (it updates on render). */
-  const arrive = useCallback((atFloor) => {
-    const f = atFloor ?? ref.current.floor;
-    S.ding();
-    // Choose what appears behind the doors at this floor:
-    // photo floors → random photo; emoji floors → big emoji; else → person silhouette
-    const photos = FLOOR_PHOTOS[f];
-    if (photos && photos.length) {
-      setDoorContent({ type: "photo", src: photos[Math.floor(Math.random() * photos.length)] });
-    } else if (FLOOR_EMOJIS[f]) {
-      setDoorContent({ type: "emoji", value: FLOOR_EMOJIS[f] });
-    } else {
-      setDoorContent({ type: "person" });
-    }
-    setPhase("opening");
-    setPersonVisible(true);
-    later(() => {
-      setPhase("open");
-      later(() => setPersonVisible(false), PERSON_FADE_MS);
-      later(() => {
-        if (ref.current.phase === "open") closeDoors();
-      }, DOOR_OPEN_MS);
-    }, DOOR_ANIM_MS);
-  }, []);
-
-  const closeDoors = useCallback(() => {
-    setPhase("closing");
-    setPersonVisible(false);
-    later(() => { setDoorContent(null); dispatch(); }, DOOR_ANIM_MS);
-  }, [dispatch]);
-
-  /* ── movement loop: one floor per step ──
-     The effect depends on `floor`, so each step re-arms the next one.
-     (The old phase-toggle trick could get batched by React into a no-op,
-     which froze the elevator after the first step.) */
-  useEffect(() => {
-    if (phase !== "moving" || !power) return;
-    const id = setTimeout(() => {
-      const { floor, direction, queue } = ref.current;
-      const idx = FLOORS.indexOf(floor);
-      const nextIdx = direction === "up" ? idx + 1 : idx - 1;
-      if (nextIdx < 0 || nextIdx >= FLOORS.length) { dispatch(); return; }
-      const next = FLOORS[nextIdx];
-      setFloor(next);
-      if (queue.includes(next)) {
-        setQueue((q) => q.filter((f) => f !== next));
-        arrive(next);
-      }
-      // otherwise: floor changed → this effect re-runs → next step
-    }, STEP_MS);
-    return () => clearTimeout(id);
-  }, [phase, floor, power, dispatch, arrive]);
-
-  /* ── idle: 10s → return home; 20s → random call ── */
-  useEffect(() => {
-    if (phase !== "idle" || !power) return;
-    const ids = [];
-    if (floor !== HOME) {
-      ids.push(setTimeout(() => setQueue((q) => (q.includes(HOME) ? q : [...q, HOME])), IDLE_RETURN_MS));
-    }
-    ids.push(
-      setTimeout(() => {
-        const options = FLOORS.filter((f) => f !== ref.current.floor);
-        const pick = options[Math.floor(Math.random() * options.length)];
-        setQueue((q) => (q.includes(pick) ? q : [...q, pick]));
-      }, RANDOM_CALL_MS)
-    );
-    return () => ids.forEach(clearTimeout);
-  }, [phase, power, floor]);
-
-  /* ── when idle and queue gains floors, start ── */
-  useEffect(() => {
-    if (power && phase === "idle" && queue.length > 0) dispatch();
-  }, [queue, phase, power, dispatch]);
-
-  /* ── interactions ── */
-  const pressFloor = (f) => {
-    if (!power) return;
-    S.click();
-    if (f === floor && phase !== "moving") {
-      if (phase === "idle") arrive(); // courtesy: reopen at current floor
-      return;
-    }
-    setQueue((q) => (q.includes(f) ? q : [...q, f]));
-  };
-
-  const stationary = power && (phase === "idle" || phase === "opening" || phase === "open" || phase === "closing");
-
-  const pressOpen = () => {
-    if (!stationary) { S.deny(); return; }
-    S.click();
-    if (phase === "closing" || phase === "idle") arrive();
-    // if already open, the 10s timer simply continues
-  };
-  const pressClose = () => {
-    if (!stationary) { S.deny(); return; }
-    S.click();
-    if (phase === "open") closeDoors();
-  };
-  const pressBell = () => {
-    if (!power) return;
-    S.bell();
-    setBellFlash(true);
-    later(() => setBellFlash(false), 1200);
-  };
-
-  /* ── admin: power + reset ── */
-  const fullReset = () => {
-    clearTimers();
-    setQueue([]);
-    setFloor(HOME);
-    setDirection(null);
-    setPhase("idle");
-    setPersonVisible(false);
-    setDoorContent(null);
-  };
-  const togglePower = () => {
-    S.power(!power);
-    if (power) {
-      clearTimers();
-      setPower(false);
-      setQueue([]);
-      setDirection(null);
-      setPersonVisible(false);
-      setDoorContent(null);
-      setPhase("idle");
-    } else {
-      setPower(true);
-      setFloor(HOME);
-      setPhase("idle");
-    }
-    setAdminOpen(false);
-  };
-  const submitPinDigit = (d) => {
-    const next = (pin + d).slice(0, 3);
-    setPin(next);
-    setPinError(false);
-    if (next.length === 3) {
-      if (next === "911") {
-        S.ding();
-        fullReset();
-        setPin("");
-        setPinMode(false);
-        setAdminOpen(false);
-      } else {
-        S.deny();
-        setPinError(true);
-        setTimeout(() => { setPin(""); setPinError(false); }, 700);
-      }
-    }
-  };
-
-  const doorsApart = phase === "open" || phase === "opening";
-
-  return (
-    <div className="eg-root">
-      <style>{css}</style>
-
-      <button className="eg-gear" onClick={() => { setAdminOpen(true); setPinMode(false); setPin(""); }} aria-label="Settings">
-        ⚙
-      </button>
-
-      {/* ── Left: elevator car ── */}
-      <div className="eg-shaft">
-        <div className="eg-frame">
-          <div className="eg-lintel">
-            <div className={`eg-lcd ${power ? "" : "off"}`}>
-              <ArrowDisplay direction={direction} power={power} />
-              <DotGrid matrix={digitMatrix(power ? (floor >= 10 ? Math.floor(floor / 10) : null) : null)} lit={power} />
-              <DotGrid matrix={digitMatrix(power ? floor % 10 : null)} lit={power} />
-            </div>
-          </div>
-          <div className="eg-doorway">
-            <div className="eg-cab" />
-            {/* ── Surprise reveal: photo floors show a photo, emoji floors an emoji,
-                   all other floors the fading person silhouette ── */}
-            {doorContent?.type === "photo" && (
-              <img className="eg-photo" src={doorContent.src} alt="" />
-            )}
-            {doorContent?.type === "emoji" && (
-              <div className="eg-emoji">{doorContent.value}</div>
-            )}
-            {doorContent?.type === "person" && personVisible && (
-              <div className={`eg-person ${phase === "open" ? "fading" : ""}`}>
-                <svg viewBox="0 0 60 130" width="74" height="160">
-                  <circle cx="30" cy="20" r="14" fill="#3d2c20" />
-                  <rect x="14" y="38" width="32" height="52" rx="14" fill="#5b4634" />
-                  <rect x="18" y="92" width="9" height="34" rx="4.5" fill="#3d2c20" />
-                  <rect x="33" y="92" width="9" height="34" rx="4.5" fill="#3d2c20" />
-                </svg>
-              </div>
-            )}
-            <div className={`eg-door left ${doorsApart ? "open" : ""}`} />
-            <div className={`eg-door right ${doorsApart ? "open" : ""}`} />
-          </div>
-        </div>
-        {bellFlash && <div className="eg-bellflash">🔔</div>}
-      </div>
-
-      {/* ── Right: copper panel ── */}
-      <div className={`eg-panel ${power ? "" : "dark"}`}>
-        <div className="eg-spec">
-          <span>載重 1150 KG</span>
-          <span>乘客 16 人</span>
-        </div>
-
-        <div className="eg-grid">
-          {ROWS.map((row, ri) => (
-            <div className="eg-row" key={ri}>
-              {row.map((f) => (
-                <button
-                  key={f}
-                  className={`eg-btn ${queue.includes(f) ? "lit" : ""}`}
-                  onClick={() => pressFloor(f)}
-                  aria-label={`Floor ${f}`}
-                >
-                  <span className="eg-btn-ring-brass" />
-                  <span className="eg-btn-ring" />
-                  <span className="eg-btn-cap">
-                    <span className="eg-btn-label">{f}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        <div className="eg-controls">
-          <button
-            className={`eg-ctl ${stationary ? "" : "disabled"}`}
-            onClick={pressOpen}
-            aria-label="Open doors"
-          >
-            ◄|►
-          </button>
-          <button
-            className={`eg-ctl ${stationary ? "" : "disabled"}`}
-            onClick={pressClose}
-            aria-label="Close doors"
-          >
-            ►|◄
-          </button>
-          <button
-            className={`eg-ctl bell ${bellFlash ? "flashing" : ""}`}
-            onClick={pressBell}
-            aria-label="Alarm bell"
-          >
-            🔔
-          </button>
-        </div>
-      </div>
-
-      {/* ── Admin overlay ── */}
-      {adminOpen && (
-        <div className="eg-overlay" onClick={() => { setAdminOpen(false); setPinMode(false); setPin(""); }}>
-          <div className="eg-modal" onClick={(e) => e.stopPropagation()}>
-            {!pinMode ? (
-              <>
-                <div className="eg-modal-title">Elevator Controls</div>
-                <button className="eg-modal-btn" onClick={togglePower}>
-                  {power ? "⏻  Turn Off" : "⏻  Turn On"}
-                </button>
-                <button className="eg-modal-btn" onClick={() => setPinMode(true)} disabled={!power}>
-                  ↺  Reset (PIN required)
-                </button>
-                <button className="eg-modal-btn quiet" onClick={() => setAdminOpen(false)}>
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="eg-modal-title">Enter PIN</div>
-                <div className={`eg-pin-dots ${pinError ? "err" : ""}`}>
-                  {[0, 1, 2].map((i) => (
-                    <span key={i} className={pin.length > i ? "full" : ""} />
-                  ))}
-                </div>
-                <div className="eg-pinpad">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, "", 0, "⌫"].map((k, i) =>
-                    k === "" ? (
-                      <span key={i} />
-                    ) : (
-                      <button
-                        key={i}
-                        className="eg-pinkey"
-                        onClick={() =>
-                          k === "⌫" ? setPin((p) => p.slice(0, -1)) : submitPinDigit(String(k))
-                        }
-                      >
-                        {k}
-                      </button>
-                    )
-                  )}
-                </div>
-                <button className="eg-modal-btn quiet" onClick={() => { setPinMode(false); setPin(""); }}>
-                  Back
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ───────────────────────── Styles ───────────────────────────── */
-const css = `
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-.eg-root{
-  width:100vw;height:100dvh;overflow:hidden;display:flex;
-  background:linear-gradient(160deg,#241910 0%,#3a2917 50%,#241910 100%);
-  font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;
-  user-select:none;position:relative;
-}
-
-/* ╔══════════════════════════════════════════════════════════════╗
-   ║  EDIT ZONE 3 — SCREEN SPLIT                                   ║
-   ║  Elevator door side vs. button panel side (must sum to 100%). ║
-   ╚══════════════════════════════════════════════════════════════╝ */
-.eg-shaft{flex:1 1 70%;display:flex;align-items:center;justify-content:center;position:relative;padding:14px}
-.eg-panel-width-anchor{} /* (panel width is set on .eg-panel below: flex:1 1 30%) */
-
-.eg-frame{
-  width:100%;max-width:480px;border-radius:10px;padding:12px 14px 12px;
-  background:linear-gradient(165deg,#c89058 0%,#9c6a38 45%,#b9824c 70%,#8a5a30 100%);
-  box-shadow:inset 0 1px 0 rgba(255,235,200,.5),0 10px 30px rgba(0,0,0,.55);
-}
-.eg-lintel{display:flex;justify-content:center;margin-bottom:10px}
-.eg-lcd{
-  padding:8px 12px;border-radius:6px;
-  background:#0a0a0a;box-shadow:inset 0 0 14px #000,0 1px 0 rgba(255,235,200,.35);
-  display:flex;align-items:center;justify-content:center;gap:8px;
-}
-.eg-dotgrid{display:grid;gap:1px}
-.eg-dot{
-  width:4px;height:4px;border-radius:50%;
-  background:#102015;box-shadow:inset 0 0 1px rgba(0,0,0,.7);
-  transition:background .1s,box-shadow .1s;
-}
-.eg-dot.on{
-  background:#3dff6e;
-  box-shadow:0 0 3px 1px rgba(61,255,110,.95),0 0 7px 2px rgba(61,255,110,.55);
-}
-.eg-arrowwrap{width:34px;height:69px;overflow:hidden;position:relative;flex:none}
-.eg-arrowtrack{display:flex;flex-direction:column;gap:0}
-.eg-arrowtrack.flow-up{animation:egFlowUp 1.2s linear infinite}
-.eg-arrowtrack.flow-down{animation:egFlowDown 1.2s linear infinite}
-@keyframes egFlowUp{from{transform:translateY(0)}to{transform:translateY(-69px)}}
-@keyframes egFlowDown{from{transform:translateY(-69px)}to{transform:translateY(0)}}
-
-.eg-doorway{
-  position:relative;height:430px;border-radius:6px;overflow:hidden;
-  border:4px solid #6e4824;box-shadow:inset 0 0 18px rgba(0,0,0,.6);
-}
-.eg-cab{position:absolute;inset:0;background:
-  linear-gradient(180deg,#efe6d2 0%,#d9c9a8 60%,#b09a72 100%)}
-.eg-door{
-  position:absolute;top:0;bottom:0;width:50%;
-  background:linear-gradient(100deg,#b9b6ae 0%,#e8e6df 18%,#9d9a92 38%,#d8d5cd 58%,#8f8c84 80%,#c7c4bc 100%);
-  transition:transform ${DOOR_ANIM_MS}ms cubic-bezier(.5,0,.3,1);
-  box-shadow:inset 0 0 10px rgba(0,0,0,.25);
-}
-.eg-door.left{left:0;border-right:2px solid #55524c}
-.eg-door.right{right:0;border-left:2px solid #55524c}
-.eg-door.left.open{transform:translateX(-101%)}
-.eg-door.right.open{transform:translateX(101%)}
-.eg-person{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);transition:opacity .9s}
-.eg-person.fading{animation:egFade ${PERSON_FADE_MS}ms forwards}
-@keyframes egFade{0%,55%{opacity:1}100%{opacity:0}}
-/* ── Surprise reveals (photos & emojis behind the doors) ── */
-.eg-photo{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  max-width:88%;max-height:82%;border-radius:8px;
-  box-shadow:0 4px 18px rgba(0,0,0,.45);border:4px solid #fff;
-}
-.eg-emoji{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  font-size:130px;line-height:1;
-  filter:drop-shadow(0 4px 8px rgba(0,0,0,.3));
-}
-.eg-bellflash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:90px;animation:egBell .3s 4;pointer-events:none}
-@keyframes egBell{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
-
-/* ── panel ── */
-.eg-panel{
-  flex:1 1 30%;display:flex;flex-direction:column;align-items:center;gap:8px;
-  padding:12px 8px 10px;position:relative;height:100%;min-height:0;
-  background:linear-gradient(170deg,#d09a5e 0%,#a06f3c 30%,#c08c52 55%,#8a5c30 85%,#a87844 100%);
-  box-shadow:inset 2px 0 6px rgba(255,235,200,.25),inset -4px 0 14px rgba(0,0,0,.35);
-  transition:filter .6s;
-}
-.eg-panel.dark{filter:brightness(.32) saturate(.5)}
-.eg-spec{
-  flex:0 0 auto;
-  display:flex;gap:10px;background:rgba(245,238,222,.92);border-radius:4px;
-  padding:5px 10px;font-size:11px;font-weight:600;color:#3a2c1a;letter-spacing:.5px;
-  white-space:nowrap;
-  box-shadow:0 1px 3px rgba(0,0,0,.4);
-}
-.eg-grid{
-  display:flex;flex-direction:column;gap:18px;flex:1 1 auto;min-height:0;
-  justify-content:flex-start;align-items:center;width:100%;
-  overflow-y:auto;padding:4px 0;-webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-}
-.eg-grid::-webkit-scrollbar{display:none}
-.eg-row{display:flex;gap:16px;justify-content:center;flex:0 0 auto}
-.eg-btn{
-  position:relative;width:42px;height:42px;border:none;border-radius:50%;cursor:pointer;
-  background:none;padding:0;display:flex;align-items:center;justify-content:center;
-}
-/* Two genuine hollow rings (border-based, not box-shadow fills) so the
-   stacking order is unambiguous: lime sits at a smaller fixed diameter,
-   brass at a larger one — no overlap trickery, no phantom third ring. */
-.eg-btn-ring,
-.eg-btn-ring-brass{
-  position:absolute;top:50%;left:50%;border-radius:50%;box-sizing:border-box;
-  transform:translate(-50%,-50%);opacity:0;pointer-events:none;
-  transition:opacity .25s,border-color .25s;
-}
-.eg-btn-ring{ width:48px;height:48px;border:3px solid transparent; }
-.eg-btn.lit .eg-btn-ring{
-  opacity:1;border-color:#aaff33;
-  box-shadow:0 0 3px 0px rgba(170,255,51,.85);
-  animation:egRingPulse 1.4s ease-in-out infinite;
-}
-@keyframes egRingPulse{
-  0%,100%{border-color:#aaff33;box-shadow:0 0 3px 0px rgba(170,255,51,.85)}
-  50%{border-color:#c4ff66;box-shadow:0 0 4px 0px rgba(170,255,51,1)}
-}
-.eg-btn-ring-brass{ width:54px;height:54px;border:3px solid transparent; }
-.eg-btn.lit .eg-btn-ring-brass{
-  opacity:1;border-color:#c89a3f;
-  box-shadow:0 1px 1px rgba(0,0,0,.3);
-}
-.eg-btn-cap{
-  width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 35% 30%,#f2efe8 0%,#c9c5bc 45%,#8e8a81 100%);
-  box-shadow:inset 0 -3px 5px rgba(0,0,0,.35),inset 0 2px 3px rgba(255,255,255,.6),0 2px 4px rgba(0,0,0,.45);
-  transition:transform .12s;
-}
-.eg-btn:active .eg-btn-cap{transform:scale(.92)}
-.eg-btn-label{
-  color:#3a342c;font-weight:700;font-size:16px;
-  text-shadow:0 1px 0 rgba(255,255,255,.5);font-variant-numeric:tabular-nums;
-}
-.eg-controls{flex:0 0 auto;display:flex;gap:10px;padding:4px 0 2px}
-.eg-ctl{
-  width:60px;height:52px;border:none;border-radius:26px;cursor:pointer;font-size:15px;font-weight:800;
-  color:#42321e;background:radial-gradient(circle at 35% 30%,#f2efe8 0%,#c9c5bc 50%,#8e8a81 100%);
-  box-shadow:inset 0 -2px 5px rgba(0,0,0,.3),0 2px 5px rgba(0,0,0,.45);
-}
-.eg-ctl:active{transform:scale(.95)}
-.eg-ctl.disabled{opacity:.42;cursor:not-allowed}
-.eg-ctl.bell{font-size:22px}
-.eg-ctl.bell.flashing{background:radial-gradient(circle at 35% 30%,#fff3c0 0%,#ffcf45 55%,#c98a00 100%);
-  box-shadow:0 0 16px 5px rgba(255,200,60,.85)}
-.eg-gear{
-  position:fixed;top:8px;left:8px;width:32px;height:32px;border:none;border-radius:50%;
-  background:rgba(20,14,8,.4);color:rgba(255,240,215,.5);font-size:16px;cursor:pointer;z-index:20;
-}
-
-/* ── admin overlay ── */
-.eg-overlay{position:fixed;inset:0;background:rgba(10,6,2,.66);display:flex;align-items:center;justify-content:center;z-index:50}
-.eg-modal{
-  width:280px;background:linear-gradient(170deg,#f5ecdc,#e2d3b8);border-radius:14px;padding:20px;
-  display:flex;flex-direction:column;gap:10px;box-shadow:0 18px 50px rgba(0,0,0,.6);
-}
-.eg-modal-title{text-align:center;font-weight:800;font-size:17px;color:#4a3318;letter-spacing:.5px;margin-bottom:4px}
-.eg-modal-btn{
-  border:none;border-radius:10px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;
-  background:linear-gradient(180deg,#c89858,#9a6f3a);color:#fff8ea;
-  box-shadow:0 2px 5px rgba(0,0,0,.3);
-}
-.eg-modal-btn:disabled{opacity:.45}
-.eg-modal-btn.quiet{background:none;box-shadow:none;color:#7a6244}
-.eg-pin-dots{display:flex;gap:14px;justify-content:center;padding:6px 0}
-.eg-pin-dots span{width:16px;height:16px;border-radius:50%;border:2px solid #8a6a3c;background:transparent}
-.eg-pin-dots span.full{background:#8a6a3c}
-.eg-pin-dots.err span{border-color:#c0392b;background:#c0392b;animation:egShake .25s 2}
-@keyframes egShake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-.eg-pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.eg-pinkey{
-  height:52px;border:none;border-radius:10px;font-size:20px;font-weight:700;cursor:pointer;
-  background:#fff;color:#4a3318;box-shadow:0 1px 3px rgba(0,0,0,.25);
-}
-.eg-pinkey:active{transform:scale(.95)}
-
-/* portrait iPad: stack shaft above panel? No — keep side-by-side, it fits 768px.
-   But tighten for narrow widths */
-@media (max-width:740px){
-  .eg-btn,.eg-btn-cap{width:36px;height:36px}
-  .eg-btn-ring{width:43px;height:43px}
-  .eg-btn-ring-brass{width:50px;height:50px}
-  .eg-btn-label{font-size:14px}
-  .eg-row{gap:14px}
-  .eg-grid{gap:12px}
-  .eg-doorway{height:340px}
-}
-`;
-
-
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<ElevatorGame />);
-  </script>
+  </div>
+</div>
 </body>
 </html>
