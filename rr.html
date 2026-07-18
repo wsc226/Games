@@ -36,22 +36,56 @@ html,body{width:100%;height:100dvh;overflow:hidden;background:#1a1c24;
 .rl-word{font-size:28px;font-weight:900;color:#FFD700;letter-spacing:6px;text-transform:uppercase}
 .rl-sub{font-size:14px;color:rgba(255,255,255,.4);letter-spacing:1px;max-width:280px;text-align:center;line-height:1.5}
 
-#spotter{position:relative;width:100%;height:30dvh;
+/* iOS safe area */
+#safeTop{width:100%;height:env(safe-area-inset-top,0px);background:#000;flex-shrink:0;}
+
+#spotter{position:relative;width:100%;flex:30;
   background:linear-gradient(180deg,#5a7a3a,#4a6830 40%,#3d5a28);
   overflow:hidden;border-bottom:3px solid #2a2a20;}
-#gateArea{position:relative;width:100%;height:52dvh;overflow:hidden;background:#6a7a56;}
-#controls{width:100%;height:18dvh;background:linear-gradient(180deg,#1e2028,#14161c);
+#gateArea{position:relative;width:100%;flex:52;overflow:hidden;background:#6a7a56;}
+#controls{width:100%;flex:18;background:linear-gradient(180deg,#1e2028,#14161c);
   border-top:2px solid #333;display:flex;align-items:center;justify-content:space-between;padding:0 16px;}
+#gamePlay{display:flex;flex-direction:column;width:100%;height:100dvh;}
 #spotterSvg,#gateSvg{width:100%;height:100%;display:block}
 
-/* Title */
-#titleCard{position:fixed;inset:0;z-index:200;background:linear-gradient(180deg,#1a1c24,#0e1018);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;transition:opacity .6s;}
-#titleCard.hidden{opacity:0;pointer-events:none}
-.tc-x{font-size:80px;font-weight:900;color:#fff;text-shadow:2px 2px 0 #333;line-height:1}
-.tc-t{font-size:22px;font-weight:800;color:#FFD700;letter-spacing:6px;text-transform:uppercase}
-.tc-s{font-size:14px;color:rgba(255,255,255,.45);letter-spacing:2px;margin-top:16px;animation:pls 2s ease-in-out infinite}
+/* Start screen */
+#startScreen{position:fixed;inset:0;z-index:200;background:linear-gradient(180deg,#1a1c24,#0e1018);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  transition:opacity .6s;}
+#startScreen.hidden{opacity:0;pointer-events:none}
+.ss-icon{font-size:80px;font-weight:900;color:#fff;text-shadow:2px 2px 0 #333;line-height:1}
+.ss-title{font-size:26px;font-weight:800;color:#FFD700;letter-spacing:6px;text-transform:uppercase}
+.ss-sub{font-size:13px;color:rgba(255,255,255,.35);letter-spacing:1px}
+.ss-btn{
+  padding:16px 48px;font-size:20px;font-weight:800;letter-spacing:4px;text-transform:uppercase;
+  border-radius:12px;border:3px solid #fff;cursor:pointer;
+  box-shadow:0 5px 0 #000;transition:transform .08s;
+  -webkit-tap-highlight-color:transparent;}
+.ss-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #000}
+.ss-play{background:#00e676;color:#000;}
+.ss-back{background:transparent;color:rgba(255,255,255,.5);border:2px solid rgba(255,255,255,.2);
+  padding:10px 28px;font-size:13px;font-weight:700;letter-spacing:2px;box-shadow:none;}
+.ss-back:active{background:rgba(255,255,255,.05)}
+.ss-tap{font-size:14px;color:rgba(255,255,255,.45);letter-spacing:2px;margin-top:8px;animation:pls 2s ease-in-out infinite}
 @keyframes pls{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* In-game gear / settings overlay */
+#gearBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;z-index:180;
+  width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(0,0,0,.35);color:rgba(255,255,255,.6);font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+#gearBtn:active{background:rgba(0,0,0,.5)}
+#settingsOverlay{position:fixed;inset:0;z-index:190;background:rgba(0,0,0,.7);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+#settingsOverlay.show{display:flex}
+.so-title{font-size:18px;font-weight:800;color:#fff;letter-spacing:4px;text-transform:uppercase}
+.so-btn{padding:14px 40px;font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-width:200px;text-align:center;}
+.so-btn:active{transform:scale(.95)}
+.so-resume{background:#00e676;color:#000;border:2px solid #fff;}
+.so-quit{background:#e74c3c;color:#fff;border:2px solid rgba(255,255,255,.3);}
 
 /* Vocab */
 #vFlash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:150;pointer-events:none;
@@ -116,8 +150,23 @@ html,body{width:100%;height:100dvh;overflow:hidden;background:#1a1c24;
 </div>
 
 <div id="gameRoot">
-<div id="titleCard"><div class="tc-x">✕</div><div class="tc-t">Railroad Crossing</div><div class="tc-s">TAP TO START</div></div>
+<div id="startScreen">
+  <div class="ss-icon">✕</div>
+  <div class="ss-title">Crossing Control</div>
+  <div class="ss-sub">Railroad Crossing Gate Simulator</div>
+  <button class="ss-btn ss-play" id="btnPlay">PLAY</button>
+  <button class="ss-btn ss-back" id="btnHome" onclick="location.href='index.html'">MAIN MENU</button>
+</div>
 
+<button id="gearBtn">&#9881;</button>
+<div id="settingsOverlay">
+  <div class="so-title">Paused</div>
+  <button class="so-btn so-resume" id="soResume">Resume</button>
+  <button class="so-btn so-quit" id="soQuit">Quit to Menu</button>
+</div>
+
+<div id="gamePlay">
+<div id="safeTop"></div>
 <div id="spotter">
   <svg id="spotterSvg" viewBox="0 0 768 300" preserveAspectRatio="xMidYMid slice">
     <defs>
@@ -263,6 +312,8 @@ html,body{width:100%;height:100dvh;overflow:hidden;background:#1a1c24;
   </div>
 </div>
 
+</div><!-- /gamePlay -->
+
 <div id="vFlash"></div>
 <div id="honk"><div class="hStar"></div><div class="hTxt">HONK!</div></div>
 
@@ -332,6 +383,7 @@ function spBell(){if(bellI){clearInterval(bellI);bellI=null;}}
 // ═══════════════════════════════════════
 let mode='easy',score=0,strk=0,gate='open',phase='idle',sig='off';
 let cTr=null,tD=1,rOK=false,started=false,lkd=false;
+let consecRed=0;
 let honking=false,hkI=null,hkT=null,flOn=false,flI=null,carI=null,aId=null,aId2=null;
 
 const $=id=>document.getElementById(id);
@@ -497,7 +549,7 @@ function stopHnk(){honking=false;hb.classList.remove('show');
 // ═══════════════════════════════════════
 // SCORE
 // ═══════════════════════════════════════
-function scPt(){score++;strk=0;sV.textContent=score;SFX.pt();showV('OPEN','ok');updSt();}
+function scPt(){score++;sV.textContent=score;SFX.pt();showV('OPEN','ok');}
 function trigS(){strk++;sf.classList.add('on');setTimeout(()=>sf.classList.remove('on'),300);
   SFX.scr();showV('DANGER','bad');updSt();
   if(strk>=3)setTimeout(()=>{score=0;strk=0;sV.textContent=0;updSt();SFX.rst();},800);}
@@ -815,8 +867,10 @@ function clrTr(){
 // ═══════════════════════════════════════
 function startR(){
   if(lkd)return;lkd=true;rOK=false;stopHnk();
-  const sr=Math.random();
-  const s=sr<.33?'red':sr<.66?'yellow':'green';
+  let s;
+  if(consecRed>=2){s=Math.random()<.5?'yellow':'green';}
+  else{const sr=Math.random();s=sr<.33?'red':sr<.66?'yellow':'green';}
+  if(s==='red')consecRed++;else consecRed=0;
   cTr=pickTr();tD=Math.random()<.5?1:-1;
   phase='signalSet';setSig(s);updH();
 
@@ -957,12 +1011,29 @@ rotateMQ.addEventListener('change',handleRotate);
 
 // Init
 initScene();initGate();setSig('off');updSt();
-const tc=$('titleCard');
-function go(){ea();tc.classList.add('hidden');
-  setTimeout(()=>{tc.style.display='none';started=true;stCars();loop();
-    setTimeout(()=>startR(),TM[mode].gap*1000);},600);}
-tc.addEventListener('click',go);
-tc.addEventListener('touchstart',e=>{e.preventDefault();go();},{passive:false});
+
+// Start screen
+const ss=$('startScreen');
+const gb=$('gearBtn');
+const so=$('settingsOverlay');
+gb.style.display='none';
+
+function go(){
+  ea();ss.classList.add('hidden');
+  setTimeout(()=>{ss.style.display='none';gb.style.display='flex';
+    started=true;stCars();loop();
+    setTimeout(()=>startR(),TM[mode].gap*1000);},600);
+}
+$('btnPlay').addEventListener('click',go);
+$('btnPlay').addEventListener('touchstart',e=>{e.preventDefault();go();},{passive:false});
+
+// Settings overlay (pause/quit)
+let paused=false;
+gb.addEventListener('click',()=>{
+  if(paused)return;paused=true;so.classList.add('show');
+});
+$('soResume').addEventListener('click',()=>{paused=false;so.classList.remove('show');});
+$('soQuit').addEventListener('click',()=>{location.href='index.html';});
 </script>
 </div>
 </body>
