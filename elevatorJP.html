@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Hotel Prezio Elevator</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:#0b0d10;
+    font-family:-apple-system,"Helvetica Neue","Hiragino Sans","Yu Gothic",sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:manipulation;}
+
+  #app{position:fixed;inset:0;display:flex;background:#101216;}
+
+  /* ═══════════════ LEFT — DOORWAY ═══════════════ */
+  #stage{position:relative;flex:1 1 60%;min-width:0;overflow:hidden;
+    background:
+      repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px,rgba(198,140,64,.05) 3px 4px,transparent 4px 7px),
+      linear-gradient(180deg,#6e4726 0%,#5d3a1e 100%);}
+  /* wall wood is same macassar family, darker/quieter than doors */
+
+  .beam{position:absolute;top:0;left:0;right:0;height:16px;z-index:25;
+    background:linear-gradient(180deg,#b9bec2 0%,#8d9498 60%,#70777c 100%);
+    border-bottom:1px solid #565c60;box-shadow:0 2px 6px rgba(0,0,0,.45);}
+  .jamb{position:absolute;top:0;bottom:0;width:14px;z-index:30;}
+  .jamb.l{left:0;background:linear-gradient(90deg,#5a6065,#b4babe 45%,#d8dcdf 60%,#878e93);box-shadow:2px 0 8px rgba(0,0,0,.5)}
+  .jamb.r{right:0;background:linear-gradient(270deg,#5a6065,#b4babe 45%,#d8dcdf 60%,#878e93);box-shadow:-2px 0 8px rgba(0,0,0,.5)}
+
+  #opening{position:absolute;left:14px;right:14px;top:16px;bottom:0;overflow:hidden;background:#0a0c0f;}
+
+  .scene{position:absolute;inset:0;opacity:0;transition:opacity .3s;}
+  .scene.show{opacity:1;}
+
+  .sill{position:absolute;left:0;right:0;bottom:0;height:22px;z-index:6;
+    background:
+      repeating-linear-gradient(90deg,#7e8488 0 6px,#a8adb1 6px 8px,#93989c 8px 14px),
+      linear-gradient(180deg,#9aa0a4,#787e82);
+    border-top:1px solid #5f6569;box-shadow:0 -3px 8px rgba(0,0,0,.35);}
+
+  /* ── UPPER FLOORS 3–13 (IMG_7383) ── */
+  .up-wall{position:absolute;left:0;right:0;top:0;height:63%;
+    background:linear-gradient(180deg,#f1ebdf 0%,#ece4d4 70%,#e4dbc8 100%);}
+  .up-wall::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse 90% 60% at 50% 110%,rgba(120,90,40,.10),transparent 60%);}
+  .up-panel{position:absolute;left:7%;height:16.5%;width:63%;border-radius:1px;
+    background:
+      repeating-linear-gradient(0deg,rgba(140,95,40,.10) 0 1px,transparent 1px 5px,rgba(255,255,255,.05) 5px 6px,transparent 6px 11px),
+      linear-gradient(178deg,#d3ab72 0%,#c69d61 45%,#b58e52 100%);
+    box-shadow:0 5px 14px rgba(60,40,15,.22),inset 0 1px 0 rgba(255,255,255,.25);}
+  .up-panel.p1{top:6.5%}
+  .up-panel.p2{top:30.5%}
+  .up-glow{position:absolute;left:5.5%;width:66%;top:48.5%;height:6px;border-radius:3px;
+    background:linear-gradient(180deg,#fff8e2,#ffedb8);
+    box-shadow:0 4px 20px 6px rgba(255,226,150,.55),0 10px 40px 8px rgba(255,220,140,.25);}
+  .up-glow2{position:absolute;left:6%;width:64%;top:24.5%;height:5px;border-radius:3px;
+    background:linear-gradient(180deg,#fff8e2cc,#ffedb8aa);
+    box-shadow:0 4px 16px 4px rgba(255,226,150,.35);}
+  .up-sensor{position:absolute;right:7.5%;top:21%;width:34px;height:56px;border-radius:3px;
+    background:linear-gradient(180deg,#e2dfd7,#cbc8bf);
+    box-shadow:inset 0 1px 2px rgba(255,255,255,.7),0 2px 6px rgba(0,0,0,.25);}
+  .up-sensor::after{content:"";position:absolute;left:8px;right:8px;top:20px;height:17px;border-radius:2px;
+    background:linear-gradient(180deg,#0e0e10,#26262a);box-shadow:inset 0 0 5px #000;}
+  .up-note{position:absolute;right:6%;top:9%;width:44px;height:26px;border-radius:1px;
+    background:#e9e5da;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+  .up-note::after{content:"";position:absolute;inset:5px 6px;
+    background:repeating-linear-gradient(0deg,#9a958a 0 1px,transparent 1px 4px);}
+  .up-carpet{position:absolute;left:0;right:0;bottom:0;height:37%;
+    background:
+      repeating-linear-gradient(90deg,rgba(60,48,34,.10) 0 1px,transparent 1px 5px),
+      repeating-linear-gradient(0deg,rgba(60,48,34,.12) 0 1px,transparent 1px 6px),
+      linear-gradient(180deg,#a4937c 0%,#93826b 55%,#877659 100%);}
+  .up-carpet::before{content:"";position:absolute;inset:0;
+    background:
+      repeating-linear-gradient(90deg,transparent 0 44px,rgba(40,30,18,.10) 44px 45px,transparent 45px 89px,rgba(255,255,255,.05) 89px 90px),
+      repeating-linear-gradient(0deg,transparent 0 40px,rgba(40,30,18,.09) 40px 41px);}
+  .up-carpet::after{content:"";position:absolute;inset:0;   /* checker offset shading */
+    background:
+      repeating-linear-gradient(90deg,rgba(0,0,0,.045) 0 45px,transparent 45px 90px);}
+
+  /* ── FLOOR 2 — FRONT DESK (IMG_7384) ── */
+  .f2-back{position:absolute;left:0;right:0;top:0;height:58%;
+    background:
+      repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 2px,transparent 2px 26px),
+      repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 4px),
+      linear-gradient(180deg,#33200f 0%,#281808 100%);}
+  .f2-steel{position:absolute;left:0;top:0;width:8%;height:58%;
+    background:linear-gradient(90deg,#d2d6d9,#a9afb3 70%,#8f959a);
+    box-shadow:2px 0 6px rgba(0,0,0,.3);}
+  .f2-plaster{position:absolute;left:8%;top:0;width:26%;height:26%;
+    background:linear-gradient(180deg,#ede8df,#e0dacd);
+    box-shadow:0 3px 6px rgba(0,0,0,.25);}
+  .f2-poster{position:absolute;left:10.5%;top:3%;width:15%;height:18%;
+    background:linear-gradient(180deg,#f4f2ee,#e8e5df);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+  .f2-poster::after{content:"";position:absolute;inset:12% 14%;
+    background:
+      linear-gradient(180deg,#7d9bc0 0 38%,transparent 38%),
+      repeating-linear-gradient(0deg,transparent 0 45%,#b9b4aa 45% 48%,transparent 48% 60%,#c8c3b9 60% 62%,transparent 62%);}
+  .f2-counter{position:absolute;left:5%;top:38%;width:33%;height:6.5%;
+    background:linear-gradient(180deg,#4e2f17,#3b220e);
+    box-shadow:0 3px 10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);}
+  .f2-counter-leg{position:absolute;left:8%;top:44.5%;width:24%;height:13%;
+    background:linear-gradient(180deg,#37200d,#2a1808);
+    box-shadow:inset 0 4px 8px rgba(0,0,0,.35);}
+  .f2-card{position:absolute;left:8.5%;top:30%;width:11%;height:8%;
+    background:linear-gradient(165deg,#11554d,#0a3b36);border:1px solid #cbab62;border-radius:1px;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    color:#ead9a8;font-size:5.5px;font-weight:700;line-height:1.15;
+    box-shadow:0 2px 4px rgba(0,0,0,.45);}
+  .f2-basket{position:absolute;left:30%;top:33.5%;width:7%;height:4.5%;border-radius:2px 2px 4px 4px;
+    background:repeating-linear-gradient(90deg,#a97e42 0 2px,#8d6530 2px 4px);
+    box-shadow:0 1px 3px rgba(0,0,0,.4);}
+  .f2-rack{position:absolute;left:44%;top:24%;width:20%;height:36%;
+    background:linear-gradient(180deg,#2f1c0c,#241505);border-radius:1px;
+    box-shadow:0 8px 18px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);
+    display:flex;flex-direction:column;gap:4%;padding:5% 6%;}
+  .f2-rack i{display:block;flex:1;border-radius:1px;box-shadow:0 1px 2px rgba(0,0,0,.4);
+    background:linear-gradient(90deg,var(--a),var(--b));position:relative;}
+  .f2-rack i::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px;background:#180e04;}
+  .f2-rack i:nth-child(1){--a:#c8503f;--b:#dfa04a}
+  .f2-rack i:nth-child(2){--a:#4a7ec2;--b:#5fb9be}
+  .f2-rack i:nth-child(3){--a:#d9b74a;--b:#8fbf68}
+  .f2-rack i:nth-child(4){--a:#b0619f;--b:#6d7ec2}
+  .f2-wheel{position:absolute;left:66%;top:44%;width:12%;aspect-ratio:1;border-radius:50%;
+    border:3px solid #3c4044;background:transparent;box-shadow:inset 0 0 0 1px #56595d;}
+  .f2-wheel::after{content:"";position:absolute;inset:28%;border-radius:50%;border:2px solid #4a4e52;}
+  .f2-floor{position:absolute;left:0;right:0;bottom:0;height:42%;
+    background:linear-gradient(180deg,#f3f1eb 0%,#eae7df 60%,#e2dfd5 100%);}
+  .f2-floor::before{content:"";position:absolute;inset:0;
+    background:
+      repeating-linear-gradient(90deg,transparent 0 88px,rgba(120,115,105,.22) 88px 89px),
+      repeating-linear-gradient(0deg,transparent 0 66px,rgba(120,115,105,.18) 66px 67px);}
+  .f2-floor::after{content:"";position:absolute;inset:0;   /* gloss reflection */
+    background:linear-gradient(180deg,rgba(255,255,255,.35),transparent 35%);}
+  .f2-mat{position:absolute;left:13%;right:13%;bottom:26%;height:26%;
+    background:
+      radial-gradient(circle at 30% 40%,rgba(255,255,255,.05) 1px,transparent 1px),
+      repeating-linear-gradient(45deg,#5c5c5e 0 2px,#6a6a6c 2px 4px);
+    background-size:5px 5px,auto;
+    border:2px solid #48484a;border-radius:1px;box-shadow:0 3px 8px rgba(0,0,0,.3);}
+
+  /* ── FLOOR 1 — LOBBY (IMG_7385) ── */
+  .f1-back{position:absolute;left:0;right:0;top:0;height:62%;
+    background:linear-gradient(90deg,#585d61,#83898d 15%,#83898d 85%,#585d61);}
+  .f1-posterL{position:absolute;left:3%;top:4%;width:14%;height:34%;
+    background:linear-gradient(180deg,#f2f0ec,#e6e3dd);box-shadow:0 2px 5px rgba(0,0,0,.35);}
+  .f1-posterL::after{content:"";position:absolute;inset:8% 12%;
+    background:
+      linear-gradient(180deg,#8a6c4e 0 30%,transparent 30%),
+      linear-gradient(180deg,transparent 0 40%,#c3906a 40% 66%,transparent 66%),
+      repeating-linear-gradient(0deg,transparent 0 78%,#b6b1a7 78% 81%,transparent 81% 90%,#c5c0b6 90% 92%,transparent 92%);}
+  .f1-door{position:absolute;left:23%;top:0;width:54%;height:62%;
+    background:
+      repeating-linear-gradient(0deg,rgba(0,0,0,.10) 0 1px,transparent 1px 6px,rgba(200,140,80,.06) 6px 7px,transparent 7px 12px),
+      linear-gradient(180deg,#8f5c33 0%,#7c4a26 55%,#6b3d1e 100%);
+    border-left:3px solid #b2b8bc;border-right:3px solid #8b9195;
+    box-shadow:inset 0 0 30px rgba(0,0,0,.18);}
+  .f1-door::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(0,0,0,.35);} /* door split line */
+  .f1-door::after{content:"";position:absolute;right:8%;top:49.5%;width:26%;height:5px;border-radius:3px;
+    background:linear-gradient(180deg,#e8ecef,#a6acb0 70%,#7f858a);
+    box-shadow:0 2px 3px rgba(0,0,0,.5);}
+  .f1-sign{position:absolute;left:50%;top:19%;transform:translateX(-50%);
+    width:29%;max-width:110px;aspect-ratio:13/8;background:#f2ca10;
+    border-radius:1px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:#141414;font-weight:800;text-align:center;line-height:1.2;
+    box-shadow:0 1px 4px rgba(0,0,0,.4);z-index:7;cursor:pointer;}
+  .f1-sign .jp{font-size:7px;font-weight:600}
+  .f1-sign .en{font-size:10.5px;letter-spacing:1.5px;margin-top:2px}
+  .f1-sign.bonk{animation:bonk .4s ease}
+  @keyframes bonk{0%,100%{transform:translateX(-50%) scale(1)}40%{transform:translateX(-50%) scale(1.12) rotate(-2deg)}}
+  .f1-floor{position:absolute;left:0;right:0;bottom:0;height:38%;
+    background:
+      radial-gradient(circle at 22% 32%,rgba(70,64,54,.14) 1px,transparent 1.4px),
+      radial-gradient(circle at 64% 68%,rgba(70,64,54,.12) 1px,transparent 1.4px),
+      radial-gradient(circle at 84% 22%,rgba(255,255,255,.14) 1px,transparent 1.4px),
+      linear-gradient(180deg,#cfc8bb 0%,#c2bbad 60%,#b7b0a1 100%);
+    background-size:6px 6px,9px 9px,7px 7px,100% 100%;}
+  .f1-floor::before{content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(90deg,transparent 0 86px,rgba(90,84,72,.20) 86px 87px);}
+  .f1-matg{position:absolute;left:17%;right:17%;bottom:29%;height:14%;
+    background:repeating-linear-gradient(45deg,#525254 0 2px,#606062 2px 4px);
+    border:1px solid #424244;box-shadow:0 2px 5px rgba(0,0,0,.3);}
+  .f1-matr{position:absolute;left:11%;right:11%;bottom:12%;height:19%;
+    background:
+      radial-gradient(circle at 40% 40%,rgba(0,0,0,.14) 1px,transparent 1.3px),
+      repeating-linear-gradient(45deg,#a8180e 0 2px,#8c130a 2px 4px);
+    background-size:4px 4px,auto;
+    border:2px solid #6b0e06;box-shadow:0 3px 9px rgba(0,0,0,.4);}
+
+  /* ═══════ WOOD DOORS (IMG_7386 macassar) ═══════ */
+  .door{position:absolute;top:0;bottom:0;width:50%;z-index:20;
+    background-color:#7a4f2a;
+    background-image:
+      repeating-linear-gradient(0deg,
+        rgba(20,12,5,.62) 0 1px, transparent 1px 3px,
+        rgba(20,12,5,.34) 3px 4px, transparent 4px 5px,
+        rgba(199,133,55,.30) 5px 7px, transparent 7px 8px,
+        rgba(20,12,5,.5) 8px 9px, transparent 9px 12px,
+        rgba(170,110,45,.22) 12px 14px, transparent 14px 16px,
+        rgba(20,12,5,.42) 16px 17px, transparent 17px 21px),
+      repeating-linear-gradient(0deg,
+        transparent 0 34px, rgba(226,160,70,.10) 34px 46px,
+        transparent 46px 78px, rgba(20,12,5,.12) 78px 92px, transparent 92px 128px),
+      linear-gradient(178deg,#8a5c33 0%,#77492a 40%,#6b4023 75%,#5e3820 100%);
+    box-shadow:inset 0 0 46px rgba(0,0,0,.28);
+    transition:transform 1.2s cubic-bezier(.34,.42,.24,1);
+    will-change:transform;}
+  .door::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(115deg,rgba(255,255,255,.09) 0%,rgba(255,255,255,.02) 22%,transparent 45%,transparent 72%,rgba(255,255,255,.05) 100%);}
+  .door.l{left:0;}
+  .door.r{right:0;}
+  .door.l::before{content:"";position:absolute;right:0;top:0;bottom:0;width:5px;z-index:2;
+    background:linear-gradient(90deg,#3c3f42 0%,#c9cdd0 55%,#eef1f3 70%,#84898d 100%);}
+  .door.r::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;z-index:2;
+    background:linear-gradient(270deg,#3c3f42 0%,#c9cdd0 55%,#eef1f3 70%,#84898d 100%);}
+  .door.l.open{transform:translateX(-99.5%);}
+  .door.r.open{transform:translateX(99.5%);}
+  .door-sticker{position:absolute;left:60%;top:35%;width:24px;height:24px;z-index:21;border-radius:3px;
+    background:linear-gradient(180deg,#f6ce16,#e5b90a);
+    display:flex;align-items:center;justify-content:center;font-size:13px;
+    box-shadow:0 1px 2px rgba(0,0,0,.45);}
+  .door-sticker::before{content:"🚫";position:absolute;font-size:19px;opacity:.85;}
+
+  /* ═══════ WORD OVERLAY ═══════ */
+  #word{position:absolute;left:0;right:0;top:44%;z-index:40;text-align:center;
+    pointer-events:none;opacity:0;transition:opacity .18s,transform .18s;transform:scale(.92);}
+  #word.show{opacity:1;transform:scale(1);}
+  #word b{display:inline-block;font-size:clamp(32px,7vw,56px);font-weight:900;letter-spacing:1px;
+    color:#fff;padding:7px 22px;border-radius:8px;
+    background:rgba(16,24,44,.85);box-shadow:0 8px 26px rgba(0,0,0,.55);
+    text-shadow:0 2px 6px rgba(0,0,0,.6);}
+  #word.good b{background:rgba(18,84,38,.9)}
+  #word.warn b{background:rgba(168,28,18,.92)}
+
+  #call{position:absolute;left:12px;bottom:14px;z-index:50;background:#fdfdfd;color:#22303e;
+    padding:8px 14px;border-radius:12px 12px 12px 2px;font-weight:700;font-size:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,.45);opacity:0;transform:translateY(6px);transition:.2s;}
+  #call.show{opacity:1;transform:translateY(0)}
+
+  /* ═══════════════ RIGHT — CONTROL PANEL ═══════════════ */
+  /* wood wall strip behind panel, panel = brushed steel column */
+  #panelWall{flex:0 0 40%;max-width:330px;min-width:255px;position:relative;
+    background:
+      repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px,rgba(198,140,64,.06) 3px 4px,transparent 4px 7px),
+      linear-gradient(180deg,#6e4726 0%,#5d3a1e 100%);
+    display:flex;justify-content:center;border-left:2px solid #3a2512;}
+  #panel{width:86%;max-width:250px;height:100%;
+    background:
+      repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,rgba(0,0,0,.02) 1px 2px),
+      linear-gradient(95deg,#9fa5aa 0%,#c6cbce 28%,#b3b9bd 55%,#c0c5c9 80%,#969da2 100%);
+    box-shadow:0 0 22px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.18);
+    display:flex;flex-direction:column;align-items:center;
+    padding:6px 8px 8px;gap:4px;overflow:hidden;}
+
+  /* speaker grille */
+  .grille{width:78%;height:20px;flex:0 0 auto;border-radius:2px;
+    background:repeating-linear-gradient(0deg,#17181a 0 3px,#3c3f42 3px 5px);
+    box-shadow:inset 0 1px 3px #000,0 1px 0 rgba(255,255,255,.25);}
+
+  /* LED indicator */
+  .led{width:88%;flex:0 0 auto;border:2px solid #101215;border-radius:3px;
+    background:linear-gradient(180deg,#41609f,#31497f);
+    box-shadow:inset 0 0 16px rgba(0,0,15,.4),0 1px 0 rgba(255,255,255,.3);
+    padding:3px 8px 4px;color:#fff;}
+  .led-row{display:flex;align-items:center;justify-content:center;gap:7px;height:40px;}
+  .led-arrow{font-size:26px;line-height:1;width:24px;text-align:center;color:#f2f5ff;
+    text-shadow:0 0 8px rgba(255,255,255,.5);}
+  .led-num{font-size:40px;font-weight:700;line-height:1;letter-spacing:1px;
+    font-family:"Helvetica Neue",Arial,sans-serif;color:#f6f8ff;
+    text-shadow:0 0 10px rgba(255,255,255,.4);}
+  .led-msg{text-align:center;font-size:7.5px;line-height:1.3;color:#dfe8ff;font-weight:600;min-height:18px;}
+  .led-msg .jp{font-size:7.5px;display:block;}
+
+  /* emergency block */
+  .emg{width:92%;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .emg-row{display:flex;align-items:center;gap:6px;width:100%;justify-content:center;}
+  .braille{width:26px;height:13px;border-radius:1px;flex:0 0 auto;
+    background:linear-gradient(180deg,#c8ccd0,#aab0b4);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.6),0 1px 1px rgba(0,0,0,.2);
+    position:relative;}
+  .braille::after{content:"";position:absolute;inset:2px 5px;
+    background-image:radial-gradient(circle,#7d8388 1px,transparent 1.4px);
+    background-size:5px 4px;}
+  .ebtn{width:46px;height:46px;border-radius:50%;border:0;cursor:pointer;flex:0 0 auto;
+    background:radial-gradient(circle at 40% 34%,#ffcf5e,#f0a613 58%,#c98400);
+    box-shadow:inset 0 0 0 2px rgba(120,75,0,.45),inset 0 2px 3px rgba(255,255,255,.5),0 2px 4px rgba(0,0,0,.35);
+    color:#241500;font-size:19px;display:flex;align-items:center;justify-content:center;
+    transition:transform .08s;}
+  .ebtn:active{transform:scale(.92)}
+  .ebtn.ring{animation:ering .5s ease-in-out 4;}
+  @keyframes ering{0%,100%{box-shadow:inset 0 0 0 2px rgba(120,75,0,.45),0 0 3px rgba(0,0,0,.3)}
+    50%{box-shadow:inset 0 0 0 2px rgba(120,75,0,.45),0 0 16px 5px rgba(255,110,40,.85)}}
+  .emg-note{width:56px;font-size:5px;line-height:1.35;color:#2e3438;font-weight:600;
+    background:linear-gradient(180deg,#b8bdc1,#a3a9ad);padding:2px 3px;border-radius:1px;
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.5);}
+  .emg-note b{display:block;font-size:5.5px;letter-spacing:.3px;}
+  .emg-label{background:linear-gradient(180deg,#e8483a,#cf2f22);color:#fff;
+    font-size:10px;font-weight:800;letter-spacing:2px;padding:1px 10px;border-radius:1px;
+    box-shadow:0 1px 2px rgba(0,0,0,.3);}
+  .emg-notice{font-size:6.3px;line-height:1.45;color:#33383c;font-weight:600;text-align:left;
+    width:100%;padding:0 4px;}
+
+  /* floor button grid */
+  .floors{flex:1 1 auto;width:100%;display:flex;flex-direction:column-reverse;
+    justify-content:space-evenly;min-height:0;padding:2px 0;}
+  .frow{display:flex;justify-content:center;gap:6px;flex:0 0 auto;}
+  .fcell{display:flex;align-items:center;gap:4px;width:104px;}
+  .fcell.blank{visibility:hidden}
+  .fbtn{position:relative;width:62px;height:62px;border-radius:50%;border:0;cursor:pointer;flex:0 0 auto;
+    background:radial-gradient(circle at 42% 36%,#ffffff,#f2f3f4 55%,#dcdfe1 82%,#c9cdd0 100%);
+    box-shadow:
+      inset 0 0 0 2px #b9bec2,
+      inset 0 0 0 3.5px #e8ebed,
+      inset 0 -2px 4px rgba(0,0,0,.10),
+      inset 0 2px 3px rgba(255,255,255,.9),
+      0 1px 3px rgba(0,0,0,.35);
+    color:#3a3f44;font-size:24px;font-weight:600;
+    font-family:"Helvetica Neue",Arial,sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .07s;}
+  .fbtn:active{transform:scale(.94)}
+  /* registered = red number, exactly like the real panel's lit "12" */
+  .fbtn.lit{color:#e0301e;font-weight:700;
+    text-shadow:0 0 6px rgba(255,80,50,.55),0 0 14px rgba(255,80,50,.3);}
+  .fbtn.here{box-shadow:
+      inset 0 0 0 2px #b9bec2,inset 0 0 0 3.5px #e8ebed,
+      inset 0 -2px 4px rgba(0,0,0,.10),inset 0 2px 3px rgba(255,255,255,.9),
+      0 0 10px 2px rgba(255,255,255,.55),0 1px 3px rgba(0,0,0,.35);}
+  .fbtn .sub{position:absolute;bottom:-13px;left:50%;transform:translateX(-50%);
+    font-size:8px;font-weight:700;color:#33383c;background:#f4f5f6;
+    border:1px solid #c2c6c9;border-radius:1px;padding:0 3px;white-space:nowrap;}
+
+  /* door open/close ovals */
+  .doors-ctl{display:flex;width:100%;gap:8px;justify-content:center;flex:0 0 auto;
+    padding-bottom:2px;}
+  .dcell{display:flex;align-items:center;gap:4px;}
+  .dbtn{width:74px;height:48px;border:0;border-radius:24px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+    font-weight:700;transition:transform .08s;
+    box-shadow:inset 0 2px 3px rgba(255,255,255,.55),inset 0 -2px 4px rgba(0,0,0,.18),0 2px 4px rgba(0,0,0,.35);}
+  .dbtn:active{transform:scale(.93)}
+  .dbtn .ico{font-size:16px;line-height:1.1;letter-spacing:-1px}
+  .dbtn .jp{font-size:9px;line-height:1.1}
+  .dbtn.open{background:radial-gradient(circle at 42% 34%,#4fbf60,#2e9e42 62%,#1d7d30);color:#eafce9;}
+  .dbtn.open .ico{color:#fff}
+  /* while doors are closing, the white parts of ひらく blink bright yellow */
+  .dbtn.open.closing .ico,.dbtn.open.closing .jp{animation:blinkY .45s step-end infinite;}
+  @keyframes blinkY{
+    0%,100%{color:#fff;text-shadow:none}
+    50%{color:#ffe23a;text-shadow:0 0 9px rgba(255,224,50,.95),0 0 18px rgba(255,210,40,.5)}
+  }
+  .dbtn.close{background:radial-gradient(circle at 42% 34%,#f4f6f7,#d9dcdf 62%,#bfc4c7);color:#42484d;}
+
+  /* pictogram footer */
+  .foot{width:80%;flex:0 0 auto;font-size:5.4px;line-height:1.7;color:#494f54;font-weight:600;
+    border-top:1px solid #9ba1a6;padding-top:3px;}
+  .foot span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .keyhole{width:9px;height:9px;border-radius:50%;margin:3px auto 0;flex:0 0 auto;
+    background:radial-gradient(circle at 40% 35%,#5c6165,#2c2f32 70%);
+    box-shadow:inset 0 1px 2px #000,0 1px 0 rgba(255,255,255,.4);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ════════ STAGE ════════ -->
+  <div id="stage">
+    <div class="beam"></div>
+    <div class="jamb l"></div>
+    <div class="jamb r"></div>
+
+    <div id="opening">
+      <div class="scene" id="scUp">
+        <div class="up-wall"></div>
+        <div class="up-glow2"></div>
+        <div class="up-panel p1"></div>
+        <div class="up-panel p2"></div>
+        <div class="up-glow"></div>
+        <div class="up-sensor"></div>
+        <div class="up-note"></div>
+        <div class="up-carpet"></div>
+        <div class="sill"></div>
+      </div>
+
+      <div class="scene" id="scF2">
+        <div class="f2-back"></div>
+        <div class="f2-steel"></div>
+        <div class="f2-plaster"></div>
+        <div class="f2-poster"></div>
+        <div class="f2-counter-leg"></div>
+        <div class="f2-counter"></div>
+        <div class="f2-card">WELCOME<br>TO<br>SHIZUOKA</div>
+        <div class="f2-basket"></div>
+        <div class="f2-rack"><i></i><i></i><i></i><i></i></div>
+        <div class="f2-wheel"></div>
+        <div class="f2-floor"></div>
+        <div class="f2-mat"></div>
+        <div class="sill"></div>
+      </div>
+
+      <div class="scene" id="scF1">
+        <div class="f1-back"></div>
+        <div class="f1-posterL"></div>
+        <div class="f1-door"></div>
+        <div class="f1-sign" id="staffSign"><span class="jp">関係者専用出入口</span><span class="en">STAFF ONLY</span></div>
+        <div class="f1-floor"></div>
+        <div class="f1-matg"></div>
+        <div class="f1-matr"></div>
+        <div class="sill"></div>
+      </div>
+    </div>
+
+    <div class="door l" id="dL"><div class="door-sticker"></div></div>
+    <div class="door r" id="dR"></div>
+
+    <div id="word"><b>LOBBY</b></div>
+    <div id="call">フロント Hello!</div>
+  </div>
+
+  <!-- ════════ PANEL ════════ -->
+  <div id="panelWall">
+    <div id="panel">
+      <div class="grille"></div>
+
+      <div class="led">
+        <div class="led-row">
+          <div class="led-arrow" id="ledArrow"></div>
+          <div class="led-num" id="ledNum">1</div>
+        </div>
+        <div class="led-msg" id="ledMsg"><span class="jp">行き先ボタンを押してください</span>PLEASE PUSH A FLOOR BUTTON.</div>
+      </div>
+
+      <div class="emg">
+        <div class="emg-row">
+          <div class="braille"></div>
+          <button class="ebtn" id="btnEmerg">📞</button>
+          <div class="emg-note">非常のとき押しつづけると外部に連絡できます<b>EMERGENCY CALL</b></div>
+        </div>
+        <div class="emg-label">非常用ボタン</div>
+        <div class="emg-notice">当館では防犯のため、2階を経由するご移動の場合は<br>2階（フロント・ロビー）に一旦停止いたします。</div>
+      </div>
+
+      <div class="floors" id="floors"></div>
+
+      <div class="doors-ctl">
+        <div class="dcell"><div class="braille"></div>
+          <button class="dbtn open" id="btnOpen"><span class="ico">◀|▶</span><span class="jp">ひらく</span></button>
+        </div>
+        <div class="dcell"><div class="braille"></div>
+          <button class="dbtn close" id="btnClose"><span class="ico">▶|◀</span><span class="jp">しまる</span></button>
+        </div>
+      </div>
+
+      <div class="foot">
+        <span>📞 EMERGENCY CALL</span>
+        <span>◀|▶ DOOR OPEN BUTTON</span>
+        <span>▶|◀ DOOR CLOSE BUTTON</span>
+        <span>🔊 FOLLOW VOICE MESSAGE</span>
+        <span>🧒 CHILDREN MUST BE ATTENDED</span>
+        <span>🚭 NO SMOKING</span>
+      </div>
+      <div class="keyhole"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ═══════════ AUDIO ═══════════ */
+const AC=window.AudioContext||window.webkitAudioContext;
+let actx=null;
+function ac(){if(!actx)actx=new AC();if(actx.state==='suspended')actx.resume();return actx;}
+function tone(f,dur,type='sine',vol=.16,slideTo=null){
+  const c=ac(),o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.value=f;
+  if(slideTo)o.frequency.linearRampToValueAtTime(slideTo,c.currentTime+dur);
+  g.gain.setValueAtTime(0,c.currentTime);
+  g.gain.linearRampToValueAtTime(vol,c.currentTime+.012);
+  g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+dur);
+  o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+dur+.02);
+}
+function noise(dur,vol=.10,hp=400){
+  const c=ac(),b=c.createBuffer(1,c.sampleRate*dur,c.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+  const s=c.createBufferSource();s.buffer=b;
+  const f=c.createBiquadFilter();f.type='highpass';f.frequency.value=hp;
+  const g=c.createGain();g.gain.value=vol;
+  s.connect(f).connect(g).connect(c.destination);s.start();
+}
+const snd={
+  press(){tone(700,.06,'square',.09);},
+  tick(){tone(170,.06,'sine',.09);},
+  /* single bell strike with partials — the arrival ding */
+  ding(){
+    const c=ac();
+    [[830,1.1,.22],[1245,.85,.09],[622,1.3,.07],[1660,.5,.04]].forEach(([f,d,v])=>{
+      const o=c.createOscillator(),g=c.createGain();
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(v,c.currentTime);
+      g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+d);
+      o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+d+.05);
+    });
+  },
+  /* rapid trill alarm bell for the emergency button */
+  alarm(){
+    for(let i=0;i<22;i++)setTimeout(()=>{
+      tone(1080,.05,'square',.11);
+      tone(720,.05,'square',.055);
+    },i*75);
+  },
+  doormv(){noise(.55,.06,450);},
+  call(){tone(740,.2,'sine',.15);setTimeout(()=>tone(587,.3,'sine',.15),220);},
+  bonk(){tone(300,.12,'square',.13,180);},
+};
+
+/* ═══════════ STATE ═══════════ */
+const TOP=13;
+const FLOOR_MS=2500;      // travel time per floor
+const IDLE_CLOSE=7000;    // doors auto-close after 7s idle
+const IDLE_WANDER=15000;  // after 15s idle, elevator gets a random call
+let current=1, dir=0, queue=new Set();
+let state='IDLE';            // IDLE | MOVING | OPEN
+let doorsOpen=true;
+let busy=false;
+let closing=false, closeTO=null, pendingCb=null;
+let autoTimer=null;
+let lastAct=Date.now();
+let atFrontStop=false;       // true when parked at the mandatory floor-2 stop
+
+/* ═══════════ DOM ═══════════ */
+const $=id=>document.getElementById(id);
+const dL=$('dL'),dR=$('dR'),wordEl=$('word'),ledNum=$('ledNum'),ledArrow=$('ledArrow'),ledMsg=$('ledMsg');
+const btnOpen=$('btnOpen');
+const scenes={1:$('scF1'),2:$('scF2'),up:$('scUp')};
+
+/* floor grid, bottom→top, 13 in LEFT column like the real panel */
+(function(){
+  const wrap=$('floors');
+  const rows=[[1,2],[3,4],[5,6],[7,8],[9,10],[11,12],[13,null]];
+  rows.forEach(r=>{
+    const row=document.createElement('div');row.className='frow';
+    r.forEach(n=>{
+      const cell=document.createElement('div');cell.className='fcell';
+      if(n===null){cell.classList.add('blank');row.appendChild(cell);return;}
+      const bp=document.createElement('div');bp.className='braille';
+      const b=document.createElement('button');b.className='fbtn';b.dataset.f=n;b.textContent=n;
+      if(n===2){const s=document.createElement('span');s.className='sub';s.textContent='フロント';b.appendChild(s);}
+      b.addEventListener('click',()=>{ac();pressFloor(n);});
+      cell.appendChild(bp);cell.appendChild(b);
+      row.appendChild(cell);
+    });
+    wrap.appendChild(row);
+  });
+})();
+const fbtns=[...document.querySelectorAll('.fbtn')];
+
+/* ═══════════ VIEW HELPERS ═══════════ */
+function showScene(f){
+  Object.values(scenes).forEach(s=>s.classList.remove('show'));
+  (f===1?scenes[1]:f===2?scenes[2]:scenes.up).classList.add('show');
+}
+function updateLED(){
+  ledNum.textContent=current;
+  ledArrow.textContent=dir>0?'▲':dir<0?'▼':'';
+  fbtns.forEach(b=>b.classList.toggle('here',+b.dataset.f===current&&doorsOpen));
+  if(state==='MOVING'){
+    ledMsg.innerHTML='<span class="jp">'+(dir>0?'上昇中':'下降中')+'</span>'+(dir>0?'GOING UP':'GOING DOWN');
+  }else if(atFrontStop){
+    ledMsg.innerHTML='<span class="jp">フロントに停止中</span>FRONT DESK STOP';
+  }else if(doorsOpen){
+    ledMsg.innerHTML='<span class="jp">行き先ボタンを押してください</span>PLEASE PUSH A FLOOR BUTTON.';
+  }else{
+    ledMsg.innerHTML='&nbsp;';
+  }
+}
+let wordT=null;
+function word(txt,kind='',hold=1100){
+  clearTimeout(wordT);
+  wordEl.className='';wordEl.querySelector('b').textContent=txt;
+  if(kind)wordEl.classList.add(kind);
+  void wordEl.offsetWidth;wordEl.classList.add('show');
+  if(hold)wordT=setTimeout(()=>wordEl.classList.remove('show'),hold);
+}
+function litBtns(){fbtns.forEach(b=>b.classList.toggle('lit',queue.has(+b.dataset.f)));}
+
+/* ═══════════ DOORS ═══════════ */
+function scheduleAuto(){   // 7s idle → doors close (and trip continues if queued)
+  clearTimeout(autoTimer);
+  autoTimer=setTimeout(()=>{
+    if(doorsOpen&&!busy&&!closing&&(state==='OPEN'||state==='IDLE')){
+      closeDoors(()=>afterClose());
+    }
+  },IDLE_CLOSE);
+}
+function openDoors(cb){
+  if(doorsOpen&&!closing){cb&&cb();return;}
+  doorsOpen=true;busy=true;snd.doormv();
+  dL.classList.add('open');dR.classList.add('open');
+  setTimeout(()=>{busy=false;updateLED();cb&&cb();},1220);
+}
+function closeDoors(cb){
+  if(!doorsOpen&&!closing){cb&&cb();return;}
+  if(closing){pendingCb=cb;return;}
+  clearTimeout(autoTimer);
+  closing=true;doorsOpen=false;busy=true;pendingCb=cb;
+  snd.doormv();word('CLOSE','',700);
+  btnOpen.classList.add('closing');            // ← blink starts
+  dL.classList.remove('open');dR.classList.remove('open');
+  closeTO=setTimeout(()=>{
+    closing=false;busy=false;
+    btnOpen.classList.remove('closing');       // ← blink stops: fully closed
+    updateLED();
+    const cb2=pendingCb;pendingCb=null;cb2&&cb2();
+  },1220);
+}
+/* pressing ひらく mid-close reverses the doors, like the real thing */
+function reopenDoors(){
+  clearTimeout(closeTO);closing=false;pendingCb=null;
+  btnOpen.classList.remove('closing');
+  doorsOpen=true;busy=true;snd.doormv();word('OPEN','',800);
+  dL.classList.add('open');dR.classList.add('open');
+  setTimeout(()=>{busy=false;updateLED();scheduleAuto();},1220);
+}
+
+/* ═══════════ CALLS + SCAN ═══════════ */
+function pressFloor(n){
+  snd.press();
+  if(n===current&&doorsOpen){word(n===1?'LOBBY':n===2?'FRONT DESK':'HERE','',900);return;}
+  if(queue.has(n))return;
+  queue.add(n);litBtns();
+
+  if(state==='IDLE'){
+    if(doorsOpen){
+      word(n>current?'UP':'DOWN','',900);
+      scheduleAuto();   // departs via しまる, or after 7s idle
+    }else{
+      run();
+    }
+  }
+}
+function crosses2(a,b){return (a===1&&b>=3)||(a>=3&&b===1);}
+function nextStop(){
+  if(queue.size===0)return null;
+  const fl=[...queue];let cand;
+  if(dir>=0){
+    const up=fl.filter(f=>f>current).sort((a,b)=>a-b);
+    const dn=fl.filter(f=>f<current).sort((a,b)=>b-a);
+    if(up.length)cand=up[0];else if(dn.length){dir=-1;cand=dn[0];}else cand=current;
+  }else{
+    const dn=fl.filter(f=>f<current).sort((a,b)=>b-a);
+    const up=fl.filter(f=>f>current).sort((a,b)=>a-b);
+    if(dn.length)cand=dn[0];else if(up.length){dir=1;cand=up[0];}else cand=current;
+  }
+  if(cand===current)return current;
+  if(crosses2(current,cand))return 2;   // mandatory front-desk stop
+  return cand;
+}
+function run(){
+  const stop=nextStop();
+  if(stop===null){goIdle();return;}
+  if(stop===current){arrive(current);return;}
+  dir=stop>current?1:-1;
+  state='MOVING';updateLED();
+  step(stop);
+}
+function step(stop){
+  setTimeout(()=>{
+    if(state!=='MOVING')return;
+    current+=dir;updateLED();snd.tick();
+    if(current===stop){arrive(current);return;}
+    const ns=nextStop();
+    if(ns===null){goIdle();return;}
+    if(ns===current){arrive(current);return;}
+    dir=ns>current?1:-1;
+    step(ns);
+  },FLOOR_MS);
+}
+function arrive(f){
+  current=f;
+  const wasRequested=queue.has(f);
+  queue.delete(f);litBtns();
+  atFrontStop=(f===2&&!wasRequested);   // stopped here only because of the rule
+  snd.ding();                            // ← arrival ding
+  showScene(f);
+  state='OPEN';
+  openDoors(()=>{
+    word(f===1?'LOBBY':f===2?'FRONT DESK':'OPEN','',1300);
+    if(queue.size===0){dir=0;updateLED();}
+    scheduleAuto();                      // 7s idle → close (and continue if queued)
+  });
+}
+function afterClose(){
+  atFrontStop=false;
+  if(queue.size)run();else goIdle();
+}
+function goIdle(){state='IDLE';dir=0;updateLED();litBtns();}
+
+/* ═══════════ DOOR BUTTONS ═══════════ */
+btnOpen.addEventListener('click',()=>{
+  ac();
+  if(closing){reopenDoors();return;}      // reverse mid-close
+  if(busy)return;
+  snd.press();
+  if(!doorsOpen&&state==='IDLE'){
+    word('OPEN','',700);
+    openDoors(()=>{showScene(current);scheduleAuto();});
+  }else if(doorsOpen){
+    scheduleAuto();                        // re-press keeps doors open another 7s
+  }
+});
+$('btnClose').addEventListener('click',()=>{
+  ac();
+  if(busy||closing)return;
+  if(!doorsOpen)return;
+  snd.press();
+  clearTimeout(autoTimer);
+  if(state==='IDLE'&&queue.size===0){closeDoors();return;}
+  closeDoors(()=>afterClose());
+});
+
+/* emergency call → alarm bell */
+$('btnEmerg').addEventListener('click',function(){
+  ac();this.classList.remove('ring');void this.offsetWidth;this.classList.add('ring');
+  snd.alarm();
+  const c=$('call');c.classList.add('show');
+  setTimeout(()=>c.classList.remove('show'),2200);
+});
+
+/* staff-only easter egg */
+$('staffSign').addEventListener('click',e=>{
+  e.stopPropagation();ac();
+  const s=e.currentTarget;s.classList.remove('bonk');void s.offsetWidth;s.classList.add('bonk');
+  snd.bonk();word('STAFF ONLY','',900);
+});
+
+/* ═══════════ IDLE TRACKING + 15s WANDER ═══════════ */
+document.addEventListener('pointerdown',()=>{
+  lastAct=Date.now();
+  if(doorsOpen&&!closing&&!busy&&(state==='OPEN'||state==='IDLE'))scheduleAuto();
+},true);
+
+setInterval(()=>{
+  if(state==='IDLE'&&queue.size===0&&!busy&&!closing&&Date.now()-lastAct>IDLE_WANDER){
+    lastAct=Date.now();
+    let f;do{f=1+Math.floor(Math.random()*TOP);}while(f===current);
+    queue.add(f);litBtns();
+    if(doorsOpen)closeDoors(()=>run());else run();
+  }
+},1000);
+
+/* ═══════════ INIT ═══════════ */
+showScene(1);
+dL.classList.add('open');dR.classList.add('open');
+updateLED();
+word('LOBBY','',1600);
+scheduleAuto();
+</script>
+</body>
+</html>
