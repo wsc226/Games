@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Shinkansen Whack-a-Train</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: manipulation;
+  background: #1a1a2e;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  color: #fff;
+}
+
+#game-container {
+  width: 100%;
+  max-width: 600px;
+  height: 100%;
+  max-height: 900px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  position: relative;
+}
+
+/* --- Screens --- */
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 24px;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* --- Start Screen --- */
+#start-screen .title {
+  font-size: clamp(28px, 7vw, 48px);
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #00b4d8, #90e0ef);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#start-screen .subtitle {
+  font-size: clamp(14px, 3.5vw, 20px);
+  color: #90e0ef;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.train-preview {
+  width: 100px;
+  height: 100px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  margin-bottom: 32px;
+  box-shadow: 0 0 30px rgba(0, 180, 216, 0.4);
+}
+
+.difficulty-selector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.diff-btn {
+  padding: 12px 24px;
+  border: 2px solid #00b4d8;
+  border-radius: 12px;
+  background: transparent;
+  color: #90e0ef;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 100px;
+}
+
+.diff-btn.selected {
+  background: #00b4d8;
+  color: #0f0c29;
+}
+
+.diff-btn:active {
+  transform: scale(0.95);
+}
+
+#start-btn {
+  padding: 16px 48px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #00b4d8, #0077b6);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 180, 216, 0.4);
+  letter-spacing: 1px;
+}
+
+#start-btn:active {
+  transform: scale(0.95);
+}
+
+.high-score-display {
+  margin-top: 24px;
+  font-size: 14px;
+  color: #caf0f8;
+  text-align: center;
+}
+
+.high-score-display span {
+  font-weight: 700;
+  color: #ffd700;
+}
+
+/* --- Countdown Screen --- */
+#countdown-screen {
+  background: rgba(15, 12, 41, 0.95);
+  z-index: 10;
+}
+
+#countdown-number {
+  font-size: 120px;
+  font-weight: 900;
+  color: #00b4d8;
+  text-shadow: 0 0 40px rgba(0, 180, 216, 0.6);
+}
+
+/* --- HUD --- */
+#hud {
+  display: none;
+  width: 100%;
+  max-width: 600px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: rgba(15, 12, 41, 0.9);
+  border-bottom: 2px solid #00b4d8;
+}
+
+#hud.visible {
+  display: flex;
+}
+
+.hud-item {
+  text-align: center;
+}
+
+.hud-label {
+  font-size: 11px;
+  color: #90e0ef;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hud-value {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+#hud-score {
+  color: #fff;
+}
+
+#hud-combo {
+  color: #ffd700;
+}
+
+#hud-timer {
+  color: #00b4d8;
+}
+
+/* --- Game Grid --- */
+#play-screen {
+  padding-top: 80px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(12px, 3vw, 20px);
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1;
+}
+
+.hole {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 16px;
+  background: radial-gradient(ellipse at center bottom, #1b1b3a 0%, #0d0d1f 100%);
+  border: 3px solid #2a2a5a;
+}
+
+.tunnel-opening {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  height: 40%;
+  background: radial-gradient(ellipse at center, #0a0a1a 0%, #000 70%);
+  border-radius: 50% 50% 0 0;
+  border-top: 3px solid #3a3a6a;
+}
+
+.train {
+  position: absolute;
+  bottom: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 65%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: bottom 0.15s ease-out;
+  z-index: 2;
+}
+
+.train.visible {
+  bottom: 8%;
+}
+
+.train-face {
+  width: 100%;
+  height: 100%;
+  border-radius: 50% 50% 10px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(32px, 8vw, 48px);
+  position: relative;
+}
+
+.train-face.normal {
+  background: linear-gradient(180deg, #e0e0e0 0%, #b0b0b0 100%);
+  border: 3px solid #888;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.train-face.normal::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  width: 70%;
+  height: 30%;
+  background: #00b4d8;
+  border-radius: 4px;
+}
+
+.train-face.normal::after {
+  content: '';
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20%;
+  height: 15%;
+  background: #333;
+  border-radius: 50%;
+}
+
+.train-face.golden {
+  background: linear-gradient(180deg, #ffd700 0%, #daa520 100%);
+  border: 3px solid #b8860b;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5);
+}
+
+.train-face.golden::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  width: 70%;
+  height: 30%;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.train-face.golden::after {
+  content: '';
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20%;
+  height: 15%;
+  background: #8B6914;
+  border-radius: 50%;
+}
+
+.train-face.bomb {
+  background: linear-gradient(180deg, #333 0%, #111 100%);
+  border: 3px solid #600;
+  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.4);
+}
+
+.train-face.bomb::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  width: 70%;
+  height: 30%;
+  background: #c00;
+  border-radius: 4px;
+}
+
+.train-face.bomb::after {
+  content: '!!';
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  font-weight: 900;
+  color: #ff4444;
+}
+
+.hit-feedback {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  font-weight: 900;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10;
+}
+
+.hit-feedback.show {
+  opacity: 1;
+  animation: floatUp 0.6s ease-out forwards;
+}
+
+@keyframes floatUp {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -120%) scale(1.3); }
+}
+
+/* --- Game Over Screen --- */
+#gameover-screen {
+  background: rgba(15, 12, 41, 0.97);
+  z-index: 10;
+}
+
+#gameover-screen .title {
+  font-size: clamp(28px, 7vw, 42px);
+  font-weight: 800;
+  margin-bottom: 24px;
+  color: #00b4d8;
+}
+
+.final-stats {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.final-score {
+  font-size: 64px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.final-detail {
+  font-size: 16px;
+  color: #90e0ef;
+  margin-bottom: 4px;
+}
+
+.new-high-score {
+  display: none;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffd700;
+  margin-top: 12px;
+}
+
+.new-high-score.show {
+  display: block;
+}
+
+#replay-btn {
+  padding: 16px 48px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #00b4d8, #0077b6);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 180, 216, 0.4);
+  margin-bottom: 12px;
+}
+
+#replay-btn:active {
+  transform: scale(0.95);
+}
+
+#menu-btn {
+  padding: 12px 32px;
+  border: 2px solid #00b4d8;
+  border-radius: 12px;
+  background: transparent;
+  color: #90e0ef;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#menu-btn:active {
+  transform: scale(0.95);
+}
+
+/* --- Streak Banner --- */
+#streak-banner {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 20px;
+  background: rgba(255, 215, 0, 0.9);
+  color: #1a1a2e;
+  font-weight: 800;
+  font-size: 16px;
+  border-radius: 20px;
+  z-index: 15;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+#streak-banner.show {
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<div id="game-container">
+
+  <!-- Start Screen -->
+  <div id="start-screen" class="screen active">
+    <div class="train-preview">🚅</div>
+    <div class="title">WHACK-A-TRAIN</div>
+    <div class="subtitle">Shinkansen Edition</div>
+
+    <div class="difficulty-selector">
+      <button class="diff-btn" data-diff="easy">Easy</button>
+      <button class="diff-btn selected" data-diff="medium">Medium</button>
+      <button class="diff-btn" data-diff="hard">Hard</button>
+    </div>
+
+    <button id="start-btn">START</button>
+
+    <div class="high-score-display" id="high-score-area"></div>
+  </div>
+
+  <!-- Countdown Screen -->
+  <div id="countdown-screen" class="screen">
+    <div id="countdown-number">3</div>
+  </div>
+
+  <!-- Play Screen -->
+  <div id="play-screen" class="screen">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameover-screen" class="screen">
+    <div class="title">GAME OVER</div>
+    <div class="final-stats">
+      <div class="final-score" id="final-score">0</div>
+      <div class="final-detail">Trains Whacked: <span id="final-hits">0</span></div>
+      <div class="final-detail">Best Combo: <span id="final-combo">0</span></div>
+      <div class="final-detail">Accuracy: <span id="final-accuracy">0%</span></div>
+      <div class="new-high-score" id="new-high-score">NEW HIGH SCORE!</div>
+    </div>
+    <button id="replay-btn">PLAY AGAIN</button>
+    <button id="menu-btn">MENU</button>
+  </div>
+
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-item">
+    <div class="hud-label">Score</div>
+    <div class="hud-value" id="hud-score">0</div>
+  </div>
+  <div class="hud-item">
+    <div class="hud-label">Combo</div>
+    <div class="hud-value" id="hud-combo">0x</div>
+  </div>
+  <div class="hud-item">
+    <div class="hud-label">Time</div>
+    <div class="hud-value" id="hud-timer">60</div>
+  </div>
+</div>
+
+<!-- Streak Banner -->
+<div id="streak-banner"></div>
+
+<script>
+const GAME_DURATION = 60;
+const GRID_SIZE = 9;
+const BASE_POINTS = 10;
+
+const DIFFICULTY = {
+  easy: {
+    label: 'Easy',
+    spawnInterval: [1200, 1800],
+    visibleDuration: [1400, 1800],
+    maxSimultaneous: 1,
+    speedUpFactor: 0.92,
+    speedUpInterval: 10,
+    goldenChance: 0.08,
+    bombChance: 0.03,
+    bombPenalty: 20,
+    goldenBonus: 30
+  },
+  medium: {
+    label: 'Medium',
+    spawnInterval: [900, 1400],
+    visibleDuration: [1000, 1500],
+    maxSimultaneous: 2,
+    speedUpFactor: 0.88,
+    speedUpInterval: 8,
+    goldenChance: 0.10,
+    bombChance: 0.06,
+    bombPenalty: 30,
+    goldenBonus: 25
+  },
+  hard: {
+    label: 'Hard',
+    spawnInterval: [600, 1000],
+    visibleDuration: [700, 1100],
+    maxSimultaneous: 3,
+    speedUpFactor: 0.84,
+    speedUpInterval: 6,
+    goldenChance: 0.12,
+    bombChance: 0.10,
+    bombPenalty: 40,
+    goldenBonus: 20
+  }
+};
+
+let selectedDifficulty = 'medium';
+let config = DIFFICULTY[selectedDifficulty];
+
+let score = 0;
+let combo = 0;
+let bestCombo = 0;
+let totalHits = 0;
+let totalTaps = 0;
+let timeLeft = GAME_DURATION;
+let gameActive = false;
+let timerInterval = null;
+let spawnTimeout = null;
+let lastHole = -1;
+let activeTrains = new Map();
+let speedMultiplier = 1;
+
+const startScreen = document.getElementById('start-screen');
+const countdownScreen = document.getElementById('countdown-screen');
+const playScreen = document.getElementById('play-screen');
+const gameoverScreen = document.getElementById('gameover-screen');
+const hud = document.getElementById('hud');
+const grid = document.getElementById('grid');
+const countdownNumber = document.getElementById('countdown-number');
+const streakBanner = document.getElementById('streak-banner');
+const highScoreArea = document.getElementById('high-score-area');
+
+function showScreen(screen) {
+  [startScreen, countdownScreen, playScreen, gameoverScreen].forEach(s => s.classList.remove('active'));
+  screen.classList.add('active');
+}
+
+function buildGrid() {
+  grid.innerHTML = '';
+  for (let i = 0; i < GRID_SIZE; i++) {
+    const hole = document.createElement('div');
+    hole.className = 'hole';
+    hole.dataset.index = i;
+    hole.innerHTML = `
+      <div class="tunnel-opening"></div>
+      <div class="train" data-index="${i}">
+        <div class="train-face normal"></div>
+      </div>
+      <div class="hit-feedback"></div>
+    `;
+    const train = hole.querySelector('.train');
+    train.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      whackTrain(i);
+    });
+    grid.appendChild(hole);
+  }
+}
+
+function getRandomHole() {
+  let hole;
+  do {
+    hole = Math.floor(Math.random() * GRID_SIZE);
+  } while (hole === lastHole && GRID_SIZE > 1);
+  lastHole = hole;
+  return hole;
+}
+
+function getTrainType() {
+  const r = Math.random();
+  if (r < config.bombChance) return 'bomb';
+  if (r < config.bombChance + config.goldenChance) return 'golden';
+  return 'normal';
+}
+
+function spawnTrain() {
+  if (!gameActive) return;
+
+  if (activeTrains.size < config.maxSimultaneous) {
+    let hole = getRandomHole();
+    let attempts = 0;
+    while (activeTrains.has(hole) && attempts < GRID_SIZE) {
+      hole = (hole + 1) % GRID_SIZE;
+      attempts++;
+    }
+
+    if (!activeTrains.has(hole)) {
+      const type = getTrainType();
+      showTrain(hole, type);
+    }
+  }
+
+  const [minInterval, maxInterval] = config.spawnInterval;
+  const interval = (minInterval + Math.random() * (maxInterval - minInterval)) * speedMultiplier;
+  spawnTimeout = setTimeout(spawnTrain, interval);
+}
+
+function showTrain(holeIndex, type) {
+  const holeEl = grid.children[holeIndex];
+  const trainEl = holeEl.querySelector('.train');
+  const faceEl = trainEl.querySelector('.train-face');
+
+  faceEl.className = 'train-face ' + type;
+  trainEl.classList.add('visible');
+
+  const [minDur, maxDur] = config.visibleDuration;
+  const duration = (minDur + Math.random() * (maxDur - minDur)) * speedMultiplier;
+
+  const hideTimer = setTimeout(() => {
+    hideTrain(holeIndex, false);
+  }, duration);
+
+  activeTrains.set(holeIndex, { type, hideTimer });
+}
+
+function hideTrain(holeIndex, wasHit) {
+  const data = activeTrains.get(holeIndex);
+  if (!data) return;
+
+  clearTimeout(data.hideTimer);
+  activeTrains.delete(holeIndex);
+
+  const holeEl = grid.children[holeIndex];
+  const trainEl = holeEl.querySelector('.train');
+  trainEl.classList.remove('visible');
+
+  if (!wasHit && data.type !== 'bomb') {
+    combo = 0;
+    updateHUD();
+  }
+}
+
+function whackTrain(holeIndex) {
+  if (!gameActive) return;
+
+  const data = activeTrains.get(holeIndex);
+  totalTaps++;
+
+  if (!data) return;
+
+  const type = data.type;
+  hideTrain(holeIndex, true);
+
+  const holeEl = grid.children[holeIndex];
+  const feedback = holeEl.querySelector('.hit-feedback');
+
+  if (type === 'bomb') {
+    score = Math.max(0, score - config.bombPenalty);
+    combo = 0;
+    showFeedback(feedback, `-${config.bombPenalty}`, '#ff4444');
+  } else if (type === 'golden') {
+    const points = config.goldenBonus + (combo * 2);
+    score += points;
+    combo++;
+    totalHits++;
+    showFeedback(feedback, `+${points}`, '#ffd700');
+  } else {
+    const comboBonus = Math.floor(combo * 2);
+    const points = BASE_POINTS + comboBonus;
+    score += points;
+    combo++;
+    totalHits++;
+    showFeedback(feedback, `+${points}`, '#00ff88');
+  }
+
+  if (combo > bestCombo) bestCombo = combo;
+  updateStreakBanner();
+  updateHUD();
+}
+
+function showFeedback(el, text, color) {
+  el.textContent = text;
+  el.style.color = color;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 600);
+}
+
+function updateHUD() {
+  document.getElementById('hud-score').textContent = score;
+  document.getElementById('hud-combo').textContent = combo > 0 ? combo + 'x' : '0x';
+  document.getElementById('hud-timer').textContent = timeLeft;
+}
+
+let streakTimeout = null;
+function updateStreakBanner() {
+  if (combo >= 3) {
+    let msg = combo + 'x COMBO!';
+    if (combo >= 10) msg = combo + 'x UNSTOPPABLE!';
+    else if (combo >= 7) msg = combo + 'x ON FIRE!';
+    else if (combo >= 5) msg = combo + 'x STREAK!';
+    streakBanner.textContent = msg;
+    streakBanner.classList.add('show');
+    clearTimeout(streakTimeout);
+    streakTimeout = setTimeout(() => streakBanner.classList.remove('show'), 1500);
+  }
+}
+
+function startTimer() {
+  timeLeft = GAME_DURATION;
+  let elapsed = 0;
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    elapsed++;
+    updateHUD();
+
+    if (elapsed % config.speedUpInterval === 0) {
+      speedMultiplier *= config.speedUpFactor;
+    }
+
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
+function startCountdown() {
+  showScreen(countdownScreen);
+  let count = 3;
+  countdownNumber.textContent = count;
+
+  const countInterval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      countdownNumber.textContent = count;
+    } else {
+      clearInterval(countInterval);
+      startGame();
+    }
+  }, 800);
+}
+
+function startGame() {
+  score = 0;
+  combo = 0;
+  bestCombo = 0;
+  totalHits = 0;
+  totalTaps = 0;
+  speedMultiplier = 1;
+  lastHole = -1;
+  activeTrains.clear();
+  gameActive = true;
+
+  config = DIFFICULTY[selectedDifficulty];
+  buildGrid();
+  showScreen(playScreen);
+  hud.classList.add('visible');
+  updateHUD();
+  startTimer();
+  spawnTrain();
+}
+
+function endGame() {
+  gameActive = false;
+  clearInterval(timerInterval);
+  clearTimeout(spawnTimeout);
+  hud.classList.remove('visible');
+  streakBanner.classList.remove('show');
+
+  activeTrains.forEach((_, hole) => {
+    const holeEl = grid.children[hole];
+    const trainEl = holeEl.querySelector('.train');
+    trainEl.classList.remove('visible');
+  });
+  activeTrains.clear();
+
+  document.getElementById('final-score').textContent = score;
+  document.getElementById('final-hits').textContent = totalHits;
+  document.getElementById('final-combo').textContent = bestCombo + 'x';
+
+  const accuracy = totalTaps > 0 ? Math.round((totalHits / totalTaps) * 100) : 0;
+  document.getElementById('final-accuracy').textContent = accuracy + '%';
+
+  const isNewHigh = saveHighScore(selectedDifficulty, score);
+  const newHighEl = document.getElementById('new-high-score');
+  if (isNewHigh) {
+    newHighEl.classList.add('show');
+  } else {
+    newHighEl.classList.remove('show');
+  }
+
+  showScreen(gameoverScreen);
+}
+
+function getHighScores() {
+  try {
+    return JSON.parse(localStorage.getItem('shinkansen_highscores')) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveHighScore(difficulty, newScore) {
+  const scores = getHighScores();
+  const current = scores[difficulty] || 0;
+  if (newScore > current) {
+    scores[difficulty] = newScore;
+    localStorage.setItem('shinkansen_highscores', JSON.stringify(scores));
+    return true;
+  }
+  return false;
+}
+
+function updateHighScoreDisplay() {
+  const scores = getHighScores();
+  const parts = [];
+  for (const d of ['easy', 'medium', 'hard']) {
+    if (scores[d]) {
+      parts.push(`${DIFFICULTY[d].label}: <span>${scores[d]}</span>`);
+    }
+  }
+  if (parts.length > 0) {
+    highScoreArea.innerHTML = 'High Scores<br>' + parts.join(' &middot; ');
+  } else {
+    highScoreArea.innerHTML = '';
+  }
+}
+
+// --- Event Listeners ---
+
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedDifficulty = btn.dataset.diff;
+    updateHighScoreDisplay();
+  });
+});
+
+document.getElementById('start-btn').addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  startCountdown();
+});
+
+document.getElementById('replay-btn').addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  startCountdown();
+});
+
+document.getElementById('menu-btn').addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  updateHighScoreDisplay();
+  showScreen(startScreen);
+});
+
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('gesturechange', e => e.preventDefault());
+document.addEventListener('gestureend', e => e.preventDefault());
+
+buildGrid();
+updateHighScoreDisplay();
+</script>
+</body>
+</html>
