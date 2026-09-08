@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Game Launcher</title>
+<title>Asher's Playroom</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
   html,body{
@@ -27,6 +27,7 @@
     letter-spacing:.06em;
     text-transform:uppercase;
   }
+  .tagline{margin-top:-1.4vh;color:rgba(255,255,255,.48);font-size:1.65vh;letter-spacing:.08em}
   .grid{
     display:grid;
     grid-template-columns:repeat(5,1fr);
@@ -54,6 +55,10 @@
     transform:scale(.94);
     box-shadow:0 2px 8px rgba(0,0,0,.3);
   }
+  .btn.last{border:2px solid #ffe783;box-shadow:0 0 0 3px rgba(255,231,131,.15),0 6px 24px rgba(0,0,0,.35)}
+  .btn.last::after{content:'LAST PLAYED';position:absolute;left:.7vh;top:.7vh;
+    background:#ffe783;color:#302600;border-radius:999px;padding:.35vh .65vh;
+    font-size:.85vh;font-weight:900;letter-spacing:.06em}
   .btn svg{
     width:15vh;height:15vh;
     stroke:rgba(255,255,255,.92);
@@ -74,6 +79,8 @@
     font-size:2.4vh;
     filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
   }
+  .kind{position:absolute;top:.7vh;right:.7vh;border-radius:999px;padding:.4vh .7vh;
+    background:rgba(0,0,0,.35);color:#fff;font-size:.9vh;font-weight:800;letter-spacing:.06em}
 
   .c1{background:linear-gradient(145deg,#c0392b,#962d22);}
   .c2{background:linear-gradient(145deg,#d4a853,#b8912e);}
@@ -84,40 +91,20 @@
   .c7{background:linear-gradient(145deg,#e67e22,#c0691c);}
   .c8{background:linear-gradient(145deg,#c0392b,#8e2c20);}
   .c9{background:linear-gradient(145deg,#3498db,#2176ad);}
-  .c10{background:linear-gradient(145deg,#00b4d8,#0077b6);}
-
-  #reload-btn{
-    position:fixed;top:1.4vh;right:1.4vh;
-    width:5vh;height:5vh;
-    border-radius:50%;border:none;
-    background:rgba(255,255,255,.1);
-    cursor:pointer;z-index:20;
-    display:flex;align-items:center;justify-content:center;
-    transition:transform .2s;
-    -webkit-tap-highlight-color:transparent;
-  }
-  #reload-btn:active{transform:rotate(180deg) scale(.9);}
-  #reload-btn svg{
-    width:2.6vh;height:2.6vh;
-    stroke:rgba(255,255,255,.6);stroke-width:2;
-    stroke-linecap:round;stroke-linejoin:round;fill:none;
-  }
 
   @media screen and (orientation:portrait){
     .grid{
       grid-template-columns:repeat(3,1fr);
-      grid-template-rows:repeat(4,1fr);
+      grid-template-rows:repeat(3,1fr);
       max-width:600px;
     }
   }
 </style>
 </head>
 <body>
-<button id="reload-btn" onclick="location.reload(true)">
-  <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
-</button>
 <div class="wrap">
-  <h1>Pick a Game</h1>
+  <h1>Asher's Playroom</h1>
+  <p class="tagline">PICK AN ADVENTURE</p>
   <div class="grid">
 
     <a class="btn c1" href="airplane.html">
@@ -139,17 +126,19 @@
 
     <a class="btn c4" href="e5.html">
       <svg viewBox="0 0 24 24"><path d="M4 15l0 4l4 0"/><path d="M20 15l0 4l-4 0"/><path d="M4 11l16 0"/><path d="M4 15l16 0"/><rect x="4" y="5" width="16" height="10" rx="2"/><circle cx="8" cy="18" r="1"/><circle cx="16" cy="18" r="1"/><path d="M9 8l2 0"/><path d="M13 8l2 0"/></svg>
-      <span class="label">Shinkansen<br>Crossing</span>
+      <span class="label">Shinkansen<br>Adventure</span>
     </a>
 
     <a class="btn c5" href="mtr.html">
+      <span class="kind">↔ LANDSCAPE</span>
       <svg viewBox="0 0 24 24"><path d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/><path d="M9 6v12"/><path d="M15 6v12"/><path d="M6 20l-2 2"/><path d="M18 20l2 2"/></svg>
       <span class="label">MTR Doors</span>
     </a>
 
     <a class="btn c6" href="panel.html">
+      <span class="kind">DISPLAY</span>
       <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M6 16h.01"/><path d="M10 16h.01"/><path d="M14 16h.01"/><path d="M18 16h.01"/></svg>
-      <span class="label">Shinkansen<br>LED Panel</span>
+      <span class="label">Shinkansen<br>LED Screensaver</span>
     </a>
 
     <a class="btn c7" href="rocket.html">
@@ -164,15 +153,18 @@
 
     <a class="btn c9" href="neon.html">
       <svg viewBox="0 0 24 24"><line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/><line x1="15" y1="12" x2="15.01" y2="12"/><line x1="18" y1="10" x2="18.01" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/></svg>
-      <span class="label">Obstacle<br>Dodger</span>
-    </a>
-
-    <a class="btn c10" href="shinkansen.html">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="4"/><path d="M12 10v4"/><path d="M8 20l4-6 4 6"/><path d="M5 14l3-2"/><path d="M19 14l-3-2"/><path d="M3 10l2-1.5"/><path d="M21 10l-2-1.5"/><path d="M7 3l-1-2"/><path d="M17 3l1-2"/></svg>
-      <span class="label">Whack-a-<br>Train</span>
+      <span class="label">Little Star<br>Run</span>
     </a>
 
   </div>
 </div>
+<script>
+const gameButtons=[...document.querySelectorAll('.btn[href]')];
+const lastPlayed=localStorage.getItem('lastGame');
+gameButtons.forEach(button=>{
+  if(button.getAttribute('href')===lastPlayed)button.classList.add('last');
+  button.addEventListener('click',()=>localStorage.setItem('lastGame',button.getAttribute('href')));
+});
+</script>
 </body>
 </html>
