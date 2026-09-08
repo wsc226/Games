@@ -14,6 +14,12 @@ html,body{width:100%;height:100dvh;overflow:hidden;background:#0a0d14;
 button{border:none;outline:none;background:none;-webkit-tap-highlight-color:transparent;cursor:pointer;font-family:inherit}
 .screen{position:absolute;inset:0;overflow:hidden}
 .screen.gone{display:none!important}
+.corner-tools{position:absolute;top:10px;left:10px;z-index:80;display:flex;gap:8px}
+.corner-btn{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  color:#fff;background:rgba(4,12,28,.78);border:2px solid rgba(255,255,255,.34);
+  box-shadow:0 3px 12px rgba(0,0,0,.36);font-size:22px;font-weight:900;backdrop-filter:blur(6px)}
+.corner-btn:active{transform:scale(.9)}
+.corner-btn[aria-pressed="true"]{background:#8b2945;color:#fff}
 
 /* ═══ AIRLINE SELECTOR ═══ */
 #scr-air{background:
@@ -83,7 +89,7 @@ button{border:none;outline:none;background:none;-webkit-tap-highlight-color:tran
 /* ═══ HUD ═══ */
 .hud{position:absolute;z-index:12;pointer-events:none;opacity:0;transition:opacity .5s}
 .hud.hs{opacity:1}
-#hud-alt{top:12px;left:12px;font-family:'SF Mono',Menlo,monospace;font-size:22px;font-weight:700;
+#hud-alt{top:12px;left:122px;font-family:'SF Mono',Menlo,monospace;font-size:22px;font-weight:700;
   color:#00e880;letter-spacing:2px;background:rgba(0,0,0,.55);padding:5px 12px;border-radius:6px}
 #hud-cmp{top:10px;right:104px;text-align:center}
 #cmp-b{font-family:Menlo,monospace;font-size:17px;font-weight:700;color:#fff;margin-top:2px}
@@ -243,12 +249,17 @@ button{border:none;outline:none;background:none;-webkit-tap-highlight-color:tran
   color:#3a352d;padding:10px 30px;min-height:44px;border:2px solid #6a6459;border-radius:8px}
 .korry.done .kbar-t{color:#8a8a55}
 .korry.done{opacity:.55;pointer-events:none}
+@media (max-width:600px){
+  #hud-alt{top:64px;left:8px;font-size:16px;padding:4px 8px}
+  #hud-cmp{top:94px;right:10px}
+}
 </style>
 </head>
 <body>
 
 <!-- SELECTOR -->
 <div class="screen" id="scr-air">
+  <div class="corner-tools"><button class="corner-btn" id="nav-air" aria-label="Back to game menu">⌂</button></div>
   <div id="air-h">CHOOSE YOUR AIRLINE</div>
   <div id="air-sub">BOEING 747 · CAPTAIN ASHER</div>
   <div id="a-grid"></div>
@@ -257,6 +268,10 @@ button{border:none;outline:none;background:none;-webkit-tap-highlight-color:tran
 <!-- SIM -->
 <div class="screen gone" id="scr-sim">
   <div id="scene">
+    <div class="corner-tools">
+      <button class="corner-btn" id="nav-sim" aria-label="Back to game menu">⌂</button>
+      <button class="corner-btn" id="sound-sim" aria-label="Turn sound off" aria-pressed="false">🔊</button>
+    </div>
     <div id="sky"></div>
     <div id="stars"></div>
     <div id="horizon"></div>
@@ -417,13 +432,14 @@ let wrongN={},wrongLast=null,fbT=null;
 
 /* ═══ AUDIO ═══ */
 let A=null;
-function initA(){if(!A)A=new(window.AudioContext||window.webkitAudioContext)();if(A.state==='suspended')A.resume()}
-function tone(f,d,ty='sine',g=.14,f2=null){if(!A)return;
+let muted=localStorage.getItem('airplaneMuted')==='1';
+function initA(){if(!A)A=new(window.AudioContext||window.webkitAudioContext)();if(A.state==='suspended'&&!muted)A.resume()}
+function tone(f,d,ty='sine',g=.14,f2=null){if(!A||muted)return;
  const o=A.createOscillator(),gn=A.createGain();o.connect(gn);gn.connect(A.destination);
  o.type=ty;o.frequency.value=f;if(f2)o.frequency.linearRampToValueAtTime(f2,A.currentTime+d);
  gn.gain.setValueAtTime(g,A.currentTime);gn.gain.exponentialRampToValueAtTime(.001,A.currentTime+d);
  o.start();o.stop(A.currentTime+d+.02)}
-function noisy(d,g=.1,fc=800){if(!A)return;
+function noisy(d,g=.1,fc=800){if(!A||muted)return;
  const sz=Math.ceil(A.sampleRate*d),buf=A.createBuffer(1,sz,A.sampleRate),dt=buf.getChannelData(0);
  for(let i=0;i<sz;i++)dt[i]=Math.random()*2-1;
  const s=A.createBufferSource(),f=A.createBiquadFilter(),gn=A.createGain();
@@ -431,7 +447,7 @@ function noisy(d,g=.1,fc=800){if(!A)return;
  gn.gain.setValueAtTime(g,A.currentTime);gn.gain.exponentialRampToValueAtTime(.001,A.currentTime+d);
  s.start();s.stop(A.currentTime+d+.02)}
 let humO=null,humG=null;
-function humOn(){if(!A||humO)return;humG=A.createGain();humG.gain.value=0;humG.connect(A.destination);
+function humOn(){if(!A||humO||muted)return;humG=A.createGain();humG.gain.value=0;humG.connect(A.destination);
  humO=A.createOscillator();humO.type='sawtooth';humO.frequency.value=110;humO.connect(humG);humO.start();
  humG.gain.linearRampToValueAtTime(.05,A.currentTime+2)}
 function humOff(){if(!humG)return;humG.gain.linearRampToValueAtTime(0,A.currentTime+1.5);
@@ -451,14 +467,50 @@ const SFX={
  ding:()=>{tone(880,.2,'sine',.17)},
 };
 
-/* ═══ SPEECH ═══ */
+/* ═══ ANNOUNCEMENTS ═══
+   Drop future OmniVoice files into audio/airplane and add their paths here.
+   Airline-specific clips win; "default" clips work for every airline. */
+const AIRPLANE_AUDIO={version:1,clips:{
+ // 'default.fa.doors_closed':'audio/airplane/default/fa/doors_closed.mp3',
+ // 'default.fa.takeoff':'audio/airplane/default/fa/takeoff.mp3',
+ // 'default.pilot.welcome':'audio/airplane/default/pilot/welcome.mp3',
+ // 'default.pilot.cruise':'audio/airplane/default/pilot/cruise.mp3',
+ // 'default.tower.takeoff_clearance':'audio/airplane/default/tower/takeoff_clearance.mp3',
+ // 'cx.pilot.welcome':'audio/airplane/cx/pilot/welcome.mp3'
+}};
+const voiceEl=new Audio();
+let activeVoiceEnd=null,activeVoiceSeq=0;
+function voiceDone(seq=activeVoiceSeq){if(seq!==activeVoiceSeq)return;const fn=activeVoiceEnd;activeVoiceEnd=null;if(fn)fn()}
 function speak(t,rate=.88,pitch=1,cb=null){
- if(!window.speechSynthesis){if(cb)setTimeout(cb,1200);return}
+ const seq=++activeVoiceSeq;
+ activeVoiceEnd=cb;
+ if(muted){setTimeout(()=>voiceDone(seq),260);return}
+ if(!window.speechSynthesis){setTimeout(()=>voiceDone(seq),1200);return}
  window.speechSynthesis.cancel();
  const u=new SpeechSynthesisUtterance(t);u.rate=rate;u.pitch=pitch;
- u.onend=()=>{cb&&cb()};u.onerror=()=>{cb&&cb()};
+ u.onend=()=>voiceDone(seq);u.onerror=()=>voiceDone(seq);
  window.speechSynthesis.speak(u)}
-const atc=(t,cb)=>speak(t,1.08,.95,cb);
+function playVoice(role,event,text,rate=.88,pitch=1,cb=null){
+ const airlineKey=AL?.id||'default';
+ const src=AIRPLANE_AUDIO.clips[`${airlineKey}.${role}.${event}`]||
+   AIRPLANE_AUDIO.clips[`default.${role}.${event}`];
+ if(!src){speak(text,rate,pitch,cb);return}
+ const seq=++activeVoiceSeq;activeVoiceEnd=cb;
+ if(muted){setTimeout(()=>voiceDone(seq),260);return}
+ try{speechSynthesis.cancel()}catch(e){}
+ voiceEl.pause();voiceEl.src=src;voiceEl.currentTime=0;
+ let fellBack=false;
+ const fallback=()=>{if(fellBack||seq!==activeVoiceSeq)return;fellBack=true;speak(text,rate,pitch,cb)};
+ voiceEl.onended=()=>voiceDone(seq);voiceEl.onerror=fallback;
+ voiceEl.play().catch(fallback);
+}
+function setMuted(next){
+ muted=next;localStorage.setItem('airplaneMuted',muted?'1':'0');
+ const b=$('sound-sim');if(b){b.textContent=muted?'🔇':'🔊';b.setAttribute('aria-pressed',String(muted));
+  b.setAttribute('aria-label',muted?'Turn sound on':'Turn sound off')}
+ if(muted){humOff();voiceEl.pause();try{speechSynthesis.cancel()}catch(e){}voiceDone();try{A&&A.suspend()}catch(e){}}
+ else{try{A&&A.resume()}catch(e){}}
+}
 const tod=()=>{const h=new Date().getHours();return h<12&&h>=5?'morning':h<18?'afternoon':'evening'};
 
 /* ═══ 747 SVG ═══ */
@@ -650,7 +702,8 @@ function populate(){
  $('hud-cmp').innerHTML=cmpSVG(AL.hdg)+`<div id="cmp-b">${AL.hdg}°</div><div id="cmp-p">${AL.dir}</div>`;
  $('badge').innerHTML=`<img src="${LOGOS[AL.id]}" alt="">`;
  $('hud-gate').textContent='GATE '+AL.gate;
- $('end-sil').innerHTML=ac747(AL,{gear:false,still:true}).replace(/<\/?svg[^>]*>/g,'');
+ $('end-sil').innerHTML=ac747(AL,{gear:false,still:true})
+  .replace(/<\/?svg[^>]*>/g,'').replace(/\sid="[^"]+"/g,'');
  let st='<style>@keyframes twk{from{opacity:.15}to{opacity:.8}}</style>';
  for(let i=0;i<50;i++)st+=`<svg style="position:absolute;left:${Math.random()*100}%;top:${Math.random()*70}%" width="4" height="4"><circle cx="2" cy="2" r="${.8+Math.random()*1.4}" fill="#fff" style="animation:twk ${1.3+Math.random()}s ease-in-out infinite alternate"/></svg>`;
  $('stars').innerHTML=st;
@@ -774,7 +827,7 @@ function enterGate(){
  requestAnimationFrame(()=>{u.style.transition=''})}
 function doDoors(){
  goTo(S.DOORS);lockAll();
- speak('Cabin doors are now closed and cross-checked. Please make sure your seatbelt is fastened.',.88,1,()=>{
+ playVoice('fa','doors_closed','Cabin doors are now closed and cross-checked. Please make sure your seatbelt is fastened.',.88,1,()=>{
   updDoor(false);
   const jb=document.getElementById('jb');
   if(jb){jb.style.transform='translateX(118px)';jb.style.opacity='0'}
@@ -798,7 +851,7 @@ function pushDone(){
  goTo(S.WELRDY)}
 function doWelcome(){
  goTo(S.PRETAXI);lockAll();
- speak(`Good ${tod()}, ladies and gentlemen. Welcome aboard ${AL.name}. Our flying time today will be smooth and easy. We'll be on our way shortly.`,.88,1,()=>{
+ playVoice('pilot','welcome',`Good ${tod()}, ladies and gentlemen. Welcome aboard ${AL.name}. Our flying time today will be smooth and easy. We'll be on our way shortly.`,.88,1,()=>{
   $('taxi-ov').classList.add('show');
   setTimeout(()=>{
    const u=$('push-unit');
@@ -811,9 +864,9 @@ function doWelcome(){
     setTimeout(()=>goTo(S.HOLD),400)},1300)},900)})}
 function doTakeoffAnn(){
  goTo(S.TORDY);lockAll();
- speak('Cabin crew, please be seated for takeoff.',.88,1,()=>{
+ playVoice('fa','takeoff','Cabin crew, please be seated for takeoff.',.88,1,()=>{
   setTimeout(()=>{
-   atc(`${AL.cs} ${AL.flt}, runway ${RWY_SP[AL.rwy]||AL.rwy}, cleared for takeoff.`,()=>{
+   playVoice('tower','takeoff_clearance',`${AL.cs} ${AL.flt}, runway ${RWY_SP[AL.rwy]||AL.rwy}, cleared for takeoff.`,1.08,.95,()=>{
     done.takeoff=true;fb('GO','ok');goTo(S.TORDY)})},1200)})}
 
 /* PUSH hold */
@@ -942,7 +995,7 @@ function hACruise(e){e.preventDefault();
  if(done.cruise||ST!==S.CRUISE)return;
  done.cruise=true;closeDrawer();
  lockAll();
- speak('We have now reached our cruising altitude of thirty five thousand feet. The fasten seatbelt sign is now off. Sit back, relax, and enjoy the flight.',.88,1,()=>{
+ playVoice('pilot','cruise','We have now reached our cruising altitude of thirty five thousand feet. The fasten seatbelt sign is now off. Sit back, relax, and enjoy the flight.',.88,1,()=>{
   beltOn=false;updBelt();
   goTo(S.END);
   setTimeout(()=>$('end-ov').classList.add('show'),800)})}
@@ -959,7 +1012,7 @@ function resetAll(){
  [altT,pushT,thrustT,decayT,beepT].forEach(t=>clearInterval(t));
  altT=pushT=thrustT=decayT=beepT=null;
  pushHeld=thrustHeld=false;wrongN={};wrongLast=null;
- humOff();try{speechSynthesis.cancel()}catch(e){}
+ humOff();voiceEl.pause();activeVoiceSeq++;activeVoiceEnd=null;try{speechSynthesis.cancel()}catch(e){}
  $('fb').className='';$('rotate-b').classList.remove('show');
  $('taxi-ov').classList.remove('show');$('end-ov').classList.remove('show');
  $('spd-wrap').classList.remove('show');
@@ -987,6 +1040,8 @@ function bindAll(){
  tap($('ad-close'),()=>closeDrawer());
  tap($('rotate-b'),hRotate);
  tap($('b-fly'),hFly);tap($('b-new'),hNew);
+ tap($('nav-sim'),()=>location.href='index.html');
+ tap($('sound-sim'),()=>{initA();setMuted(!muted)});
  tap($('m-easy'),()=>setLvl('easy'));tap($('m-norm'),()=>setLvl('normal'))}
 let bound=false;
 function setLvl(l){level=l;
@@ -1009,6 +1064,8 @@ function pick(al){
  populate();
  if(!bound){bindAll();bound=true}
  setTimeout(enterGate,150)}
+$('nav-air').addEventListener('click',()=>location.href='index.html');
+setMuted(muted);
 grid();
 </script>
 </body>
