@@ -1,0 +1,745 @@
+{
+  "_version": 1,
+  "_status": "draft - English only, ready for voice cloning",
+  "_readme": "All spoken lines for airplane-v2.html. Edit 'lines' (the templates). Then run `node tools/build_airplane_v2.mjs` - it regenerates 'renders' (every final sentence with its target audio file) and re-embeds this file into airplane-v2.html. Any render whose audio file exists is played; otherwise the game falls back to the browser's text-to-speech using the same text.",
+  "_how_to_record": "Clone each voice in 'voices', then render every entry in 'renders' to its 'file' path (mp3 or wav - keep the extension in the path in sync). 'common' files are shared by all airlines; files under an airline id folder (cx, jl, ...) contain that airline's name, callsign or flight number. ATC lines marked prefix/suffix 'callsign' are played as two clips back to back: the airline's callsign clip, then the generic instruction.",
+  "voices": {
+    "captain": {
+      "description": "The player's captain. Warm, calm, friendly PA voice.",
+      "rate": 0.9,
+      "pitch": 1
+    },
+    "first_officer": {
+      "description": "Co-pilot in the right seat. Short crisp cockpit callouts.",
+      "rate": 1,
+      "pitch": 1.05
+    },
+    "purser": {
+      "description": "Lead flight attendant. Bright, polite cabin PA voice.",
+      "rate": 0.92,
+      "pitch": 1.15
+    },
+    "ramp": {
+      "description": "Ground crew on the pushback headset. Casual, slightly radio-filtered.",
+      "rate": 1,
+      "pitch": 0.95
+    },
+    "ground": {
+      "description": "Airport ground controller (taxi). Fast radio voice.",
+      "rate": 1.08,
+      "pitch": 0.95
+    },
+    "tower": {
+      "description": "Airport tower controller. Fast radio voice.",
+      "rate": 1.08,
+      "pitch": 0.95
+    },
+    "center": {
+      "description": "En-route (cruise) air traffic controller for the Sky Challenge. Calm radio voice.",
+      "rate": 1.04,
+      "pitch": 0.92
+    },
+    "tcas": {
+      "description": "The airplane's automatic collision-avoidance voice. Flat, synthetic, urgent.",
+      "rate": 1.1,
+      "pitch": 0.8
+    }
+  },
+  "variables": {
+    "airline": "Airline name, e.g. 'Cathay Pacific'",
+    "callsign": "Radio callsign, e.g. 'Cathay'",
+    "flight_spoken": "Flight number read digit by digit, e.g. 'four five one'",
+    "runway_spoken": "Runway read out, e.g. 'two five left'",
+    "gate": "Gate, e.g. '23'",
+    "captain_name": "Asher",
+    "fl_spoken": "Flight level read digit by digit, e.g. 'three seven zero'"
+  },
+  "variants": {
+    "fl": [
+      290,
+      310,
+      330,
+      350,
+      370,
+      390
+    ]
+  },
+  "sfx": {
+    "pa_chime": {
+      "file": "assets/airplane/sfx/pa_chime.mp3",
+      "loop": false,
+      "description": "Two-tone 'bing-bong' before a cabin PA announcement.",
+      "search": "airplane chime, PA chime, cabin chime"
+    },
+    "seatbelt_ding": {
+      "file": "assets/airplane/sfx/seatbelt_ding.mp3",
+      "loop": false,
+      "description": "Single soft ding when the seatbelt sign turns on or off.",
+      "search": "seatbelt sign ding, airplane ding"
+    },
+    "call_bell": {
+      "file": "assets/airplane/sfx/call_bell.mp3",
+      "loop": false,
+      "description": "Flight attendant call button high ding (used for success).",
+      "search": "flight attendant call button"
+    },
+    "door_close": {
+      "file": "assets/airplane/sfx/door_close.mp3",
+      "loop": false,
+      "description": "Heavy aircraft door closing thunk.",
+      "search": "heavy door close, airplane door"
+    },
+    "engine_start": {
+      "file": "assets/airplane/sfx/engine_start.mp3",
+      "loop": false,
+      "description": "Jet engine spool-up (about 2-4 s).",
+      "search": "jet engine start, turbine spool up"
+    },
+    "engine_loop": {
+      "file": "assets/airplane/sfx/engine_loop.mp3",
+      "loop": true,
+      "description": "Seamless jet engine roar loop. Volume follows thrust.",
+      "search": "jet engine loop, airplane interior loop"
+    },
+    "cabin_ambience": {
+      "file": "assets/airplane/sfx/cabin_ambience.mp3",
+      "loop": true,
+      "description": "Quiet cruise cabin hum loop (cabin, window and cockpit views).",
+      "search": "airplane cabin ambience, cabin noise"
+    },
+    "pushback_beep": {
+      "file": "assets/airplane/sfx/pushback_beep.mp3",
+      "loop": false,
+      "description": "Short tug reversing beep.",
+      "search": "truck reversing beep"
+    },
+    "gear_motion": {
+      "file": "assets/airplane/sfx/gear_motion.mp3",
+      "loop": false,
+      "description": "Hydraulic whine + clunk of landing gear moving.",
+      "search": "landing gear retract, hydraulic"
+    },
+    "flaps_motion": {
+      "file": "assets/airplane/sfx/flaps_motion.mp3",
+      "loop": false,
+      "description": "Electric/hydraulic whir of flaps moving.",
+      "search": "flaps motor, servo whir"
+    },
+    "gear_horn": {
+      "file": "assets/airplane/sfx/gear_horn.mp3",
+      "loop": false,
+      "description": "Warning horn when gear can't move yet.",
+      "search": "cockpit warning horn"
+    },
+    "rotate_cue": {
+      "file": "assets/airplane/sfx/rotate_cue.mp3",
+      "loop": false,
+      "description": "Rising 3-note cue when it's time to rotate.",
+      "search": "game rising notification"
+    },
+    "success": {
+      "file": "assets/airplane/sfx/success.mp3",
+      "loop": false,
+      "description": "Short happy confirmation.",
+      "search": "success notification, positive ui"
+    },
+    "success_big": {
+      "file": "assets/airplane/sfx/success_big.mp3",
+      "loop": false,
+      "description": "Bigger fanfare for milestones (doors sealed, airborne).",
+      "search": "level complete jingle short"
+    },
+    "cruise_jingle": {
+      "file": "assets/airplane/sfx/cruise_jingle.mp3",
+      "loop": false,
+      "description": "Reaching cruise / challenge complete.",
+      "search": "achievement jingle"
+    },
+    "error": {
+      "file": "assets/airplane/sfx/error.mp3",
+      "loop": false,
+      "description": "Gentle 'not yet' buzz for wrong button.",
+      "search": "ui error soft"
+    },
+    "thunder": {
+      "file": "assets/airplane/sfx/thunder.mp3",
+      "loop": false,
+      "description": "Distant thunder near storm clouds (Sky Challenge).",
+      "search": "distant thunder rumble"
+    },
+    "turbulence": {
+      "file": "assets/airplane/sfx/turbulence.mp3",
+      "loop": true,
+      "description": "Rattling/buffeting loop while inside a storm.",
+      "search": "airplane turbulence rattle"
+    },
+    "master_caution": {
+      "file": "assets/airplane/sfx/master_caution.mp3",
+      "loop": false,
+      "description": "Cockpit caution chime (TCAS traffic / failed challenge).",
+      "search": "cockpit caution chime"
+    }
+  },
+  "lines": [
+    {
+      "id": "takeoff.purser.boarding_welcome",
+      "mode": "takeoff",
+      "role": "purser",
+      "phase": "gate",
+      "trigger": "Plays when the game starts at the gate.",
+      "chime": true,
+      "per_airline": true,
+      "text": "Good day, and welcome aboard {airline}. Please find your seat and put your bags in the overhead bins."
+    },
+    {
+      "id": "takeoff.purser.doors_closed",
+      "mode": "takeoff",
+      "role": "purser",
+      "phase": "gate",
+      "trigger": "Player presses CABIN PA > DOORS.",
+      "chime": true,
+      "text": "Ladies and gentlemen, the cabin doors are now closed. Please make sure your seatbelt is fastened."
+    },
+    {
+      "id": "takeoff.purser.arm_doors",
+      "mode": "takeoff",
+      "role": "purser",
+      "phase": "gate",
+      "trigger": "Right after doors_closed.",
+      "text": "Cabin crew, arm doors and cross-check."
+    },
+    {
+      "id": "takeoff.ramp.ready_for_push",
+      "mode": "takeoff",
+      "role": "ramp",
+      "phase": "gate",
+      "trigger": "Jet bridge pulled away, tug connected.",
+      "text": "Cockpit, ground. Tow bar connected. Ready for pushback when you are, Captain."
+    },
+    {
+      "id": "takeoff.ramp.pushing_back",
+      "mode": "takeoff",
+      "role": "ramp",
+      "phase": "pushback",
+      "trigger": "First time the player holds PUSH BACK.",
+      "text": "Brakes released. Pushing back now."
+    },
+    {
+      "id": "takeoff.ramp.push_complete",
+      "mode": "takeoff",
+      "role": "ramp",
+      "phase": "pushback",
+      "trigger": "Pushback reaches 100%.",
+      "text": "Pushback complete. Set parking brake. Tow bar disconnected. Have a great flight!"
+    },
+    {
+      "id": "takeoff.captain.welcome",
+      "mode": "takeoff",
+      "role": "captain",
+      "phase": "pushback",
+      "trigger": "Player presses CABIN PA > WELCOME.",
+      "chime": true,
+      "per_airline": true,
+      "text": "Ladies and gentlemen, this is Captain {captain_name} speaking. Welcome aboard {airline} flight {flight_spoken}. We will be on our way shortly. Sit back and enjoy the flight."
+    },
+    {
+      "id": "takeoff.ground.taxi_clearance",
+      "mode": "takeoff",
+      "role": "ground",
+      "phase": "taxi",
+      "trigger": "Start of the taxi.",
+      "per_airline": true,
+      "text": "{callsign} {flight_spoken}, taxi to runway {runway_spoken} via Alpha."
+    },
+    {
+      "id": "takeoff.purser.safety_check",
+      "mode": "takeoff",
+      "role": "purser",
+      "phase": "taxi",
+      "trigger": "During the taxi.",
+      "chime": true,
+      "text": "Please make sure your seatbelt is fastened, your seat back is upright, and your tray table is stowed. Thank you."
+    },
+    {
+      "id": "takeoff.tower.line_up",
+      "mode": "takeoff",
+      "role": "tower",
+      "phase": "runway",
+      "trigger": "Airplane lines up on the runway.",
+      "per_airline": true,
+      "text": "{callsign} {flight_spoken}, runway {runway_spoken}, line up and wait."
+    },
+    {
+      "id": "takeoff.first_officer.flaps_10",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "runway",
+      "trigger": "Player sets FLAPS 10.",
+      "text": "Flaps ten. Green light."
+    },
+    {
+      "id": "takeoff.captain.crew_seats",
+      "mode": "takeoff",
+      "role": "captain",
+      "phase": "runway",
+      "trigger": "Player presses CABIN PA > TAKEOFF.",
+      "chime": true,
+      "text": "Cabin crew, please be seated for takeoff."
+    },
+    {
+      "id": "takeoff.tower.takeoff_clearance",
+      "mode": "takeoff",
+      "role": "tower",
+      "phase": "runway",
+      "trigger": "After crew_seats.",
+      "per_airline": true,
+      "text": "{callsign} {flight_spoken}, wind calm, runway {runway_spoken}, cleared for takeoff."
+    },
+    {
+      "id": "takeoff.first_officer.thrust_set",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "takeoff_roll",
+      "trigger": "Speed passes 25%.",
+      "text": "Thrust set."
+    },
+    {
+      "id": "takeoff.first_officer.eighty_knots",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "takeoff_roll",
+      "trigger": "Speed passes 45%.",
+      "text": "Eighty knots."
+    },
+    {
+      "id": "takeoff.first_officer.v1",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "takeoff_roll",
+      "trigger": "Speed passes 68%.",
+      "text": "V one."
+    },
+    {
+      "id": "takeoff.first_officer.rotate",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "takeoff_roll",
+      "trigger": "Speed enters the green Vr zone.",
+      "text": "Rotate."
+    },
+    {
+      "id": "takeoff.first_officer.positive_rate",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "airborne",
+      "trigger": "Wheels leave the runway.",
+      "text": "Positive rate."
+    },
+    {
+      "id": "takeoff.captain.gear_up",
+      "mode": "takeoff",
+      "role": "captain",
+      "phase": "airborne",
+      "trigger": "Player presses LDG GEAR in the air.",
+      "text": "Gear up."
+    },
+    {
+      "id": "takeoff.tower.contact_departure",
+      "mode": "takeoff",
+      "role": "tower",
+      "phase": "climb",
+      "trigger": "A few seconds after gear up.",
+      "per_airline": true,
+      "text": "{callsign} {flight_spoken}, contact departure. Good day."
+    },
+    {
+      "id": "takeoff.captain.flaps_up",
+      "mode": "takeoff",
+      "role": "captain",
+      "phase": "climb",
+      "trigger": "Player presses FLAPS during the climb.",
+      "text": "Flaps up."
+    },
+    {
+      "id": "takeoff.captain.cruise",
+      "mode": "takeoff",
+      "role": "captain",
+      "phase": "cruise",
+      "trigger": "Player presses CABIN PA > CRUISE.",
+      "chime": true,
+      "text": "We have now reached our cruising altitude of thirty five thousand feet. The fasten seatbelt sign is now off. Sit back, relax, and enjoy the flight."
+    },
+    {
+      "id": "takeoff.purser.service",
+      "mode": "takeoff",
+      "role": "purser",
+      "phase": "cruise",
+      "trigger": "After the cruise announcement, before the end screen.",
+      "chime": true,
+      "text": "Ladies and gentlemen, our cabin crew will soon come through the cabin with drinks and snacks. Thank you for flying with us."
+    },
+    {
+      "id": "atc.callsign",
+      "mode": "sky",
+      "role": "center",
+      "phase": "any",
+      "trigger": "Played before/after generic ATC clips that are marked prefix/suffix 'callsign'.",
+      "per_airline": true,
+      "text": "{callsign} {flight_spoken},"
+    },
+    {
+      "id": "sky.captain.welcome",
+      "mode": "sky",
+      "role": "captain",
+      "phase": "start",
+      "trigger": "Sky Challenge starts.",
+      "chime": true,
+      "text": "Ladies and gentlemen, this is Captain {captain_name}. We are cruising at thirty five thousand feet. Please keep your seatbelt fastened while seated."
+    },
+    {
+      "id": "sky.center.radar_contact",
+      "mode": "sky",
+      "role": "center",
+      "phase": "start",
+      "trigger": "Sky Challenge starts, after the captain PA.",
+      "prefix": "callsign",
+      "text": "radar contact. Maintain flight level three five zero."
+    },
+    {
+      "id": "sky.center.climb",
+      "mode": "sky",
+      "role": "center",
+      "phase": "altitude",
+      "trigger": "Altitude challenge: climb.",
+      "prefix": "callsign",
+      "variant": "fl",
+      "text": "climb and maintain flight level {fl_spoken}."
+    },
+    {
+      "id": "sky.center.descend",
+      "mode": "sky",
+      "role": "center",
+      "phase": "altitude",
+      "trigger": "Altitude challenge: descend.",
+      "prefix": "callsign",
+      "variant": "fl",
+      "text": "descend and maintain flight level {fl_spoken}."
+    },
+    {
+      "id": "sky.first_officer.readback_climb",
+      "mode": "sky",
+      "role": "first_officer",
+      "phase": "altitude",
+      "trigger": "Right after a climb instruction.",
+      "variant": "fl",
+      "text": "Climbing to flight level {fl_spoken}."
+    },
+    {
+      "id": "sky.first_officer.readback_descend",
+      "mode": "sky",
+      "role": "first_officer",
+      "phase": "altitude",
+      "trigger": "Right after a descend instruction.",
+      "variant": "fl",
+      "text": "Descending to flight level {fl_spoken}."
+    },
+    {
+      "id": "sky.first_officer.one_thousand_to_go",
+      "mode": "sky",
+      "role": "first_officer",
+      "phase": "altitude",
+      "trigger": "1,000 ft from the target altitude.",
+      "text": "One thousand to go."
+    },
+    {
+      "id": "sky.center.altitude_good",
+      "mode": "sky",
+      "role": "center",
+      "phase": "altitude",
+      "trigger": "Player holds the target altitude long enough.",
+      "prefix": "callsign",
+      "text": "thank you. Maintain present altitude."
+    },
+    {
+      "id": "sky.center.weather_ahead",
+      "mode": "sky",
+      "role": "center",
+      "phase": "storm",
+      "trigger": "Storm challenge starts.",
+      "prefix": "callsign",
+      "text": "heavy weather twelve o'clock, fifteen miles. Deviation left or right of course is approved."
+    },
+    {
+      "id": "sky.first_officer.weather_readback",
+      "mode": "sky",
+      "role": "first_officer",
+      "phase": "storm",
+      "trigger": "After weather_ahead.",
+      "text": "Storm on the radar. Let's turn around it."
+    },
+    {
+      "id": "sky.captain.turbulence_pa",
+      "mode": "sky",
+      "role": "captain",
+      "phase": "storm",
+      "trigger": "Storm challenge starts (cabin warning).",
+      "chime": true,
+      "text": "Ladies and gentlemen, we may have some bumps ahead. Please return to your seats and fasten your seatbelt."
+    },
+    {
+      "id": "sky.first_officer.turbulence",
+      "mode": "sky",
+      "role": "first_officer",
+      "phase": "storm",
+      "trigger": "Airplane flies into a storm cell.",
+      "text": "Turbulence! Let's get out of this storm."
+    },
+    {
+      "id": "sky.center.clear_of_weather",
+      "mode": "sky",
+      "role": "center",
+      "phase": "storm",
+      "trigger": "Storm passed.",
+      "prefix": "callsign",
+      "text": "clear of weather. Resume own navigation."
+    },
+    {
+      "id": "sky.center.traffic_advisory",
+      "mode": "sky",
+      "role": "center",
+      "phase": "traffic",
+      "trigger": "Traffic challenge starts.",
+      "prefix": "callsign",
+      "text": "traffic, twelve o'clock, opposite direction, same altitude. Report in sight."
+    },
+    {
+      "id": "sky.first_officer.looking",
+      "mode": "sky",
+      "role": "first_officer",
+      "phase": "traffic",
+      "trigger": "After traffic_advisory.",
+      "text": "Looking for the traffic. Watch the radar screen."
+    },
+    {
+      "id": "sky.tcas.traffic",
+      "mode": "sky",
+      "role": "tcas",
+      "phase": "traffic",
+      "trigger": "Traffic advisory (amber circle on the radar).",
+      "text": "Traffic, traffic."
+    },
+    {
+      "id": "sky.tcas.climb",
+      "mode": "sky",
+      "role": "tcas",
+      "phase": "traffic",
+      "trigger": "Resolution advisory: climb (red square on the radar).",
+      "text": "Climb, climb."
+    },
+    {
+      "id": "sky.tcas.descend",
+      "mode": "sky",
+      "role": "tcas",
+      "phase": "traffic",
+      "trigger": "Resolution advisory: descend.",
+      "text": "Descend, descend."
+    },
+    {
+      "id": "sky.tcas.clear",
+      "mode": "sky",
+      "role": "tcas",
+      "phase": "traffic",
+      "trigger": "Traffic has passed safely.",
+      "text": "Clear of conflict."
+    },
+    {
+      "id": "sky.center.traffic_no_factor",
+      "mode": "sky",
+      "role": "center",
+      "phase": "traffic",
+      "trigger": "After clear of conflict.",
+      "prefix": "callsign",
+      "text": "traffic no longer a factor. Return to your assigned altitude."
+    },
+    {
+      "id": "sky.first_officer.too_close",
+      "mode": "sky",
+      "role": "first_officer",
+      "phase": "traffic",
+      "trigger": "Player did not follow the TCAS command.",
+      "text": "That was too close! Let's try again."
+    },
+    {
+      "id": "sky.first_officer.try_again",
+      "mode": "sky",
+      "role": "first_officer",
+      "phase": "any",
+      "trigger": "A challenge was missed.",
+      "text": "No problem, Captain. Let's try that one again."
+    },
+    {
+      "id": "sky.first_officer.great_job",
+      "mode": "sky",
+      "role": "first_officer",
+      "phase": "any",
+      "trigger": "A challenge completed with 3 stars.",
+      "text": "Great flying, Captain!"
+    },
+    {
+      "id": "sky.center.goodbye",
+      "mode": "sky",
+      "role": "center",
+      "phase": "end",
+      "trigger": "All challenges finished.",
+      "prefix": "callsign",
+      "text": "great flying today. Contact the next center. Good day."
+    }
+  ],
+  "renders": [
+    {"key":"cx|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"cx","variant":null,"text":"Good day, and welcome aboard Cathay Pacific. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/cx/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"hx|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"hx","variant":null,"text":"Good day, and welcome aboard HK Express. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/hx/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"jl|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"jl","variant":null,"text":"Good day, and welcome aboard JAL. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/jl/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"nh|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"nh","variant":null,"text":"Good day, and welcome aboard ANA. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/nh/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"zg|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"zg","variant":null,"text":"Good day, and welcome aboard ZIPAIR. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/zg/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"ek|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"ek","variant":null,"text":"Good day, and welcome aboard Emirates. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/ek/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"as|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"as","variant":null,"text":"Good day, and welcome aboard Alaska Airlines. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/as/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"mu|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"mu","variant":null,"text":"Good day, and welcome aboard China Eastern. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/mu/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"vn|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"vn","variant":null,"text":"Good day, and welcome aboard Vietnam Airlines. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/vn/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"aa|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"aa","variant":null,"text":"Good day, and welcome aboard American Airlines. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/aa/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"dl|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"dl","variant":null,"text":"Good day, and welcome aboard Delta. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/dl/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"ua|takeoff.purser.boarding_welcome","line_id":"takeoff.purser.boarding_welcome","role":"purser","airline":"ua","variant":null,"text":"Good day, and welcome aboard United. Please find your seat and put your bags in the overhead bins.","file":"assets/airplane/voice/ua/takeoff.purser.boarding_welcome.mp3"},
+    {"key":"common|takeoff.purser.doors_closed","line_id":"takeoff.purser.doors_closed","role":"purser","airline":null,"variant":null,"text":"Ladies and gentlemen, the cabin doors are now closed. Please make sure your seatbelt is fastened.","file":"assets/airplane/voice/common/takeoff.purser.doors_closed.mp3"},
+    {"key":"common|takeoff.purser.arm_doors","line_id":"takeoff.purser.arm_doors","role":"purser","airline":null,"variant":null,"text":"Cabin crew, arm doors and cross-check.","file":"assets/airplane/voice/common/takeoff.purser.arm_doors.mp3"},
+    {"key":"common|takeoff.ramp.ready_for_push","line_id":"takeoff.ramp.ready_for_push","role":"ramp","airline":null,"variant":null,"text":"Cockpit, ground. Tow bar connected. Ready for pushback when you are, Captain.","file":"assets/airplane/voice/common/takeoff.ramp.ready_for_push.mp3"},
+    {"key":"common|takeoff.ramp.pushing_back","line_id":"takeoff.ramp.pushing_back","role":"ramp","airline":null,"variant":null,"text":"Brakes released. Pushing back now.","file":"assets/airplane/voice/common/takeoff.ramp.pushing_back.mp3"},
+    {"key":"common|takeoff.ramp.push_complete","line_id":"takeoff.ramp.push_complete","role":"ramp","airline":null,"variant":null,"text":"Pushback complete. Set parking brake. Tow bar disconnected. Have a great flight!","file":"assets/airplane/voice/common/takeoff.ramp.push_complete.mp3"},
+    {"key":"cx|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"cx","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard Cathay Pacific flight four five one. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/cx/takeoff.captain.welcome.mp3"},
+    {"key":"hx|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"hx","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard HK Express flight two three seven. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/hx/takeoff.captain.welcome.mp3"},
+    {"key":"jl|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"jl","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard JAL flight seven two three. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/jl/takeoff.captain.welcome.mp3"},
+    {"key":"nh|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"nh","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard ANA flight eight eight two. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/nh/takeoff.captain.welcome.mp3"},
+    {"key":"zg|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"zg","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard ZIPAIR flight one zero five. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/zg/takeoff.captain.welcome.mp3"},
+    {"key":"ek|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"ek","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard Emirates flight three one one. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/ek/takeoff.captain.welcome.mp3"},
+    {"key":"as|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"as","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard Alaska Airlines flight six seven. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/as/takeoff.captain.welcome.mp3"},
+    {"key":"mu|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"mu","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard China Eastern flight seven three three. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/mu/takeoff.captain.welcome.mp3"},
+    {"key":"vn|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"vn","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard Vietnam Airlines flight five nine one. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/vn/takeoff.captain.welcome.mp3"},
+    {"key":"aa|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"aa","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard American Airlines flight two seven three. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/aa/takeoff.captain.welcome.mp3"},
+    {"key":"dl|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"dl","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard Delta flight four one two. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/dl/takeoff.captain.welcome.mp3"},
+    {"key":"ua|takeoff.captain.welcome","line_id":"takeoff.captain.welcome","role":"captain","airline":"ua","variant":null,"text":"Ladies and gentlemen, this is Captain Asher speaking. Welcome aboard United flight five five eight. We will be on our way shortly. Sit back and enjoy the flight.","file":"assets/airplane/voice/ua/takeoff.captain.welcome.mp3"},
+    {"key":"cx|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"cx","variant":null,"text":"Cathay four five one, taxi to runway two five left via Alpha.","file":"assets/airplane/voice/cx/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"hx|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"hx","variant":null,"text":"Hong Kong Express two three seven, taxi to runway two five left via Alpha.","file":"assets/airplane/voice/hx/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"jl|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"jl","variant":null,"text":"Japan Air seven two three, taxi to runway three four left via Alpha.","file":"assets/airplane/voice/jl/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"nh|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"nh","variant":null,"text":"All Nippon eight eight two, taxi to runway three four left via Alpha.","file":"assets/airplane/voice/nh/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"zg|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"zg","variant":null,"text":"Zip Air one zero five, taxi to runway three four left via Alpha.","file":"assets/airplane/voice/zg/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"ek|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"ek","variant":null,"text":"Emirates three one one, taxi to runway three zero left via Alpha.","file":"assets/airplane/voice/ek/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"as|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"as","variant":null,"text":"Alaska six seven, taxi to runway one six left via Alpha.","file":"assets/airplane/voice/as/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"mu|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"mu","variant":null,"text":"China Eastern seven three three, taxi to runway three five right via Alpha.","file":"assets/airplane/voice/mu/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"vn|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"vn","variant":null,"text":"Vietnam five nine one, taxi to runway two five right via Alpha.","file":"assets/airplane/voice/vn/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"aa|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"aa","variant":null,"text":"American two seven three, taxi to runway one eight left via Alpha.","file":"assets/airplane/voice/aa/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"dl|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"dl","variant":null,"text":"Delta four one two, taxi to runway two eight via Alpha.","file":"assets/airplane/voice/dl/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"ua|takeoff.ground.taxi_clearance","line_id":"takeoff.ground.taxi_clearance","role":"ground","airline":"ua","variant":null,"text":"United five five eight, taxi to runway one five left via Alpha.","file":"assets/airplane/voice/ua/takeoff.ground.taxi_clearance.mp3"},
+    {"key":"common|takeoff.purser.safety_check","line_id":"takeoff.purser.safety_check","role":"purser","airline":null,"variant":null,"text":"Please make sure your seatbelt is fastened, your seat back is upright, and your tray table is stowed. Thank you.","file":"assets/airplane/voice/common/takeoff.purser.safety_check.mp3"},
+    {"key":"cx|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"cx","variant":null,"text":"Cathay four five one, runway two five left, line up and wait.","file":"assets/airplane/voice/cx/takeoff.tower.line_up.mp3"},
+    {"key":"hx|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"hx","variant":null,"text":"Hong Kong Express two three seven, runway two five left, line up and wait.","file":"assets/airplane/voice/hx/takeoff.tower.line_up.mp3"},
+    {"key":"jl|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"jl","variant":null,"text":"Japan Air seven two three, runway three four left, line up and wait.","file":"assets/airplane/voice/jl/takeoff.tower.line_up.mp3"},
+    {"key":"nh|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"nh","variant":null,"text":"All Nippon eight eight two, runway three four left, line up and wait.","file":"assets/airplane/voice/nh/takeoff.tower.line_up.mp3"},
+    {"key":"zg|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"zg","variant":null,"text":"Zip Air one zero five, runway three four left, line up and wait.","file":"assets/airplane/voice/zg/takeoff.tower.line_up.mp3"},
+    {"key":"ek|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"ek","variant":null,"text":"Emirates three one one, runway three zero left, line up and wait.","file":"assets/airplane/voice/ek/takeoff.tower.line_up.mp3"},
+    {"key":"as|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"as","variant":null,"text":"Alaska six seven, runway one six left, line up and wait.","file":"assets/airplane/voice/as/takeoff.tower.line_up.mp3"},
+    {"key":"mu|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"mu","variant":null,"text":"China Eastern seven three three, runway three five right, line up and wait.","file":"assets/airplane/voice/mu/takeoff.tower.line_up.mp3"},
+    {"key":"vn|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"vn","variant":null,"text":"Vietnam five nine one, runway two five right, line up and wait.","file":"assets/airplane/voice/vn/takeoff.tower.line_up.mp3"},
+    {"key":"aa|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"aa","variant":null,"text":"American two seven three, runway one eight left, line up and wait.","file":"assets/airplane/voice/aa/takeoff.tower.line_up.mp3"},
+    {"key":"dl|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"dl","variant":null,"text":"Delta four one two, runway two eight, line up and wait.","file":"assets/airplane/voice/dl/takeoff.tower.line_up.mp3"},
+    {"key":"ua|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"ua","variant":null,"text":"United five five eight, runway one five left, line up and wait.","file":"assets/airplane/voice/ua/takeoff.tower.line_up.mp3"},
+    {"key":"common|takeoff.first_officer.flaps_10","line_id":"takeoff.first_officer.flaps_10","role":"first_officer","airline":null,"variant":null,"text":"Flaps ten. Green light.","file":"assets/airplane/voice/common/takeoff.first_officer.flaps_10.mp3"},
+    {"key":"common|takeoff.captain.crew_seats","line_id":"takeoff.captain.crew_seats","role":"captain","airline":null,"variant":null,"text":"Cabin crew, please be seated for takeoff.","file":"assets/airplane/voice/common/takeoff.captain.crew_seats.mp3"},
+    {"key":"cx|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"cx","variant":null,"text":"Cathay four five one, wind calm, runway two five left, cleared for takeoff.","file":"assets/airplane/voice/cx/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"hx|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"hx","variant":null,"text":"Hong Kong Express two three seven, wind calm, runway two five left, cleared for takeoff.","file":"assets/airplane/voice/hx/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"jl|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"jl","variant":null,"text":"Japan Air seven two three, wind calm, runway three four left, cleared for takeoff.","file":"assets/airplane/voice/jl/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"nh|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"nh","variant":null,"text":"All Nippon eight eight two, wind calm, runway three four left, cleared for takeoff.","file":"assets/airplane/voice/nh/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"zg|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"zg","variant":null,"text":"Zip Air one zero five, wind calm, runway three four left, cleared for takeoff.","file":"assets/airplane/voice/zg/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"ek|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"ek","variant":null,"text":"Emirates three one one, wind calm, runway three zero left, cleared for takeoff.","file":"assets/airplane/voice/ek/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"as|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"as","variant":null,"text":"Alaska six seven, wind calm, runway one six left, cleared for takeoff.","file":"assets/airplane/voice/as/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"mu|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"mu","variant":null,"text":"China Eastern seven three three, wind calm, runway three five right, cleared for takeoff.","file":"assets/airplane/voice/mu/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"vn|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"vn","variant":null,"text":"Vietnam five nine one, wind calm, runway two five right, cleared for takeoff.","file":"assets/airplane/voice/vn/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"aa|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"aa","variant":null,"text":"American two seven three, wind calm, runway one eight left, cleared for takeoff.","file":"assets/airplane/voice/aa/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"dl|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"dl","variant":null,"text":"Delta four one two, wind calm, runway two eight, cleared for takeoff.","file":"assets/airplane/voice/dl/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"ua|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"ua","variant":null,"text":"United five five eight, wind calm, runway one five left, cleared for takeoff.","file":"assets/airplane/voice/ua/takeoff.tower.takeoff_clearance.mp3"},
+    {"key":"common|takeoff.first_officer.thrust_set","line_id":"takeoff.first_officer.thrust_set","role":"first_officer","airline":null,"variant":null,"text":"Thrust set.","file":"assets/airplane/voice/common/takeoff.first_officer.thrust_set.mp3"},
+    {"key":"common|takeoff.first_officer.eighty_knots","line_id":"takeoff.first_officer.eighty_knots","role":"first_officer","airline":null,"variant":null,"text":"Eighty knots.","file":"assets/airplane/voice/common/takeoff.first_officer.eighty_knots.mp3"},
+    {"key":"common|takeoff.first_officer.v1","line_id":"takeoff.first_officer.v1","role":"first_officer","airline":null,"variant":null,"text":"V one.","file":"assets/airplane/voice/common/takeoff.first_officer.v1.mp3"},
+    {"key":"common|takeoff.first_officer.rotate","line_id":"takeoff.first_officer.rotate","role":"first_officer","airline":null,"variant":null,"text":"Rotate.","file":"assets/airplane/voice/common/takeoff.first_officer.rotate.mp3"},
+    {"key":"common|takeoff.first_officer.positive_rate","line_id":"takeoff.first_officer.positive_rate","role":"first_officer","airline":null,"variant":null,"text":"Positive rate.","file":"assets/airplane/voice/common/takeoff.first_officer.positive_rate.mp3"},
+    {"key":"common|takeoff.captain.gear_up","line_id":"takeoff.captain.gear_up","role":"captain","airline":null,"variant":null,"text":"Gear up.","file":"assets/airplane/voice/common/takeoff.captain.gear_up.mp3"},
+    {"key":"cx|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"cx","variant":null,"text":"Cathay four five one, contact departure. Good day.","file":"assets/airplane/voice/cx/takeoff.tower.contact_departure.mp3"},
+    {"key":"hx|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"hx","variant":null,"text":"Hong Kong Express two three seven, contact departure. Good day.","file":"assets/airplane/voice/hx/takeoff.tower.contact_departure.mp3"},
+    {"key":"jl|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"jl","variant":null,"text":"Japan Air seven two three, contact departure. Good day.","file":"assets/airplane/voice/jl/takeoff.tower.contact_departure.mp3"},
+    {"key":"nh|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"nh","variant":null,"text":"All Nippon eight eight two, contact departure. Good day.","file":"assets/airplane/voice/nh/takeoff.tower.contact_departure.mp3"},
+    {"key":"zg|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"zg","variant":null,"text":"Zip Air one zero five, contact departure. Good day.","file":"assets/airplane/voice/zg/takeoff.tower.contact_departure.mp3"},
+    {"key":"ek|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"ek","variant":null,"text":"Emirates three one one, contact departure. Good day.","file":"assets/airplane/voice/ek/takeoff.tower.contact_departure.mp3"},
+    {"key":"as|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"as","variant":null,"text":"Alaska six seven, contact departure. Good day.","file":"assets/airplane/voice/as/takeoff.tower.contact_departure.mp3"},
+    {"key":"mu|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"mu","variant":null,"text":"China Eastern seven three three, contact departure. Good day.","file":"assets/airplane/voice/mu/takeoff.tower.contact_departure.mp3"},
+    {"key":"vn|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"vn","variant":null,"text":"Vietnam five nine one, contact departure. Good day.","file":"assets/airplane/voice/vn/takeoff.tower.contact_departure.mp3"},
+    {"key":"aa|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"aa","variant":null,"text":"American two seven three, contact departure. Good day.","file":"assets/airplane/voice/aa/takeoff.tower.contact_departure.mp3"},
+    {"key":"dl|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"dl","variant":null,"text":"Delta four one two, contact departure. Good day.","file":"assets/airplane/voice/dl/takeoff.tower.contact_departure.mp3"},
+    {"key":"ua|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"ua","variant":null,"text":"United five five eight, contact departure. Good day.","file":"assets/airplane/voice/ua/takeoff.tower.contact_departure.mp3"},
+    {"key":"common|takeoff.captain.flaps_up","line_id":"takeoff.captain.flaps_up","role":"captain","airline":null,"variant":null,"text":"Flaps up.","file":"assets/airplane/voice/common/takeoff.captain.flaps_up.mp3"},
+    {"key":"common|takeoff.captain.cruise","line_id":"takeoff.captain.cruise","role":"captain","airline":null,"variant":null,"text":"We have now reached our cruising altitude of thirty five thousand feet. The fasten seatbelt sign is now off. Sit back, relax, and enjoy the flight.","file":"assets/airplane/voice/common/takeoff.captain.cruise.mp3"},
+    {"key":"common|takeoff.purser.service","line_id":"takeoff.purser.service","role":"purser","airline":null,"variant":null,"text":"Ladies and gentlemen, our cabin crew will soon come through the cabin with drinks and snacks. Thank you for flying with us.","file":"assets/airplane/voice/common/takeoff.purser.service.mp3"},
+    {"key":"cx|atc.callsign","line_id":"atc.callsign","role":"center","airline":"cx","variant":null,"text":"Cathay four five one,","file":"assets/airplane/voice/cx/atc.callsign.mp3"},
+    {"key":"hx|atc.callsign","line_id":"atc.callsign","role":"center","airline":"hx","variant":null,"text":"Hong Kong Express two three seven,","file":"assets/airplane/voice/hx/atc.callsign.mp3"},
+    {"key":"jl|atc.callsign","line_id":"atc.callsign","role":"center","airline":"jl","variant":null,"text":"Japan Air seven two three,","file":"assets/airplane/voice/jl/atc.callsign.mp3"},
+    {"key":"nh|atc.callsign","line_id":"atc.callsign","role":"center","airline":"nh","variant":null,"text":"All Nippon eight eight two,","file":"assets/airplane/voice/nh/atc.callsign.mp3"},
+    {"key":"zg|atc.callsign","line_id":"atc.callsign","role":"center","airline":"zg","variant":null,"text":"Zip Air one zero five,","file":"assets/airplane/voice/zg/atc.callsign.mp3"},
+    {"key":"ek|atc.callsign","line_id":"atc.callsign","role":"center","airline":"ek","variant":null,"text":"Emirates three one one,","file":"assets/airplane/voice/ek/atc.callsign.mp3"},
+    {"key":"as|atc.callsign","line_id":"atc.callsign","role":"center","airline":"as","variant":null,"text":"Alaska six seven,","file":"assets/airplane/voice/as/atc.callsign.mp3"},
+    {"key":"mu|atc.callsign","line_id":"atc.callsign","role":"center","airline":"mu","variant":null,"text":"China Eastern seven three three,","file":"assets/airplane/voice/mu/atc.callsign.mp3"},
+    {"key":"vn|atc.callsign","line_id":"atc.callsign","role":"center","airline":"vn","variant":null,"text":"Vietnam five nine one,","file":"assets/airplane/voice/vn/atc.callsign.mp3"},
+    {"key":"aa|atc.callsign","line_id":"atc.callsign","role":"center","airline":"aa","variant":null,"text":"American two seven three,","file":"assets/airplane/voice/aa/atc.callsign.mp3"},
+    {"key":"dl|atc.callsign","line_id":"atc.callsign","role":"center","airline":"dl","variant":null,"text":"Delta four one two,","file":"assets/airplane/voice/dl/atc.callsign.mp3"},
+    {"key":"ua|atc.callsign","line_id":"atc.callsign","role":"center","airline":"ua","variant":null,"text":"United five five eight,","file":"assets/airplane/voice/ua/atc.callsign.mp3"},
+    {"key":"common|sky.captain.welcome","line_id":"sky.captain.welcome","role":"captain","airline":null,"variant":null,"text":"Ladies and gentlemen, this is Captain Asher. We are cruising at thirty five thousand feet. Please keep your seatbelt fastened while seated.","file":"assets/airplane/voice/common/sky.captain.welcome.mp3"},
+    {"key":"common|sky.center.radar_contact","line_id":"sky.center.radar_contact","role":"center","airline":null,"variant":null,"text":"radar contact. Maintain flight level three five zero.","file":"assets/airplane/voice/common/sky.center.radar_contact.mp3"},
+    {"key":"common|sky.center.climb.290","line_id":"sky.center.climb","role":"center","airline":null,"variant":290,"text":"climb and maintain flight level two nine zero.","file":"assets/airplane/voice/common/sky.center.climb.290.mp3"},
+    {"key":"common|sky.center.climb.310","line_id":"sky.center.climb","role":"center","airline":null,"variant":310,"text":"climb and maintain flight level three one zero.","file":"assets/airplane/voice/common/sky.center.climb.310.mp3"},
+    {"key":"common|sky.center.climb.330","line_id":"sky.center.climb","role":"center","airline":null,"variant":330,"text":"climb and maintain flight level three three zero.","file":"assets/airplane/voice/common/sky.center.climb.330.mp3"},
+    {"key":"common|sky.center.climb.350","line_id":"sky.center.climb","role":"center","airline":null,"variant":350,"text":"climb and maintain flight level three five zero.","file":"assets/airplane/voice/common/sky.center.climb.350.mp3"},
+    {"key":"common|sky.center.climb.370","line_id":"sky.center.climb","role":"center","airline":null,"variant":370,"text":"climb and maintain flight level three seven zero.","file":"assets/airplane/voice/common/sky.center.climb.370.mp3"},
+    {"key":"common|sky.center.climb.390","line_id":"sky.center.climb","role":"center","airline":null,"variant":390,"text":"climb and maintain flight level three nine zero.","file":"assets/airplane/voice/common/sky.center.climb.390.mp3"},
+    {"key":"common|sky.center.descend.290","line_id":"sky.center.descend","role":"center","airline":null,"variant":290,"text":"descend and maintain flight level two nine zero.","file":"assets/airplane/voice/common/sky.center.descend.290.mp3"},
+    {"key":"common|sky.center.descend.310","line_id":"sky.center.descend","role":"center","airline":null,"variant":310,"text":"descend and maintain flight level three one zero.","file":"assets/airplane/voice/common/sky.center.descend.310.mp3"},
+    {"key":"common|sky.center.descend.330","line_id":"sky.center.descend","role":"center","airline":null,"variant":330,"text":"descend and maintain flight level three three zero.","file":"assets/airplane/voice/common/sky.center.descend.330.mp3"},
+    {"key":"common|sky.center.descend.350","line_id":"sky.center.descend","role":"center","airline":null,"variant":350,"text":"descend and maintain flight level three five zero.","file":"assets/airplane/voice/common/sky.center.descend.350.mp3"},
+    {"key":"common|sky.center.descend.370","line_id":"sky.center.descend","role":"center","airline":null,"variant":370,"text":"descend and maintain flight level three seven zero.","file":"assets/airplane/voice/common/sky.center.descend.370.mp3"},
+    {"key":"common|sky.center.descend.390","line_id":"sky.center.descend","role":"center","airline":null,"variant":390,"text":"descend and maintain flight level three nine zero.","file":"assets/airplane/voice/common/sky.center.descend.390.mp3"},
+    {"key":"common|sky.first_officer.readback_climb.290","line_id":"sky.first_officer.readback_climb","role":"first_officer","airline":null,"variant":290,"text":"Climbing to flight level two nine zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_climb.290.mp3"},
+    {"key":"common|sky.first_officer.readback_climb.310","line_id":"sky.first_officer.readback_climb","role":"first_officer","airline":null,"variant":310,"text":"Climbing to flight level three one zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_climb.310.mp3"},
+    {"key":"common|sky.first_officer.readback_climb.330","line_id":"sky.first_officer.readback_climb","role":"first_officer","airline":null,"variant":330,"text":"Climbing to flight level three three zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_climb.330.mp3"},
+    {"key":"common|sky.first_officer.readback_climb.350","line_id":"sky.first_officer.readback_climb","role":"first_officer","airline":null,"variant":350,"text":"Climbing to flight level three five zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_climb.350.mp3"},
+    {"key":"common|sky.first_officer.readback_climb.370","line_id":"sky.first_officer.readback_climb","role":"first_officer","airline":null,"variant":370,"text":"Climbing to flight level three seven zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_climb.370.mp3"},
+    {"key":"common|sky.first_officer.readback_climb.390","line_id":"sky.first_officer.readback_climb","role":"first_officer","airline":null,"variant":390,"text":"Climbing to flight level three nine zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_climb.390.mp3"},
+    {"key":"common|sky.first_officer.readback_descend.290","line_id":"sky.first_officer.readback_descend","role":"first_officer","airline":null,"variant":290,"text":"Descending to flight level two nine zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_descend.290.mp3"},
+    {"key":"common|sky.first_officer.readback_descend.310","line_id":"sky.first_officer.readback_descend","role":"first_officer","airline":null,"variant":310,"text":"Descending to flight level three one zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_descend.310.mp3"},
+    {"key":"common|sky.first_officer.readback_descend.330","line_id":"sky.first_officer.readback_descend","role":"first_officer","airline":null,"variant":330,"text":"Descending to flight level three three zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_descend.330.mp3"},
+    {"key":"common|sky.first_officer.readback_descend.350","line_id":"sky.first_officer.readback_descend","role":"first_officer","airline":null,"variant":350,"text":"Descending to flight level three five zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_descend.350.mp3"},
+    {"key":"common|sky.first_officer.readback_descend.370","line_id":"sky.first_officer.readback_descend","role":"first_officer","airline":null,"variant":370,"text":"Descending to flight level three seven zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_descend.370.mp3"},
+    {"key":"common|sky.first_officer.readback_descend.390","line_id":"sky.first_officer.readback_descend","role":"first_officer","airline":null,"variant":390,"text":"Descending to flight level three nine zero.","file":"assets/airplane/voice/common/sky.first_officer.readback_descend.390.mp3"},
+    {"key":"common|sky.first_officer.one_thousand_to_go","line_id":"sky.first_officer.one_thousand_to_go","role":"first_officer","airline":null,"variant":null,"text":"One thousand to go.","file":"assets/airplane/voice/common/sky.first_officer.one_thousand_to_go.mp3"},
+    {"key":"common|sky.center.altitude_good","line_id":"sky.center.altitude_good","role":"center","airline":null,"variant":null,"text":"thank you. Maintain present altitude.","file":"assets/airplane/voice/common/sky.center.altitude_good.mp3"},
+    {"key":"common|sky.center.weather_ahead","line_id":"sky.center.weather_ahead","role":"center","airline":null,"variant":null,"text":"heavy weather twelve o'clock, fifteen miles. Deviation left or right of course is approved.","file":"assets/airplane/voice/common/sky.center.weather_ahead.mp3"},
+    {"key":"common|sky.first_officer.weather_readback","line_id":"sky.first_officer.weather_readback","role":"first_officer","airline":null,"variant":null,"text":"Storm on the radar. Let's turn around it.","file":"assets/airplane/voice/common/sky.first_officer.weather_readback.mp3"},
+    {"key":"common|sky.captain.turbulence_pa","line_id":"sky.captain.turbulence_pa","role":"captain","airline":null,"variant":null,"text":"Ladies and gentlemen, we may have some bumps ahead. Please return to your seats and fasten your seatbelt.","file":"assets/airplane/voice/common/sky.captain.turbulence_pa.mp3"},
+    {"key":"common|sky.first_officer.turbulence","line_id":"sky.first_officer.turbulence","role":"first_officer","airline":null,"variant":null,"text":"Turbulence! Let's get out of this storm.","file":"assets/airplane/voice/common/sky.first_officer.turbulence.mp3"},
+    {"key":"common|sky.center.clear_of_weather","line_id":"sky.center.clear_of_weather","role":"center","airline":null,"variant":null,"text":"clear of weather. Resume own navigation.","file":"assets/airplane/voice/common/sky.center.clear_of_weather.mp3"},
+    {"key":"common|sky.center.traffic_advisory","line_id":"sky.center.traffic_advisory","role":"center","airline":null,"variant":null,"text":"traffic, twelve o'clock, opposite direction, same altitude. Report in sight.","file":"assets/airplane/voice/common/sky.center.traffic_advisory.mp3"},
+    {"key":"common|sky.first_officer.looking","line_id":"sky.first_officer.looking","role":"first_officer","airline":null,"variant":null,"text":"Looking for the traffic. Watch the radar screen.","file":"assets/airplane/voice/common/sky.first_officer.looking.mp3"},
+    {"key":"common|sky.tcas.traffic","line_id":"sky.tcas.traffic","role":"tcas","airline":null,"variant":null,"text":"Traffic, traffic.","file":"assets/airplane/voice/common/sky.tcas.traffic.mp3"},
+    {"key":"common|sky.tcas.climb","line_id":"sky.tcas.climb","role":"tcas","airline":null,"variant":null,"text":"Climb, climb.","file":"assets/airplane/voice/common/sky.tcas.climb.mp3"},
+    {"key":"common|sky.tcas.descend","line_id":"sky.tcas.descend","role":"tcas","airline":null,"variant":null,"text":"Descend, descend.","file":"assets/airplane/voice/common/sky.tcas.descend.mp3"},
+    {"key":"common|sky.tcas.clear","line_id":"sky.tcas.clear","role":"tcas","airline":null,"variant":null,"text":"Clear of conflict.","file":"assets/airplane/voice/common/sky.tcas.clear.mp3"},
+    {"key":"common|sky.center.traffic_no_factor","line_id":"sky.center.traffic_no_factor","role":"center","airline":null,"variant":null,"text":"traffic no longer a factor. Return to your assigned altitude.","file":"assets/airplane/voice/common/sky.center.traffic_no_factor.mp3"},
+    {"key":"common|sky.first_officer.too_close","line_id":"sky.first_officer.too_close","role":"first_officer","airline":null,"variant":null,"text":"That was too close! Let's try again.","file":"assets/airplane/voice/common/sky.first_officer.too_close.mp3"},
+    {"key":"common|sky.first_officer.try_again","line_id":"sky.first_officer.try_again","role":"first_officer","airline":null,"variant":null,"text":"No problem, Captain. Let's try that one again.","file":"assets/airplane/voice/common/sky.first_officer.try_again.mp3"},
+    {"key":"common|sky.first_officer.great_job","line_id":"sky.first_officer.great_job","role":"first_officer","airline":null,"variant":null,"text":"Great flying, Captain!","file":"assets/airplane/voice/common/sky.first_officer.great_job.mp3"},
+    {"key":"common|sky.center.goodbye","line_id":"sky.center.goodbye","role":"center","airline":null,"variant":null,"text":"great flying today. Contact the next center. Good day.","file":"assets/airplane/voice/common/sky.center.goodbye.mp3"}
+  ]
+}

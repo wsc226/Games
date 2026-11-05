@@ -158,10 +158,11 @@ html,body{width:100%;height:100dvh;overflow:hidden;background:#1a1c24;
   <button class="ss-btn ss-back" id="btnHome" onclick="location.href='index.html'">MAIN MENU</button>
 </div>
 
-<button id="gearBtn">&#9881;</button>
+<button id="gearBtn" aria-label="Pause and settings">&#9881;</button>
 <div id="settingsOverlay">
   <div class="so-title">Paused</div>
   <button class="so-btn so-resume" id="soResume">Resume</button>
+  <button class="so-btn" id="soSound" style="background:#304b70;color:#fff;border:2px solid rgba(255,255,255,.35)">Sound: On</button>
   <button class="so-btn so-quit" id="soQuit">Quit to Menu</button>
 </div>
 
@@ -328,7 +329,7 @@ const R=[
   {id:'UP',  w:35,tp:'f',nm:'Union Pacific',  bc:'#EDAE00',ac:'#C41E3A'},
   {id:'BNSF',w:25,tp:'f',nm:'BNSF',           bc:'#E8751A',ac:'#1a1a1a'},
   {id:'CPKC',w:15,tp:'f',nm:'Canadian Pacific',bc:'#D32F2F',ac:'#fff'},
-  {id:'E5',  w:3.6,tp:'s',nm:'E5 Hayabusa',   bc:'#00B09A',ac:'#E91E8C',lc:'#C8C8C8'},
+  {id:'E5',  w:3.6,tp:'s',nm:'E5 Hayabusa',   bc:'#00B09A',ac:'#E91E8C',lc:'#E6EAEC',s2:'#F5F8F8'},
   {id:'E6',  w:3.6,tp:'s',nm:'E6 Komachi',     bc:'#FFFFFF',ac:'#C62828',lc:'#E8E8E8'},
   {id:'E7',  w:3.6,tp:'s',nm:'E7 Kagayaki',    bc:'#FFFFFF',ac:'#1A56B0',lc:'#D8D8D8',s2:'#C88A32'},
   {id:'E8',  w:3.6,tp:'s',nm:'E8 Tsubasa',     bc:'#FFFFFF',ac:'#6A1B9A',lc:'#E8E8E8',s2:'#D4851F'},
@@ -348,25 +349,25 @@ const FCT=[
 // AUDIO
 // ═══════════════════════════════════════
 const AC=window.AudioContext||window.webkitAudioContext;
-let ax;function ea(){if(!ax)ax=new AC();if(ax.state==='suspended')ax.resume();}
-function tn(f,d,t='sine',v=.12,r=.02){if(!ax)return;const o=ax.createOscillator(),g=ax.createGain(),n=ax.currentTime;
+let ax,muted=localStorage.getItem('crossingMuted')==='1';function ea(){if(muted)return;if(!ax)ax=new AC();if(ax.state==='suspended')ax.resume();}
+function tn(f,d,t='sine',v=.12,r=.02){if(!ax||muted)return;const o=ax.createOscillator(),g=ax.createGain(),n=ax.currentTime;
   o.type=t;o.frequency.value=f;g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(v,n+r);
   g.gain.linearRampToValueAtTime(0,n+d);o.connect(g);g.connect(ax.destination);o.start();o.stop(n+d+.01);}
 const SFX={
-  bell(){if(!ax)return;const n=ax.currentTime;for(let i=0;i<6;i++){const o=ax.createOscillator(),g=ax.createGain();
+  bell(){if(!ax||muted)return;const n=ax.currentTime;for(let i=0;i<6;i++){const o=ax.createOscillator(),g=ax.createGain();
     o.type='sine';o.frequency.value=i%2?1400:1200;g.gain.setValueAtTime(0,n+i*.15);
     g.gain.linearRampToValueAtTime(.07,n+i*.15+.02);g.gain.linearRampToValueAtTime(0,n+i*.15+.12);
     o.connect(g);g.connect(ax.destination);o.start(n+i*.15);o.stop(n+i*.15+.15);}},
   gD(){tn(200,1.5,'sawtooth',.03);tn(150,1.5,'square',.015);},
   gU(){tn(250,1.5,'sawtooth',.03);tn(180,1.5,'square',.015);},
-  rum(d){if(!ax)return;const b=ax.createBuffer(1,ax.sampleRate*d,ax.sampleRate),dt=b.getChannelData(0);
+  rum(d){if(!ax||muted)return;const b=ax.createBuffer(1,ax.sampleRate*d,ax.sampleRate),dt=b.getChannelData(0);
     for(let i=0;i<dt.length;i++)dt[i]=(Math.random()*2-1)*.06;
     const s=ax.createBufferSource(),g=ax.createGain(),fl=ax.createBiquadFilter(),n=ax.currentTime;
     s.buffer=b;fl.type='lowpass';fl.frequency.value=120;
     g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(.1,n+.3);
     g.gain.setValueAtTime(.1,n+d-.3);g.gain.linearRampToValueAtTime(0,n+d);
     s.connect(fl);fl.connect(g);g.connect(ax.destination);s.start();s.stop(n+d);},
-  scr(){if(!ax)return;const o=ax.createOscillator(),g=ax.createGain(),n=ax.currentTime;
+  scr(){if(!ax||muted)return;const o=ax.createOscillator(),g=ax.createGain(),n=ax.currentTime;
     o.type='sawtooth';o.frequency.setValueAtTime(2500,n);o.frequency.exponentialRampToValueAtTime(200,n+.5);
     g.gain.setValueAtTime(.08,n);g.gain.linearRampToValueAtTime(0,n+.5);
     o.connect(g);g.connect(ax.destination);o.start();o.stop(n+.6);},
@@ -385,6 +386,7 @@ let mode='easy',score=0,strk=0,gate='open',phase='idle',sig='off';
 let cTr=null,tD=1,rOK=false,started=false,lkd=false;
 let consecRed=0;
 let honking=false,hkI=null,hkT=null,flOn=false,flI=null,carI=null,aId=null,aId2=null;
+let paused=false,roundNonce=0;
 
 const $=id=>document.getElementById(id);
 const bC=$('bC'),bO=$('bO'),sV=$('sV'),gN=$('gN'),gS=$('gS');
@@ -492,9 +494,10 @@ function spawnCar(){
   cars.push({el:g,id,x:lx,y:sy,dir:dr,sp,lane,stp:false});
 }
 
-function updateCars(){
+function updateCars(dt=1/60){
   const bl=gate==='closed'||gate==='closing';
   const gateN=118, gateS=326;
+  const frameScale=Math.min(3,Math.max(0,dt*60));
 
   // Sort cars per lane for queuing
   const lane0=cars.filter(c=>c.lane===0).sort((a,b)=>a.y-b.y); // going up, lower y = further along
@@ -503,7 +506,8 @@ function updateCars(){
   for(let i=cars.length-1;i>=0;i--){
     const c=cars[i];
     if(!c.stp){
-      let ny=c.y+c.dir*c.sp;
+      const step=c.sp*frameScale;
+      let ny=c.y+c.dir*step;
       if(bl){
         // Check gate stop
         if(c.dir===1 && c.y<gateN && ny>=gateN){ny=gateN;c.stp=true;}
@@ -511,7 +515,7 @@ function updateCars(){
       }
       // Check queuing behind other stopped cars
       if(c.dir===1){ // going down
-        const ahead=lane1.filter(o=>o.id!==c.id && o.y>c.y && o.y<c.y+CAR_H+CAR_GAP+c.sp*2 && o.stp);
+        const ahead=lane1.filter(o=>o.id!==c.id && o.y>c.y && o.y<c.y+CAR_H+CAR_GAP+step*2 && o.stp);
         if(ahead.length>0){
           const nearest=ahead.reduce((a,b)=>a.y<b.y?a:b);
           const stopAt=nearest.y-CAR_H-CAR_GAP;
@@ -519,7 +523,7 @@ function updateCars(){
         }
       }
       if(c.dir===-1){ // going up
-        const ahead=lane0.filter(o=>o.id!==c.id && o.y<c.y && o.y>c.y-CAR_H-CAR_GAP-c.sp*2 && o.stp);
+        const ahead=lane0.filter(o=>o.id!==c.id && o.y<c.y && o.y>c.y-CAR_H-CAR_GAP-step*2 && o.stp);
         if(ahead.length>0){
           const nearest=ahead.reduce((a,b)=>a.y>b.y?a:b);
           const stopAt=nearest.y+CAR_H+CAR_GAP;
@@ -533,7 +537,7 @@ function updateCars(){
   }
 }
 function resCars(){cars.forEach(c=>c.stp=false);}
-function stCars(){spawnCar();carI=setInterval(()=>{if(cars.length<6)spawnCar();},2200);}
+function stCars(){spawnCar();carI=setInterval(()=>{if(!paused&&cars.length<6)spawnCar();},2200);}
 
 // ═══════════════════════════════════════
 // VOCAB & HONK
@@ -551,8 +555,8 @@ function stopHnk(){honking=false;hb.classList.remove('show');
 // ═══════════════════════════════════════
 function scPt(){score++;sV.textContent=score;SFX.pt();showV('OPEN','ok');}
 function trigS(){strk++;sf.classList.add('on');setTimeout(()=>sf.classList.remove('on'),300);
-  SFX.scr();showV('DANGER','bad');updSt();
-  if(strk>=3)setTimeout(()=>{score=0;strk=0;sV.textContent=0;updSt();SFX.rst();},800);}
+  SFX.scr();showV('TRY AGAIN','bad');updSt();
+  if(strk>=3)setTimeout(()=>{strk=0;updSt();},1000);}
 function updSt(){for(let i=0;i<3;i++)$('d'+i).classList.toggle('hit',i<strk);}
 function updH(){if(mode!=='easy'){bC.classList.remove('glow');bO.classList.remove('glow');return;}
   bC.classList.remove('glow');bO.classList.remove('glow');
@@ -866,7 +870,9 @@ function clrTr(){
 // ROUND LOGIC
 // ═══════════════════════════════════════
 function startR(){
-  if(lkd)return;lkd=true;rOK=false;stopHnk();
+  if(lkd||paused||!started)return;
+  const myRound=++roundNonce;
+  lkd=true;rOK=false;stopHnk();
   let s;
   if(consecRed>=2){s=Math.random()<.5?'yellow':'green';}
   else{const sr=Math.random();s=sr<.33?'red':sr<.66?'yellow':'green';}
@@ -875,6 +881,7 @@ function startR(){
   phase='signalSet';setSig(s);updH();
 
   setTimeout(()=>{
+    if(paused||myRound!==roundNonce)return;
     phase='approaching';
     const tm=TM[mode];
     let lead=s==='red'?tm.rP:s==='yellow'?tm.yL:tm.gL;
@@ -977,7 +984,7 @@ function startR(){
 function endR(){
   phase='idle';lkd=false;rOK=false;cTr=null;
   setSig('off');updH();bC.classList.remove('glow');bO.classList.remove('glow');
-  setTimeout(()=>{if(started&&phase==='idle')startR();},TM[mode].gap*1000);
+  if(!paused)setTimeout(()=>{if(started&&!paused&&phase==='idle')startR();},TM[mode].gap*1000);
 }
 
 // Mode
@@ -991,8 +998,28 @@ function wB(b,fn){let td=false;
 wB(bC,()=>{if(!bC.classList.contains('lk'))closeG();});
 wB(bO,()=>{if(!bO.classList.contains('lk'))openG();});
 
-// Game loop
-function loop(){updateCars();requestAnimationFrame(loop);}
+// Game loop — elapsed time keeps road traffic consistent on 60/120 Hz displays.
+let carLast=performance.now();
+function loop(now=performance.now()){
+  const dt=Math.min((now-carLast)/1000,.05);carLast=now;
+  if(!paused)updateCars(dt);
+  requestAnimationFrame(loop);
+}
+
+function pauseRound(){
+  paused=true;roundNonce++;
+  if(gAI){cancelAnimationFrame(gAI);gAI=null;}
+  clrTr();stopHnk();spFl();spBell();
+  gate='open';initGate();ulB();resCars();
+  lkd=false;phase='idle';rOK=false;cTr=null;
+  setSig('off');bC.classList.remove('glow');bO.classList.remove('glow');
+}
+
+function resumeGame(){
+  if(!started)return;
+  paused=false;carLast=performance.now();updH();
+  setTimeout(()=>{if(!paused&&phase==='idle')startR();},1200);
+}
 
 // Rotation safety net: if a round is mid-flight when the iPad goes
 // landscape, the overlay hides the scene but timers keep running
@@ -1000,12 +1027,8 @@ function loop(){updateCars();requestAnimationFrame(loop);}
 // a fresh round starts cleanly once portrait returns.
 const rotateMQ=window.matchMedia('(orientation: landscape)');
 function handleRotate(mq){
-  if(mq.matches && phase!=='idle'){
-    clrTr();stopHnk();spFl();spBell();
-    lkd=false;phase='idle';rOK=false;cTr=null;
-    setSig('off');updH();bC.classList.remove('glow');bO.classList.remove('glow');
-    if(started) setTimeout(()=>{if(phase==='idle')startR();},TM[mode].gap*1000);
-  }
+  if(mq.matches){pauseRound();return;}
+  if(started&&!so.classList.contains('show'))resumeGame();
 }
 rotateMQ.addEventListener('change',handleRotate);
 
@@ -1019,6 +1042,7 @@ const so=$('settingsOverlay');
 gb.style.display='none';
 
 function go(){
+  if(started||ss.classList.contains('hidden'))return;
   ea();ss.classList.add('hidden');
   setTimeout(()=>{ss.style.display='none';gb.style.display='flex';
     started=true;stCars();loop();
@@ -1027,13 +1051,22 @@ function go(){
 $('btnPlay').addEventListener('click',go);
 $('btnPlay').addEventListener('touchstart',e=>{e.preventDefault();go();},{passive:false});
 
-// Settings overlay (pause/quit)
-let paused=false;
 gb.addEventListener('click',()=>{
-  if(paused)return;paused=true;so.classList.add('show');
+  if(so.classList.contains('show'))return;
+  pauseRound();so.classList.add('show');
 });
-$('soResume').addEventListener('click',()=>{paused=false;so.classList.remove('show');});
+$('soResume').addEventListener('click',()=>{so.classList.remove('show');resumeGame();});
+$('soSound').textContent=muted?'Sound: Off':'Sound: On';
+$('soSound').addEventListener('click',()=>{
+  muted=!muted;localStorage.setItem('crossingMuted',muted?'1':'0');
+  $('soSound').textContent=muted?'Sound: Off':'Sound: On';
+  if(!muted)ea();else if(ax&&ax.state==='running')ax.suspend().catch(()=>{});
+});
 $('soQuit').addEventListener('click',()=>{location.href='index.html';});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){pauseRound();return;}
+  if(!so.classList.contains('show'))resumeGame();
+});
 </script>
 </div>
 </body>

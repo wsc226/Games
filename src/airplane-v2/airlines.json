@@ -1,0 +1,14 @@
+[
+ {"id":"cx","name":"Cathay Pacific","p":"#006564","s":"#8a8f92","apt":"HKG","rwy":"25L","hdg":250,"dir":"WSW","cs":"Cathay","flt":"451","gate":"23"},
+ {"id":"hx","name":"HK Express","p":"#6d2e8f","s":"#00b7c9","apt":"HKG","rwy":"25L","hdg":250,"dir":"WSW","cs":"Hong Kong Express","flt":"237","gate":"35"},
+ {"id":"jl","name":"JAL","p":"#eeeeee","s":"#C8102E","apt":"NRT","rwy":"34L","hdg":340,"dir":"NNW","cs":"Japan Air","flt":"723","gate":"42"},
+ {"id":"nh","name":"ANA","p":"#eeeeee","s":"#13448C","apt":"NRT","rwy":"34L","hdg":340,"dir":"NNW","cs":"All Nippon","flt":"882","gate":"44"},
+ {"id":"zg","name":"ZIPAIR","p":"#1A1A1A","s":"#009a76","apt":"NRT","rwy":"34L","hdg":340,"dir":"NNW","cs":"Zip Air","flt":"105","gate":"38"},
+ {"id":"ek","name":"Emirates","p":"#eeeeee","s":"#d71a21","apt":"DXB","rwy":"30L","hdg":300,"dir":"WNW","cs":"Emirates","flt":"311","gate":"B12"},
+ {"id":"as","name":"Alaska Airlines","p":"#01426A","s":"#78cdd1","apt":"SEA","rwy":"16L","hdg":160,"dir":"SSE","cs":"Alaska","flt":"67","gate":"N5"},
+ {"id":"mu","name":"China Eastern","p":"#eeeeee","s":"#c8102e","apt":"PVG","rwy":"35R","hdg":350,"dir":"N","cs":"China Eastern","flt":"733","gate":"D5"},
+ {"id":"vn","name":"Vietnam Airlines","p":"#0c6980","s":"#d4a017","apt":"SGN","rwy":"25R","hdg":250,"dir":"WSW","cs":"Vietnam","flt":"591","gate":"11"},
+ {"id":"aa","name":"American Airlines","p":"#d8d8d8","s":"#c8102e","apt":"DFW","rwy":"18L","hdg":180,"dir":"S","cs":"American","flt":"273","gate":"D22"},
+ {"id":"dl","name":"Delta","p":"#eeeeee","s":"#003087","apt":"ATL","rwy":"28","hdg":280,"dir":"W","cs":"Delta","flt":"412","gate":"E18"},
+ {"id":"ua","name":"United","p":"#eeeeee","s":"#003087","apt":"IAH","rwy":"15L","hdg":150,"dir":"SSE","cs":"United","flt":"558","gate":"C3"}
+]

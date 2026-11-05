@@ -23,6 +23,12 @@ html,body{
   60%{transform:translate(-3px,-2px)}80%{transform:translate(3px,2px)}
 }
 #scene.shaking{animation:shakeS .35s linear infinite}
+.scene-tools{position:absolute;top:9px;left:9px;z-index:100;display:flex;gap:7px}
+.scene-tool{width:46px;height:46px;border:none;border-radius:50%;background:rgba(5,8,18,.72);
+  color:#fff;font-size:21px;font-weight:900;box-shadow:0 3px 12px rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(5px);cursor:pointer}
+.scene-tool:active{transform:scale(.9)}
+.scene-tool[aria-pressed="true"]{background:rgba(145,32,66,.88)}
 
 #space{position:absolute;inset:0;opacity:0;z-index:1;
   background:linear-gradient(180deg,#020210 0%,#0a0c2e 60%,#1a2050 100%);
@@ -234,7 +240,7 @@ html,body{
 .hudRow{display:flex;justify-content:space-between;gap:10px;font-size:10px}
 .hudRow .k{color:rgba(140,230,160,.6);letter-spacing:1px}
 .hudRow .v{color:#8ce6a0;font-weight:700;min-width:62px;text-align:right}
-#missionTag{position:absolute;top:9px;left:10px;z-index:55;
+#missionTag{position:absolute;top:9px;left:118px;z-index:55;
   display:flex;align-items:center;gap:6px;
   background:rgba(5,8,18,.6);backdrop-filter:blur(5px);
   border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 10px}
@@ -284,7 +290,7 @@ html,body{
 .ind.green .il{color:#8ce6a0}
 .ind.amber .il{color:#ffd080}
 
-#mlog{flex:1;min-height:0;border-radius:10px;background:rgba(0,0,0,.3);
+#mlog{flex:0 0 clamp(48px,7dvh,62px);min-height:0;border-radius:10px;background:rgba(0,0,0,.3);
   border:1px solid rgba(255,255,255,.06);
   padding:8px 12px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
   font-family:'SF Mono',Menlo,monospace}
@@ -349,12 +355,21 @@ to{box-shadow:inset 0 5px 9px rgba(255,255,255,.44),inset 0 -5px 9px rgba(0,0,0,
 .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.22);pointer-events:none;
   transform:scale(0);animation:rpl .6s linear}
 @keyframes rpl{to{transform:scale(4.5);opacity:0}}
+@media (max-width:600px){
+  #missionTag{top:62px;left:8px;max-width:230px}
+  #missionTag .mt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #hud{right:8px}
+}
 </style>
 </head>
 <body>
 
 <!-- ════════ SCENE ════════ -->
 <div id="scene">
+  <div class="scene-tools">
+    <button class="scene-tool" id="btnHome" aria-label="Back to game menu">⌂</button>
+    <button class="scene-tool" id="btnSound" aria-label="Turn sound off" aria-pressed="false">🔊</button>
+  </div>
   <div id="space"></div>
   <div id="stars"></div>
   <div id="earthGlow"></div>
@@ -408,7 +423,7 @@ to{box-shadow:inset 0 5px 9px rgba(255,255,255,.44),inset 0 -5px 9px rgba(0,0,0,
     <div id="astroVisor"><div id="astroFace">😐</div></div>
   </div>
 
-  <div id="missionTag"><span class="rocket-ico">🚀</span><span class="mt">ASHER&nbsp;1</span></div>
+  <div id="missionTag"><span class="rocket-ico" id="missionIcon">🚀</span><span class="mt" id="missionName">ASHER 1</span></div>
 
   <div id="hud">
     <div class="hudRow"><span class="k">ALT</span><span class="v" id="hudAlt">0.0 km</span></div>
@@ -425,7 +440,7 @@ to{box-shadow:inset 0 5px 9px rgba(255,255,255,.44),inset 0 -5px 9px rgba(0,0,0,
 
   <div id="orbitMsg">
     <div class="big">🛰 ORBIT ACHIEVED!</div>
-    <div class="sub">GREAT FLYING, CAPTAIN ASHER!</div>
+    <div class="sub" id="orbitSub">GREAT FLYING, CAPTAIN ASHER!</div>
   </div>
 
   <div id="stateLabel">READY — FUEL THE ROCKET</div>
@@ -464,21 +479,23 @@ to{box-shadow:inset 0 5px 9px rgba(255,255,255,.44),inset 0 -5px 9px rgba(0,0,0,
 'use strict';
 
 /* ══════ AUDIO ══════ */
-let A=null,noiseBuf=null,rumbleSrc=null,rumbleGain=null,pumpOsc=null,pumpGain=null;
+let A=null,masterGain=null,noiseBuf=null,rumbleSrc=null,rumbleGain=null,pumpOsc=null,pumpGain=null;
+let muted=localStorage.getItem('rocketMuted')==='1';
 function ctx(){
   if(!A){A=new (window.AudioContext||window.webkitAudioContext)();
+    masterGain=A.createGain();masterGain.gain.value=muted?0:1;masterGain.connect(A.destination);
     const len=A.sampleRate*2,b=A.createBuffer(1,len,A.sampleRate),d=b.getChannelData(0);
     for(let i=0;i<len;i++)d[i]=Math.random()*2-1;noiseBuf=b;}
-  if(A.state==='suspended')A.resume();
+  if(A.state==='suspended'&&!muted)A.resume();
   return A;
 }
 document.addEventListener('visibilitychange',()=>{
-  try{if(!document.hidden&&A&&A.state==='suspended')A.resume();}catch(e){}
+  try{if(!document.hidden&&!muted&&A&&A.state==='suspended')A.resume();}catch(e){}
 });
 /* countdown computer voice */
 function say(text){
   try{
-    if(!('speechSynthesis' in window))return;
+    if(muted||!('speechSynthesis' in window))return;
     const u=new SpeechSynthesisUtterance(text);
     u.rate=1;u.pitch=.5;u.volume=1;   // low pitch = mission-control computer feel
     speechSynthesis.speak(u);
@@ -487,7 +504,7 @@ function say(text){
 function hushVoice(){try{if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}}
 function tone(f,dur,type='sine',vol=.25,del=0){
   try{const c=ctx(),o=c.createOscillator(),g=c.createGain();
-  o.connect(g);g.connect(c.destination);o.type=type;o.frequency.value=f;
+  o.connect(g);g.connect(masterGain);o.type=type;o.frequency.value=f;
   g.gain.setValueAtTime(vol,c.currentTime+del);
   g.gain.exponentialRampToValueAtTime(.001,c.currentTime+del+dur);
   o.start(c.currentTime+del);o.stop(c.currentTime+del+dur+.02);}catch(e){}
@@ -495,7 +512,7 @@ function tone(f,dur,type='sine',vol=.25,del=0){
 function thud(){try{const c=ctx();tone(110,.22,'sine',.5);
   const s=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();
   s.buffer=noiseBuf;f.type='lowpass';f.frequency.value=500;
-  s.connect(f);f.connect(g);g.connect(c.destination);
+  s.connect(f);f.connect(g);g.connect(masterGain);
   g.gain.setValueAtTime(.3,c.currentTime);
   g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.16);
   s.start();s.stop(c.currentTime+.2);}catch(e){}}
@@ -503,7 +520,7 @@ function startPump(){try{const c=ctx();pumpOsc=c.createOscillator();
   const l=c.createOscillator(),lg=c.createGain();pumpGain=c.createGain();
   l.frequency.value=7;lg.gain.value=16;l.connect(lg);lg.connect(pumpOsc.frequency);
   pumpOsc.type='triangle';pumpOsc.frequency.value=84;
-  pumpOsc.connect(pumpGain);pumpGain.connect(c.destination);
+  pumpOsc.connect(pumpGain);pumpGain.connect(masterGain);
   pumpGain.gain.value=.1;pumpOsc.start();l.start();pumpOsc._lfo=l;}catch(e){}}
 function stopPump(){try{if(pumpGain)pumpGain.gain.exponentialRampToValueAtTime(.001,ctx().currentTime+.3);
   if(pumpOsc){const p=pumpOsc;setTimeout(()=>{try{p.stop();p._lfo.stop();}catch(e){}},400);pumpOsc=null;}}catch(e){}}
@@ -511,7 +528,7 @@ function startRumble(vol=.07){try{const c=ctx();stopRumble();
   rumbleSrc=c.createBufferSource();rumbleGain=c.createGain();const f=c.createBiquadFilter();
   rumbleSrc.buffer=noiseBuf;rumbleSrc.loop=true;
   f.type='lowpass';f.frequency.value=180;
-  rumbleSrc.connect(f);f.connect(rumbleGain);rumbleGain.connect(c.destination);
+  rumbleSrc.connect(f);f.connect(rumbleGain);rumbleGain.connect(masterGain);
   rumbleGain.gain.value=vol;rumbleSrc.start();}catch(e){}}
 function setRumble(v){try{if(rumbleGain)rumbleGain.gain.linearRampToValueAtTime(v,ctx().currentTime+.4);}catch(e){}}
 function stopRumble(){try{if(rumbleGain)rumbleGain.gain.exponentialRampToValueAtTime(.001,ctx().currentTime+.5);
@@ -545,6 +562,13 @@ const scene=$('scene'),world=$('world'),rocketWrap=$('rocketWrap'),
   ignTimer=$('ignTimer'),ignN=$('ignN');
 const btns={fuel:$('bFuel'),hatch:$('bHatch'),ignite:$('bIgnite'),launch:$('bLaunch'),sep:$('bSep'),abort:$('bAbort')};
 const inds={fuel:$('iFuel'),hatch:$('iHatch'),eng:$('iEng'),lift:$('iLift'),sep:$('iSep')};
+function setMuted(next){
+  muted=next;localStorage.setItem('rocketMuted',muted?'1':'0');
+  if(masterGain&&A)masterGain.gain.setValueAtTime(muted?0:1,A.currentTime);
+  if(muted)hushVoice();
+  const b=$('btnSound');b.textContent=muted?'🔇':'🔊';b.setAttribute('aria-pressed',String(muted));
+  b.setAttribute('aria-label',muted?'Turn sound on':'Turn sound off');
+}
 
 for(let i=0;i<70;i++){const s=document.createElement('div');s.className='star';
   const sz=Math.random()*2.2+.8;
@@ -624,6 +648,18 @@ let st='PAD', level='easy';
 let fuel=0, alt=0, spd=0;
 let raf=null,lastT=0,smokeT=0,cdTimer=null,fuelInt=null,ventInt=null,ignInt=null,ignLeft=0;
 let missionStart=Date.now();
+const MISSIONS=[
+  {icon:'🌙',name:'MOON ORBIT'},
+  {icon:'🛰️',name:'SPACE STATION'},
+  {icon:'🌎',name:'EARTH WATCH'}
+];
+let rocketTrips=Math.max(0,Number(localStorage.getItem('rocketTrips'))||0);
+let mission=MISSIONS[rocketTrips%MISSIONS.length];
+function showMission(){
+  mission=MISSIONS[rocketTrips%MISSIONS.length];
+  $('missionIcon').textContent=mission.icon;
+  $('missionName').textContent=`ASHER ${rocketTrips+1} · ${mission.name}`;
+}
 
 const GREEN_LO=60, GREEN_HI=80, SEP_LO=4, SEP_HI=24;
 
@@ -632,7 +668,7 @@ function log(msg,cls=''){
   const t=((Date.now()-missionStart)/1000).toFixed(1).padStart(6,'0');
   d.innerHTML=`<span class="t">T+${t}</span>${msg}`;
   mlog.appendChild(d);
-  while(mlog.children.length>6)mlog.removeChild(mlog.firstChild);
+  while(mlog.children.length>2)mlog.removeChild(mlog.firstChild);
 }
 function label(t,c=''){stateLabel.textContent=t;stateLabel.className=c;}
 function ind(key,mode){const e=inds[key];e.classList.remove('amber','green');if(mode)e.classList.add(mode);}
@@ -927,6 +963,8 @@ function orbit(){
   earthGlow.style.opacity='1';
   orbitMsg.classList.add('show');
   snd.fanfare();face('🤩');
+  rocketTrips++;localStorage.setItem('rocketTrips',String(rocketTrips));
+  $('orbitSub').textContent=`${mission.name} COMPLETE · FLIGHT ${rocketTrips}`;
   label('🛰 ORBIT ACHIEVED — MISSION COMPLETE','go');
   log('ORBIT ACHIEVED! Outstanding work, Captain','sys');
   log('Press ABORT/RESET for a new mission');
@@ -961,7 +999,7 @@ function doAbort(){
   Object.keys(inds).forEach(k=>ind(k,null));
   face('😐');
   syncBtns();
-  if(wasOrbit){label('NEW MISSION — FUEL THE ROCKET');log('Vehicle recycled — ready for next launch','sys');}
+  if(wasOrbit){showMission();label('NEW MISSION — FUEL THE ROCKET');log('Vehicle recycled — ready for next launch','sys');}
   else if(wasMission){label('MISSION ABORTED — SAFE ON PAD','abort');log('ABORT — all systems safed','bad');
     setTimeout(()=>{if(st==='PAD')label('READY — FUEL THE ROCKET');},2200);}
   else{label('READY — FUEL THE ROCKET');}
@@ -976,6 +1014,8 @@ function wire(b,fn){
 }
 wire(btns.fuel,doFuel);wire(btns.hatch,doHatch);wire(btns.ignite,doIgnite);
 wire(btns.launch,doLaunch);wire(btns.sep,doSep);wire(btns.abort,doAbort);
+wire($('btnHome'),()=>location.href='index.html');
+wire($('btnSound'),()=>setMuted(!muted));
 
 function setLevel(lv){
   level=lv;
@@ -994,6 +1034,7 @@ mkCloud(34,scene.clientHeight*.30,.8);
 mkCloud(78,scene.clientHeight*.34,.95);
 setGauge(0,'fuel');
 syncBtns();
+setMuted(muted);showMission();
 log('Mission Control online — good morning, Captain','sys');
 log('Checklist: Fuel → Hatch → Fire → Launch');
 </script>

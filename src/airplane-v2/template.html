@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Little Captain 3D — 747</title>
+<!-- GENERATED FILE: edit src/airplane-v2/* and airplane_scripts.json, then run: node tools/build_airplane_v2.mjs -->
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100dvh;overflow:hidden;background:#0a0d14;
+  font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;touch-action:none;user-select:none;-webkit-user-select:none}
+button{border:none;outline:none;background:none;-webkit-tap-highlight-color:transparent;cursor:pointer;font-family:inherit}
+.screen{position:absolute;inset:0;overflow:hidden}
+.screen.gone{display:none!important}
+.corner-tools{position:absolute;top:10px;left:10px;z-index:80;display:flex;gap:8px}
+.corner-btn{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  background:rgba(4,12,28,.78);border:2px solid rgba(255,255,255,.34);box-shadow:0 3px 12px rgba(0,0,0,.36);
+  font-size:22px;font-weight:900;backdrop-filter:blur(6px)}
+.corner-btn:active{transform:scale(.9)}
+.corner-btn[aria-pressed="true"]{background:#8b2945}
+
+/* ═══ SELECTOR ═══ */
+#scr-air{background:radial-gradient(ellipse 120% 60% at 50% -10%,#16305e 0%,transparent 60%),
+  linear-gradient(170deg,#0b1530 0%,#0a1024 60%,#070b18 100%);
+  display:flex;flex-direction:column;align-items:center;overflow-y:auto;touch-action:pan-y}
+#air-h{font-size:26px;font-weight:900;letter-spacing:5px;color:#fff;text-align:center;padding:30px 20px 6px;
+  text-shadow:0 2px 24px rgba(90,160,255,.4)}
+#air-sub{font-size:12px;letter-spacing:3px;color:rgba(255,255,255,.45);margin-bottom:14px}
+#gm-tabs{display:flex;gap:10px;margin-bottom:16px;padding:0 12px;width:100%;max-width:768px}
+.gm{flex:1;border-radius:16px;padding:12px 10px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.06);
+  border:2px solid rgba(255,255,255,.12);text-align:center;transition:all .2s}
+.gm b{display:block;font-size:17px;letter-spacing:2px;font-weight:900}
+.gm span{display:block;font-size:11px;letter-spacing:.5px;margin-top:3px}
+.gm.on{color:#fff;background:linear-gradient(160deg,#1d4d9a,#123266);border-color:#6fb0ff;box-shadow:0 0 22px rgba(80,150,255,.35)}
+#a-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 12px 30px;width:100%;max-width:768px}
+.at{background:#fff;border-radius:16px;min-height:128px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:6px;padding:10px 4px;transition:transform .12s;box-shadow:0 3px 14px rgba(0,0,0,.45)}
+.at:active{transform:scale(.92)}
+.at img{width:78px;height:78px;object-fit:contain;pointer-events:none}
+.at-n{font-size:10px;font-weight:800;letter-spacing:.4px;color:#333;text-align:center;text-transform:uppercase;line-height:1.3;pointer-events:none}
+#loading{position:fixed;inset:0;z-index:200;background:#070b18;color:#9cc4ff;display:none;
+  align-items:center;justify-content:center;flex-direction:column;gap:14px;font-weight:800;letter-spacing:4px}
+#loading.show{display:flex}
+#loading small{color:rgba(255,255,255,.5);letter-spacing:1px;font-weight:500;max-width:80%;text-align:center}
+
+/* ═══ SIM LAYOUT ═══ */
+#scr-sim{display:flex;flex-direction:column;background:#000}
+#scene{position:relative;flex:1;overflow:hidden;min-height:0}
+#gl{position:absolute;inset:0}
+#gl canvas{display:block;width:100%!important;height:100%!important}
+#annunc{height:64px;flex-shrink:0}
+#panel{height:340px;flex-shrink:0;position:relative}
+#sky-panel{display:none;flex-shrink:0}
+body.sky #annunc,body.sky #panel{display:none}
+body.sky #sky-panel{display:flex}
+
+/* window frame overlay (wing-window view) */
+#winframe{position:absolute;inset:0;pointer-events:none;z-index:4;display:none;
+  background:radial-gradient(ellipse 30% 42% at 50% 50%,transparent 96%,rgba(0,0,0,.35) 98%,transparent 100%);}
+#winframe::before{content:'';position:absolute;inset:0;
+  -webkit-mask:radial-gradient(ellipse min(34vw,260px) min(40vh,300px) at 50% 50%,transparent 98%,#000 100%);
+          mask:radial-gradient(ellipse min(34vw,260px) min(40vh,300px) at 50% 50%,transparent 98%,#000 100%);
+  background:linear-gradient(90deg,#d9d6cf,#ece9e2 40%,#cfcbc2);}
+#winframe::after{content:'';position:absolute;left:50%;top:50%;width:min(68vw,520px);height:min(80vh,600px);
+  transform:translate(-50%,-50%);border-radius:50%;box-shadow:inset 0 0 0 10px #bdb8ae,inset 0 0 26px 14px rgba(0,0,0,.35)}
+#winframe.show{display:block}
+#pilotframe{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;display:none}
+body.sky #pilotframe{display:block}
+#whiteout{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:3}
+
+/* ═══ VIEW BUTTONS ═══ */
+#views{position:absolute;right:10px;top:104px;z-index:30;display:flex;flex-direction:column;gap:8px}
+.vb{width:62px;height:58px;border-radius:14px;background:rgba(4,12,28,.72);border:2px solid rgba(255,255,255,.25);
+  color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;line-height:1}
+.vb small{font-size:9px;font-weight:800;letter-spacing:1px;margin-top:4px;color:rgba(255,255,255,.7)}
+.vb.on{background:#1d5fbf;border-color:#9cd0ff;box-shadow:0 0 14px rgba(90,170,255,.6)}
+body.sky #views{display:none}
+
+/* ═══ HUD ═══ */
+.hud{position:absolute;z-index:12;pointer-events:none;opacity:0;transition:opacity .5s}
+.hud.hs{opacity:1}
+#hud-alt{top:12px;left:122px;font-family:'SF Mono',Menlo,monospace;font-size:22px;font-weight:700;color:#00e880;
+  letter-spacing:2px;background:rgba(0,0,0,.55);padding:5px 12px;border-radius:6px}
+#hud-cmp{top:12px;right:104px;text-align:center;font-family:Menlo,monospace;color:#fff;background:rgba(0,0,0,.5);
+  padding:6px 10px;border-radius:8px}
+#hud-cmp b{font-size:17px;display:block}
+#hud-cmp span{font-size:11px;color:rgba(255,255,255,.6);letter-spacing:2px}
+#badge{top:10px;right:12px;width:80px;height:80px;background:#fff;border-radius:14px;display:flex;align-items:center;
+  justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+#badge img{width:64px;height:64px;object-fit:contain}
+#hud-gate{top:64px;left:10px;font-family:Menlo,monospace;font-size:20px;font-weight:900;color:#ffe050;
+  background:rgba(0,0,0,.75);padding:6px 14px;border-radius:6px;letter-spacing:2px}
+#taxi-l{top:64px;left:50%;transform:translateX(-50%);font-family:Menlo,monospace;font-size:16px;font-weight:900;
+  letter-spacing:8px;color:#fff;background:rgba(0,0,0,.55);padding:6px 16px;border-radius:20px}
+
+#spd-wrap{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);width:300px;z-index:15;opacity:0;
+  transition:opacity .3s;pointer-events:none}
+#spd-wrap.show{opacity:1}
+#spd-track{height:34px;background:rgba(0,0,0,.65);border-radius:17px;border:2px solid rgba(255,255,255,.2);overflow:hidden;position:relative}
+#spd-fill{height:100%;width:0%;border-radius:17px;background:linear-gradient(90deg,#1a44cc,#44aaff 45%,#ffdd00 75%,#ff6a00)}
+#vr-zone{position:absolute;top:0;bottom:0;left:78%;right:0;background:rgba(64,255,110,.16);border-left:3px solid #40ff6e}
+#vr-lbl{position:absolute;top:-20px;left:78%;font-family:Menlo,monospace;font-size:12px;font-weight:700;color:#40ff6e}
+#spd-cap{font-family:Menlo,monospace;font-size:12px;color:rgba(255,255,255,.7);text-align:center;margin-top:5px;letter-spacing:3px}
+
+#rotate-b{position:absolute;top:34%;left:50%;transform:translate(-50%,-50%) scale(.85);font-size:56px;font-weight:900;
+  letter-spacing:4px;color:#fff;text-shadow:0 0 30px rgba(80,255,120,.95);opacity:0;pointer-events:none;z-index:28;
+  transition:opacity .2s,transform .2s;padding:20px 34px}
+#rotate-b.show{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto;animation:rp .5s ease-in-out infinite alternate}
+@keyframes rp{from{text-shadow:0 0 18px rgba(80,255,120,.7)}to{text-shadow:0 0 55px rgba(80,255,120,1);transform:translate(-50%,-53%) scale(1.06)}}
+
+#fb{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);font-size:70px;font-weight:900;letter-spacing:4px;
+  opacity:0;pointer-events:none;z-index:30;transition:opacity .16s;white-space:nowrap;text-align:center}
+#fb.show{opacity:1}
+#fb.err{color:#ff3b30;text-shadow:0 0 30px rgba(255,50,40,.75)}
+#fb.wait{color:#ffa722;text-shadow:0 0 30px rgba(255,160,30,.75)}
+#fb.ok{color:#35e96b;text-shadow:0 0 34px rgba(50,230,105,.8)}
+@keyframes flR{0%,100%{background:transparent}45%{background:rgba(255,30,20,.26)}}
+@keyframes flA{0%,100%{background:transparent}45%{background:rgba(255,160,20,.2)}}
+@keyframes flG{0%,100%{background:transparent}45%{background:rgba(40,230,100,.18)}}
+#flash{position:absolute;inset:0;pointer-events:none;z-index:29}
+#flash.f-r{animation:flR .4s ease}#flash.f-a{animation:flA .4s ease}#flash.f-g{animation:flG .5s ease}
+
+#subtitle{position:absolute;left:50%;bottom:72px;transform:translateX(-50%);max-width:min(86%,720px);z-index:26;
+  background:rgba(0,0,0,.66);color:#fff;font-size:15px;line-height:1.35;padding:8px 14px;border-radius:12px;
+  opacity:0;transition:opacity .3s;pointer-events:none;text-align:center}
+#subtitle.show{opacity:1}
+#subtitle b{color:#8fd0ff;font-size:11px;letter-spacing:2px;display:block;margin-bottom:2px}
+
+#end-ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,8,32,.15),rgba(0,8,32,.75));display:flex;
+  flex-direction:column;align-items:center;justify-content:flex-end;gap:22px;padding-bottom:48px;z-index:50;opacity:0;
+  pointer-events:none;transition:opacity .9s}
+#end-ov.show{opacity:1;pointer-events:auto}
+#end-t{font-size:56px;font-weight:900;letter-spacing:4px;color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,.5),0 3px 8px #000}
+#end-s{color:#fff;font-size:18px;font-weight:700;letter-spacing:1px;text-shadow:0 2px 6px #000}
+#end-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.end-b{font-size:17px;font-weight:800;letter-spacing:2px;color:#fff;border-radius:16px;padding:18px 26px;min-height:66px;min-width:150px}
+#b-fly{background:#0a5c78}#b-new{background:#3a1660}#b-sky{background:#7a4a10}
+
+#mode{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:30;display:flex;gap:3px;
+  background:rgba(0,0,0,.66);border-radius:18px;padding:4px}
+.lvl{font-size:12px;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,.42);border-radius:14px;padding:6px 16px;min-height:32px;transition:all .2s}
+.lvl.on{color:#111;background:#e8e2d6}
+.lvl.lkd{opacity:.3;pointer-events:none}
+
+/* ═══ ANNUNCIATOR + KORRY PANEL (takeoff mode) ═══ */
+#annunc{background:linear-gradient(180deg,#23211e,#151412);border-top:2px solid #3a3733;display:flex;align-items:center;
+  justify-content:space-around;padding:0 8px;gap:6px}
+.ann-g{display:flex;align-items:center;gap:8px}
+.ann-t{font-size:12px;font-weight:800;letter-spacing:2px;color:#8f897e}
+.lamp{width:26px;height:26px;border-radius:50%;background:#1c1b19;border:2px solid #0c0b0a;box-shadow:inset 0 2px 4px rgba(0,0,0,.8);transition:background .3s,box-shadow .3s}
+.lamp.grn{background:#3ee06a;box-shadow:0 0 12px rgba(60,225,105,.8),inset 0 -2px 4px rgba(0,80,20,.5)}
+.lamp.amb{background:#ffb340;box-shadow:0 0 12px rgba(255,175,55,.8),inset 0 -2px 4px rgba(120,70,0,.5)}
+.fl-cell{font-family:Menlo,monospace;font-size:15px;font-weight:700;color:#463f35;background:#1c1b19;border:2px solid #0c0b0a;
+  border-radius:5px;padding:4px 9px;box-shadow:inset 0 2px 4px rgba(0,0,0,.8);transition:all .3s}
+.fl-cell.lit{color:#3ee06a;text-shadow:0 0 8px rgba(60,225,105,.9)}
+#panel{background:linear-gradient(180deg,#b3aca0 0%,#a49d90 8%,#9a9386 55%,#8b8478 100%);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.25),inset 0 -4px 8px rgba(0,0,0,.25);padding:12px 12px 10px}
+.screw{position:absolute;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c8c2b6,#6e685e 70%);box-shadow:inset 0 -1px 2px rgba(0,0,0,.5)}
+.screw::after{content:'';position:absolute;left:2px;right:2px;top:6.5px;height:2.5px;background:#4a453d;border-radius:2px;transform:rotate(28deg)}
+#panel .screw:nth-of-type(1){top:8px;left:10px}#panel .screw:nth-of-type(2){top:8px;right:10px}
+#panel .screw:nth-of-type(3){bottom:8px;left:10px}#panel .screw:nth-of-type(4){bottom:8px;right:10px}
+#p-title{text-align:center;font-size:13px;font-weight:800;letter-spacing:4px;color:#3a352d;margin-bottom:6px}
+#k-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 10px;border:2px solid rgba(255,255,255,.75);border-radius:10px;
+  padding:10px 10px 12px;margin:0 18px;position:relative}
+.kcell{display:flex;flex-direction:column;align-items:center;gap:5px}
+.klbl{font-size:17px;font-weight:800;letter-spacing:2.5px;color:#2e2a24;text-align:center;line-height:1;pointer-events:none}
+.korry{width:100%;max-width:150px;height:84px;border-radius:8px;position:relative;
+  background:linear-gradient(160deg,#2a2a2a 0%,#161616 45%,#0c0c0c 100%);
+  box-shadow:0 3px 5px rgba(0,0,0,.55),inset 0 1px 1px rgba(255,255,255,.14),inset 0 -2px 3px rgba(0,0,0,.7);
+  border:2px solid #060606;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .12s;touch-action:none}
+.korry:active:not(.lkd){transform:translateY(2px);box-shadow:0 1px 2px rgba(0,0,0,.55),inset 0 2px 5px rgba(0,0,0,.8)}
+.korry.lkd{opacity:.35;pointer-events:none}
+.korry.held{transform:translateY(2px);box-shadow:0 1px 2px rgba(0,0,0,.55),inset 0 2px 6px rgba(0,0,0,.85)}
+@keyframes wiggle{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.korry.resist{animation:wiggle .3s ease 2}
+.kbar{width:72%;height:26px;border-radius:4px;position:relative;overflow:hidden;background:#141414;border:1.5px solid #050505;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center}
+.kbar-fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(80,225,120,.35)}
+.kbar-t{position:relative;font-family:Menlo,monospace;font-size:13px;font-weight:700;letter-spacing:2px;color:#2f2f2f;transition:color .25s,text-shadow .25s;pointer-events:none}
+.korry.lit .kbar-t{color:#5cf08a;text-shadow:0 0 10px rgba(80,240,130,.95)}
+.korry.lit .kbar{box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 0 14px rgba(70,230,120,.35)}
+.korry.lit-a .kbar-t{color:#ffbb4d;text-shadow:0 0 10px rgba(255,180,60,.95)}
+@keyframes guide{from{box-shadow:inset 0 2px 5px rgba(0,0,0,.9)}to{box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 0 20px 4px rgba(70,230,120,.75)}}
+.korry.guide .kbar{animation:guide .6s ease-in-out infinite alternate}
+.korry.guide .kbar-t{color:#5cf08a;text-shadow:0 0 10px rgba(80,240,130,.95)}
+#ann-drawer{position:absolute;inset:0;z-index:6;background:linear-gradient(180deg,#b3aca0,#8b8478);transform:translateY(102%);
+  transition:transform .28s cubic-bezier(.4,0,.2,1);padding:14px 12px;display:flex;flex-direction:column}
+#ann-drawer.open{transform:translateY(0)}
+#ad-title{text-align:center;font-size:13px;font-weight:800;letter-spacing:4px;color:#3a352d;margin-bottom:8px}
+#ad-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;border:2px solid rgba(255,255,255,.75);border-radius:10px;padding:12px;margin:0 18px 6px}
+.acell{display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:center}
+#ad-close{margin:8px auto 0;font-size:14px;font-weight:800;letter-spacing:2px;color:#3a352d;padding:10px 30px;min-height:44px;border:2px solid #6a6459;border-radius:8px}
+.korry.done .kbar-t{color:#8a8a55}
+.korry.done{opacity:.55;pointer-events:none}
+
+/* ═══ SKY CHALLENGE PANEL ═══ */
+#sky-panel{height:min(46vh,400px);background:linear-gradient(180deg,#2b2f35,#1c1f24);border-top:3px solid #0d0f12;
+  padding:8px;gap:8px;align-items:stretch;justify-content:center}
+.du{background:#000;border-radius:8px;border:4px solid #3b4048;box-shadow:inset 0 0 0 2px #111,0 2px 6px rgba(0,0,0,.6);
+  aspect-ratio:1/1;height:100%;max-width:38vw;position:relative;overflow:hidden}
+.du canvas{width:100%;height:100%;display:block}
+.du .dlbl{position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.35);pointer-events:none}
+#sky-side{flex:1;max-width:300px;min-width:150px;display:flex;flex-direction:column;gap:8px}
+#mcp{background:#24272c;border:2px solid #3b4048;border-radius:8px;padding:8px;display:flex;justify-content:space-around;gap:6px}
+.mcpw{text-align:center}
+.mcpw small{display:block;font-size:9px;letter-spacing:2px;color:#9aa3ad;font-weight:800}
+.mcpw b{display:block;font-family:Menlo,monospace;font-size:20px;color:#ffb347;background:#000;border-radius:4px;padding:2px 6px;margin-top:3px;text-shadow:0 0 6px rgba(255,170,60,.6)}
+#eicas-du{aspect-ratio:auto;flex:1;max-width:none;min-height:80px}
+#sky-btns{display:flex;gap:6px}
+.sbtn{flex:1;border-radius:8px;background:#30343b;border:2px solid #4a5059;color:#cfd6de;font-size:11px;font-weight:800;letter-spacing:1px;padding:8px 4px;min-height:44px}
+.sbtn.on{background:#1e5a2e;border-color:#56d07a;color:#c8ffd8}
+
+#mission{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:25;min-width:260px;max-width:min(78%,560px);
+  background:rgba(6,14,30,.8);border:2px solid rgba(140,200,255,.45);border-radius:14px;padding:8px 16px;color:#fff;text-align:center;
+  pointer-events:none;display:none}
+body.sky #mission{display:block}
+body.sky #mode{top:auto;bottom:10px;left:10px;transform:none}
+#mission small{display:block;font-size:10px;letter-spacing:3px;color:#8fd0ff;font-weight:800}
+#mission b{display:block;font-size:20px;letter-spacing:1px;margin-top:2px}
+#mission .bar{height:6px;background:rgba(255,255,255,.15);border-radius:3px;margin-top:6px;overflow:hidden}
+#mission .bar i{display:block;height:100%;width:0;background:#4fe07c;transition:width .2s}
+#stars{position:absolute;top:12px;right:12px;z-index:25;font-size:20px;color:#ffd84d;background:rgba(0,0,0,.5);border-radius:12px;
+  padding:6px 10px;display:none;font-weight:900;text-shadow:0 0 8px rgba(255,210,60,.6)}
+body.sky #stars{display:block}
+#stick{position:absolute;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;border:3px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.06);z-index:20;pointer-events:none;display:none}
+#stick i{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:rgba(255,255,255,.55);
+  box-shadow:0 0 16px rgba(255,255,255,.5)}
+#stick-hint{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);z-index:19;color:#fff;font-weight:800;font-size:18px;
+  letter-spacing:1px;background:rgba(0,0,0,.45);padding:10px 18px;border-radius:14px;pointer-events:none;display:none;text-align:center}
+#stick-hint.show{display:block}
+#shake{position:absolute;inset:0}
+
+@media (max-width:600px){
+  #hud-alt{top:64px;left:8px;font-size:16px;padding:4px 8px}
+  #hud-cmp{top:100px;right:10px}
+  #views{top:170px}
+  .vb{width:52px;height:50px;font-size:18px}
+  #panel{height:300px}
+  .korry{height:70px}
+  .klbl{font-size:13px}
+  #fb{font-size:48px}
+  #sky-panel{height:min(40vh,300px);padding:4px;gap:4px}
+  #sky-side{display:none}
+  .du{max-width:49vw}
+}
+/* Portrait: PFD + ND side by side, MCP / EICAS / buttons in a strip underneath */
+@media (orientation:portrait){
+  #sky-panel{height:auto;flex-wrap:wrap;align-content:flex-start;padding:6px;gap:6px}
+  #sky-panel>.du{height:auto;max-width:none;flex:0 0 calc(50% - 3px)}
+  #sky-side{display:flex;flex:1 1 100%;max-width:none;min-width:0;flex-direction:row;gap:6px;height:clamp(64px,9vh,100px)}
+  #mcp{flex:1.5;align-items:center;padding:4px}
+  .mcpw b{font-size:clamp(13px,2.5vw,20px);padding:2px 4px}
+  #eicas-du{flex:1;min-height:0;height:auto}
+  #eicas-c{object-fit:contain}
+  #sky-btns{flex:.8;flex-direction:column;gap:4px}
+  .sbtn{min-height:0;padding:4px}
+}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="loading"><div>LOADING 3D…</div><small id="loading-msg">Needs an internet connection the first time (three.js).</small></div>
+
+<!-- SELECTOR -->
+<div class="screen" id="scr-air">
+  <div class="corner-tools"><button class="corner-btn" id="nav-air" aria-label="Back to game menu">⌂</button></div>
+  <div id="air-h">CHOOSE YOUR AIRLINE</div>
+  <div id="air-sub">BOEING 747 · CAPTAIN ASHER · 3D</div>
+  <div id="gm-tabs">
+    <button class="gm on" id="gm-takeoff"><b>🛫 TAKEOFF</b><span>Gate · pushback · taxi · fly to cruise</span></button>
+    <button class="gm" id="gm-sky"><b>⛈ SKY CHALLENGE</b><span>Pilot view · storms · ATC · traffic</span></button>
+  </div>
+  <div id="a-grid"></div>
+</div>
+
+<!-- SIM -->
+<div class="screen gone" id="scr-sim">
+  <div id="scene">
+    <div id="shake"><div id="gl"></div></div>
+    <div id="whiteout"></div>
+    <div id="winframe"></div>
+    <svg id="pilotframe" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
+      <defs><linearGradient id="pfg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3f46"/><stop offset="1" stop-color="#22262b"/></linearGradient>
+        <linearGradient id="gsg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1d21"/><stop offset="1" stop-color="#0d0e10"/></linearGradient></defs>
+      <path fill="url(#pfg)" fill-rule="evenodd" d="M0 0H1000V600H0Z
+        M40 120 Q60 70 140 62 L470 50 L455 470 L70 470 Q30 470 34 420 Z
+        M960 120 Q940 70 860 62 L530 50 L545 470 L930 470 Q970 470 966 420 Z"/>
+      <path fill="url(#gsg)" d="M0 455 Q500 405 1000 455 V600 H0Z"/>
+      <rect x="340" y="452" width="320" height="26" rx="4" fill="#2b2e33"/>
+      <circle cx="500" cy="30" r="6" fill="#ffb340" opacity=".8"/>
+    </svg>
+    <div id="flash"></div>
+    <div class="corner-tools">
+      <button class="corner-btn" id="nav-sim" aria-label="Back to airline menu">⌂</button>
+      <button class="corner-btn" id="sound-sim" aria-label="Turn sound off" aria-pressed="false">🔊</button>
+    </div>
+    <div id="views">
+      <button class="vb on" data-v="chase">✈️<small>OUTSIDE</small></button>
+      <button class="vb" data-v="cockpit">🧑‍✈️<small>COCKPIT</small></button>
+      <button class="vb" data-v="cabin">💺<small>CABIN</small></button>
+      <button class="vb" data-v="window">🪟<small>WINDOW</small></button>
+    </div>
+    <div id="spd-wrap">
+      <div id="vr-lbl">Vr</div>
+      <div id="spd-track"><div id="spd-fill"></div><div id="vr-zone"></div></div>
+      <div id="spd-cap">SPEED <span id="spd-kt">0</span> KT</div>
+    </div>
+    <button id="rotate-b">ROTATE ↑</button>
+    <div id="fb"></div>
+    <div id="subtitle"></div>
+    <div class="hud" id="taxi-l">TAXIING</div>
+    <div id="end-ov">
+      <div id="end-t">WELL DONE</div>
+      <div id="end-s"></div>
+      <div id="end-btns">
+        <button class="end-b" id="b-fly">FLY AGAIN ↻</button>
+        <button class="end-b" id="b-sky">SKY CHALLENGE ⛈</button>
+        <button class="end-b" id="b-new">NEW AIRLINE →</button>
+      </div>
+    </div>
+    <div class="hud" id="hud-alt">00000 FT</div>
+    <div class="hud" id="hud-cmp"><b id="cmp-b">000°</b><span id="cmp-p">N</span></div>
+    <div class="hud hs" id="badge"></div>
+    <div class="hud" id="hud-gate"></div>
+    <div id="mode">
+      <button class="lvl on" id="m-easy">EASY</button>
+      <button class="lvl" id="m-norm">NORMAL</button>
+    </div>
+    <!-- sky challenge overlays -->
+    <div id="mission"><small id="ms-k">SKY CHALLENGE</small><b id="ms-t">Get ready…</b><div class="bar"><i id="ms-bar"></i></div></div>
+    <div id="stars">★ 0</div>
+    <div id="stick"><i></i></div>
+    <div id="stick-hint">👆 Drag on the window to fly<br><small>or use the arrow keys</small></div>
+  </div>
+
+  <!-- ANNUNCIATORS -->
+  <div id="annunc">
+    <div class="ann-g"><span class="ann-t">GEAR</span>
+      <div class="lamp grn" id="lp-g1"></div><div class="lamp grn" id="lp-g2"></div><div class="lamp grn" id="lp-g3"></div></div>
+    <div class="ann-g"><span class="ann-t">FLAPS</span>
+      <div class="fl-cell lit" id="fl-up">UP</div><div class="fl-cell" id="fl-10">10</div></div>
+    <div class="ann-g"><span class="ann-t">BELT</span><div class="lamp amb" id="lp-belt"></div></div>
+  </div>
+
+  <!-- KORRY PANEL -->
+  <div id="panel">
+    <div class="screw"></div><div class="screw"></div><div class="screw"></div><div class="screw"></div>
+    <div id="p-title">FLIGHT CONTROL</div>
+    <div id="k-grid">
+      <div class="kcell"><div class="klbl">PUSH<br>BACK</div>
+        <button class="korry lkd" id="k-push"><div class="kbar"><div class="kbar-fill" id="pf"></div><span class="kbar-t">PUSH</span></div></button></div>
+      <div class="kcell"><div class="klbl">THRUST</div>
+        <button class="korry lkd" id="k-thrust"><div class="kbar"><div class="kbar-fill" id="tf"></div><span class="kbar-t">HOLD</span></div></button></div>
+      <div class="kcell"><div class="klbl">FLAPS</div>
+        <button class="korry lkd" id="k-flaps"><div class="kbar"><span class="kbar-t" id="kt-flaps">UP</span></div></button></div>
+      <div class="kcell"><div class="klbl">LDG<br>GEAR</div>
+        <button class="korry lkd" id="k-gear"><div class="kbar"><span class="kbar-t" id="kt-gear">DOWN</span></div></button></div>
+      <div class="kcell"><div class="klbl">SEAT<br>BELT</div>
+        <button class="korry lkd" id="k-belt"><div class="kbar"><span class="kbar-t" id="kt-belt">ON</span></div></button></div>
+      <div class="kcell"><div class="klbl">CABIN<br>PA</div>
+        <button class="korry lkd" id="k-ann"><div class="kbar"><span class="kbar-t">SPEAK</span></div></button></div>
+    </div>
+    <div id="ann-drawer">
+      <div id="ad-title">CABIN ANNOUNCEMENTS</div>
+      <div id="ad-grid">
+        <div class="acell"><div class="klbl">DOORS</div><button class="korry lkd" id="a-doors"><div class="kbar"><span class="kbar-t">SPEAK</span></div></button></div>
+        <div class="acell"><div class="klbl">WELCOME</div><button class="korry lkd" id="a-welcome"><div class="kbar"><span class="kbar-t">SPEAK</span></div></button></div>
+        <div class="acell"><div class="klbl">TAKEOFF</div><button class="korry lkd" id="a-takeoff"><div class="kbar"><span class="kbar-t">SPEAK</span></div></button></div>
+        <div class="acell"><div class="klbl">CRUISE</div><button class="korry lkd" id="a-cruise"><div class="kbar"><span class="kbar-t">SPEAK</span></div></button></div>
+      </div>
+      <button id="ad-close">CLOSE ▾</button>
+    </div>
+  </div>
+
+  <!-- SKY CHALLENGE INSTRUMENTS -->
+  <div id="sky-panel">
+    <div class="du"><canvas id="pfd-c" width="512" height="512"></canvas></div>
+    <div class="du"><canvas id="nd-c" width="512" height="512"></canvas></div>
+    <div id="sky-side">
+      <div id="mcp">
+        <div class="mcpw"><small>IAS</small><b id="mcp-spd">280</b></div>
+        <div class="mcpw"><small>HDG</small><b id="mcp-hdg">090</b></div>
+        <div class="mcpw"><small>ALT</small><b id="mcp-alt">35000</b></div>
+      </div>
+      <div class="du" id="eicas-du"><canvas id="eicas-c" width="512" height="300"></canvas></div>
+      <div id="sky-btns">
+        <button class="sbtn on" id="sb-level">AUTO-LEVEL</button>
+        <button class="sbtn" id="sb-belt">SEATBELT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="airline-data" type="application/json">%%AIRLINES%%</script>
+<script id="airplane-scripts" type="application/json">%%SCRIPTS%%</script>
+<script>
+setTimeout(function(){ if(!window.__v2ok){ var l=document.getElementById('loading'); l.classList.add('show');
+  document.getElementById('loading-msg').textContent='Could not load the 3D engine (three.js). Check the internet connection and reload.'; } }, 9000);
+</script>
+<script type="module">
+%%JS%%
+</script>
+</body>
+</html>

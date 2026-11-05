@@ -29,7 +29,8 @@
   #unit{position:relative;border-radius:18px;
     background:linear-gradient(180deg,var(--casing) 0%,var(--casing-dark) 100%);
     padding:clamp(8px,1.6vmin,20px);
-    box-shadow:0 18px 50px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.6);}
+    box-shadow:0 18px 50px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.6);
+    transition:filter .5s,transform 1.2s ease;}
   #screen{position:relative;border-radius:9px;background:var(--screen-bg);overflow:hidden;
     box-shadow:inset 0 0 24px rgba(0,0,0,.9);}
   canvas{display:block;}
@@ -101,7 +102,7 @@
 </div>
 
 <button id="gear" aria-label="Settings">⚙</button>
-<div class="hint" id="hint">tap the screen to begin · ⚙ for settings</div>
+<div class="hint" id="hint">display starts automatically · ⚙ for settings</div>
 
 <div id="panel" role="dialog" aria-label="Settings">
   <button id="closeX" aria-label="Close">✕</button>
@@ -177,8 +178,10 @@
   <div class="toggle"><span>Romaji caption</span><div class="sw on" id="sw-romaji"></div></div>
   <div class="toggle"><span>LED clock (corner)</span><div class="sw" id="sw-clock"></div></div>
   <div class="toggle"><span>Dim after idle</span><div class="sw on" id="sw-dim"></div></div>
+  <div class="toggle"><span>Pixel shift protection</span><div class="sw on" id="sw-shift"></div></div>
 
   <button class="btn-ghost" id="fsBtn">Enter full screen</button>
+  <button class="btn-ghost" id="homeBtn">Back to game menu</button>
   <p class="note" style="margin-top:14px">On iPad: add to Home Screen and open from there for a true full-screen display. Keep the screen awake in Settings ▸ Display ▸ Auto-Lock ▸ Never.</p>
 </div>
 
@@ -544,9 +547,20 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 /* ============================ SIMULATION ============================ */
 const settings={
   mode:'auto', speed:'med', trans:'scan', bloom:'med',
-  romaji:true, clock:false, dim:true,
+  romaji:true, clock:false, dim:true, shift:true,
   lines:{tokaido:true,sanyo:true,kyushu:false,tohoku:true,hokuriku:false,joetsu:false},
 };
+try{
+  const saved=JSON.parse(localStorage.getItem('shinkansenPanelSettings')||'null');
+  if(saved&&typeof saved==='object'){
+    ['mode','speed','trans','bloom','romaji','clock','dim','shift'].forEach(k=>{
+      if(Object.prototype.hasOwnProperty.call(saved,k))settings[k]=saved[k];
+    });
+    if(saved.lines&&typeof saved.lines==='object')settings.lines={...settings.lines,...saved.lines};
+  }
+}catch(e){}
+if(!Object.values(settings.lines).some(Boolean))settings.lines.tokaido=true;
+function saveSettings(){try{localStorage.setItem('shinkansenPanelSettings',JSON.stringify(settings));}catch(e){}}
 const SPEED={slow:7000, med:4500, fast:2600};
 
 let running=false, runToken=0, lastRoute='';
@@ -669,7 +683,7 @@ function segGroup(id,key,after){
   $(id).querySelectorAll('button').forEach(b=>{
     b.onclick=()=>{
       $(id).querySelectorAll('button').forEach(x=>x.classList.remove('on'));
-      b.classList.add('on'); settings[key]=b.dataset.v; if(after)after(b.dataset.v);
+      b.classList.add('on'); settings[key]=b.dataset.v; saveSettings(); if(after)after(b.dataset.v);
     };
   });
 }
@@ -691,17 +705,18 @@ Object.entries(LINES).forEach(([k,l])=>{
   const b=document.createElement('button'); b.textContent=l.name; b.dataset.v=k;
   if(settings.lines[k]) b.classList.add('on');
   b.onclick=()=>{ settings.lines[k]=!settings.lines[k]; b.classList.toggle('on');
-    if(!activeLines().length){ settings.lines[k]=true; b.classList.add('on'); } };
+    if(!activeLines().length){ settings.lines[k]=true; b.classList.add('on'); } saveSettings(); };
   segLines.appendChild(b);
 });
 
 function swWire(id,key,after){
   const el=$(id);
-  el.onclick=()=>{ el.classList.toggle('on'); settings[key]=el.classList.contains('on'); if(after)after(); };
+  el.onclick=()=>{ el.classList.toggle('on'); settings[key]=el.classList.contains('on'); saveSettings(); if(after)after(); };
 }
 swWire('sw-romaji','romaji',()=>{ if(!settings.romaji) $('caption').classList.remove('show'); });
 swWire('sw-clock','clock',()=>{ if(grid){stampClock(grid);drawFrame();} });
 swWire('sw-dim','dim');
+swWire('sw-shift','shift',()=>{ if(!settings.shift)$('unit').style.transform=''; });
 
 /* populate manual selects */
 function allStationsSorted(){
@@ -732,6 +747,7 @@ $('closeX').onclick=closePanel;
 /* fullscreen */
 $('fsBtn').onclick=()=>{ const el=document.documentElement;
   (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); };
+$('homeBtn').onclick=()=>location.href='index.html';
 
 /* idle dimming + wake */
 let idleT, dimmed=false;
@@ -765,7 +781,8 @@ function startRun(){
   runAuto();
 }
 $('stage').addEventListener('pointerdown',()=>{
-  if(!started){ started=true; $('hint').classList.add('hidden'); startRun(); requestWake(); wake(); }
+  requestWake();wake();
+  if(!started){ started=true; startRun(); }
 });
 
 /* resize */
@@ -781,7 +798,28 @@ fit();
   setCaption(state);
   grid=composePanel(state); stampClock(grid); drawFrame();
 })();
-wake();
+function syncSettingsUI(){
+  [['seg-mode','mode'],['seg-speed','speed'],['seg-trans','trans'],['seg-bloom','bloom']].forEach(([id,key])=>{
+    $(id).querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===settings[key]));
+  });
+  [['sw-romaji','romaji'],['sw-clock','clock'],['sw-dim','dim'],['sw-shift','shift']].forEach(([id,key])=>$(id).classList.toggle('on',!!settings[key]));
+  $('manualBox').style.display=settings.mode==='manual'?'block':'none';
+  $('autoBox').style.display=settings.mode==='manual'?'none':'block';
+  $('modeNote').textContent=settings.mode==='manual'
+    ? 'Set the service, destination and next stop, then show it on the panel — frozen until you change it.'
+    : 'Auto run cycles realistic trains across the network on a simulated timetable.';
+}
+syncSettingsUI();started=true;startRun();wake();
+setTimeout(()=>$('hint').classList.add('hidden'),5000);
+
+/* Gentle whole-panel movement reduces static-pixel exposure during long screensaver sessions. */
+const SHIFT_POINTS=[[0,0],[2,-1],[-2,1],[1,2],[-1,-2]];
+let shiftIndex=0;
+setInterval(()=>{
+  if(!settings.shift){$('unit').style.transform='';return;}
+  shiftIndex=(shiftIndex+1)%SHIFT_POINTS.length;
+  const [x,y]=SHIFT_POINTS[shiftIndex];$('unit').style.transform=`translate(${x}px,${y}px)`;
+},60000);
 
 /* refresh clock each minute if shown */
 setInterval(()=>{ if(settings.clock && !animating && grid){ stampClock(grid); drawFrame(); } },20000);

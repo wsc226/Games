@@ -1,333 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iPad Obstacle Dodger</title>
-    <style>
-        /* Force perfect viewport fit and disable native iOS/Chrome bouncing/scrolling */
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #1a1a1a;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            position: fixed; /* Extra insurance against iOS scroll bouncing */
-        }
-
-        /* Container that matches iPad 4:3 aspect ratio or fills screen beautifully */
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* Canvas occupies available space without causing page overflow */
-        canvas {
-            display: block;
-            background-color: #222;
-            width: 100%;
-            height: 100%;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-
-        /* Control HUD styling */
-        #hud {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #ffffff;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            pointer-events: none; /* Let touches pass through to canvas if needed */
-        }
-
-        /* Thumb Button Controls setup */
-        #controls-container {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 180px; /* Comfortable height for thumbs holding iPad */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
-            box-sizing: border-box;
-            pointer-events: none; /* Allows canvas space in the middle to be touch-free */
-        }
-
-        .btn {
-            pointer-events: auto; /* Re-enable touches for the actual buttons */
-            width: 150px;
-            height: 120px;
-            background-color: rgba(255, 255, 255, 0.25);
-            border: 3px solid rgba(255, 255, 255, 0.6);
-            border-radius: 20px;
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-            
-            /* Crucial mobile adjustments requested */
-            touch-action: none; 
-            -webkit-user-select: none; 
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* Visual feedback on press without relying on hover states */
-        .btn:active {
-            background-color: rgba(255, 255, 255, 0.5);
-            transform: scale(0.95);
-        }
-
-        /* Overlay Screens (Game Over / Start) */
-        .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 10;
-        }
-
-        .screen h1 {
-            font-size: 48px;
-            margin-bottom: 10px;
-            color: #ff4757;
-        }
-
-        .screen p {
-            font-size: 22px;
-            margin-bottom: 30px;
-            color: #f1f2f6;
-        }
-
-        .restart-btn {
-            padding: 15px 40px;
-            font-size: 24px;
-            font-weight: bold;
-            background-color: #2ed573;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        
-        .restart-btn:active {
-            background-color: #26af5f;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Little Star Run</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100dvh;overflow:hidden;background:#081327;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+#game{position:relative;width:100%;height:100%;overflow:hidden;background:#10244b}canvas{display:block;width:100%;height:100%}
+#top{position:absolute;z-index:4;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 8px;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.round{pointer-events:auto;width:52px;height:52px;border:2px solid rgba(255,255,255,.55);border-radius:50%;background:rgba(8,18,40,.72);color:#fff;font-size:23px;font-weight:900;box-shadow:0 5px 14px rgba(0,0,0,.25);backdrop-filter:blur(7px)}
+.hud{display:flex;align-items:center;gap:10px;padding:8px 16px;border-radius:22px;background:rgba(8,18,40,.72);border:2px solid rgba(255,255,255,.28);color:#fff;font-size:19px;font-weight:900;letter-spacing:.4px;box-shadow:0 5px 14px rgba(0,0,0,.2)}
+#progress{position:absolute;z-index:4;left:18%;right:18%;top:calc(env(safe-area-inset-top,0px) + 70px);height:14px;border:2px solid rgba(255,255,255,.45);border-radius:8px;background:rgba(5,13,30,.6);overflow:hidden}
+#progressFill{height:100%;width:0;background:linear-gradient(90deg,#51e6c1,#ffe36c);border-radius:7px;transition:width .2s}
+#controls{position:absolute;z-index:5;left:0;right:0;bottom:0;padding:10px 22px calc(env(safe-area-inset-bottom,0px) + 14px);display:grid;grid-template-columns:1fr 1fr;gap:18px;background:linear-gradient(transparent,rgba(4,10,24,.88) 32%)}
+.move{height:96px;border:3px solid rgba(255,255,255,.72);border-radius:26px;background:linear-gradient(180deg,rgba(83,210,255,.9),rgba(31,119,217,.92));color:#fff;font-size:44px;font-weight:1000;box-shadow:0 7px 0 #0b438b,0 10px 25px rgba(0,0,0,.35);touch-action:none}.move:active{transform:translateY(5px);box-shadow:0 2px 0 #0b438b}
+.overlay{position:absolute;z-index:20;inset:0;padding:calc(env(safe-area-inset-top,0px) + 28px) 24px calc(env(safe-area-inset-bottom,0px) + 28px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(180deg,rgba(7,18,45,.95),rgba(18,38,82,.96));color:#fff;transition:opacity .25s}.overlay.hidden{opacity:0;pointer-events:none}
+.logo{font-size:72px;filter:drop-shadow(0 7px 12px rgba(0,0,0,.35));animation:float 2.4s ease-in-out infinite}@keyframes float{50%{transform:translateY(-10px) rotate(3deg)}}
+h1{margin:12px 0 4px;font-size:clamp(38px,8vw,62px);line-height:.95;letter-spacing:2px;color:#ffe36c;text-shadow:0 5px 0 #a46219}.sub{margin:12px 0 20px;max-width:420px;color:#dcecff;font-size:20px;font-weight:750;line-height:1.35}
+.pick{display:flex;gap:12px;margin:4px 0 20px}.vehicle{width:92px;height:84px;border:3px solid rgba(255,255,255,.35);border-radius:22px;background:rgba(255,255,255,.1);font-size:45px;box-shadow:0 5px 12px rgba(0,0,0,.2)}.vehicle.on{border-color:#ffe36c;background:rgba(255,227,108,.22);transform:translateY(-4px);box-shadow:0 7px 0 #9a6714}
+.big{min-width:230px;min-height:72px;padding:14px 28px;border:3px solid #fff;border-radius:20px;background:linear-gradient(#70eb91,#31c767);color:#07331a;font-size:27px;font-weight:1000;letter-spacing:2px;box-shadow:0 7px 0 #167538}.big:active{transform:translateY(5px);box-shadow:0 2px 0 #167538}.secondary{margin-top:16px;min-width:180px;min-height:52px;border:2px solid rgba(255,255,255,.45);border-radius:16px;background:rgba(255,255,255,.09);color:#fff;font-size:18px;font-weight:850}
+#countdown{position:absolute;z-index:15;inset:0;display:none;align-items:center;justify-content:center;color:#fff;font-size:min(38vw,230px);font-weight:1000;text-shadow:0 10px 0 #2a62b8,0 15px 30px rgba(0,0,0,.35)}#countdown.show{display:flex;animation:pop .65s ease both}@keyframes pop{0%{transform:scale(.3);opacity:0}45%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
+#message{position:absolute;z-index:8;top:24%;left:50%;transform:translateX(-50%) scale(0);min-width:220px;padding:12px 22px;border:3px solid #fff;border-radius:24px;background:#ffcf4b;color:#563600;text-align:center;font-size:28px;font-weight:1000;opacity:0;transition:.2s;pointer-events:none}#message.show{transform:translateX(-50%) scale(1);opacity:1}
+@media (orientation:landscape){#controls{left:10%;right:10%;grid-template-columns:180px 180px;justify-content:space-between}.move{height:76px}#progress{left:30%;right:30%}.overlay{padding-top:18px}.logo{font-size:54px}h1{font-size:42px}.sub{margin:7px 0 12px}.vehicle{height:66px}.big{min-height:58px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body>
-
-    <div id="game-container">
-        <div id="hud">Score: <span id="score-val">0</span></div>
-
-        <canvas id="gameCanvas"></canvas>
-
-        <div id="controls-container">
-            <div id="btn-left" class="btn">LEFT</div>
-            <div id="btn-right" class="btn">RIGHT</div>
-        </div>
-
-        <div id="game-over-screen" class="screen hidden">
-            <h1>GAME OVER</h1>
-            <p>Final Score: <span id="final-score">0</span></p>
-            <button id="btn-restart" class="restart-btn">TAP TO RESTART</button>
-        </div>
-    </div>
-
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        const scoreVal = document.getElementById('score-val');
-        const finalScore = document.getElementById('final-score');
-        const gameOverScreen = document.getElementById('game-over-screen');
-        
-        const btnLeft = document.getElementById('btn-left');
-        const btnRight = document.getElementById('btn-right');
-        const btnRestart = document.getElementById('btn-restart');
-
-        // Setup dynamic canvas dimensions matching actual container space
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // Game State Variables
-        let gameActive = true;
-        let score = 0;
-        let obstacles = [];
-        let spawnTimer = 0;
-        let spawnInterval = 60; // Frame loop count between obstacle spawns
-        let baseSpeed = 4;
-        let speedMultiplier = 1;
-
-        // Player configuration
-        const player = {
-            width: 50,
-            height: 50,
-            x: 0,
-            y: 0,
-            speed: 10,
-            color: '#00d2d3',
-            movingLeft: false,
-            movingRight: false
-        };
-
-        // Initialize Player Location safely inside canvas bounds
-        function initPlayer() {
-            player.x = (canvas.width / 2) - (player.width / 2);
-            player.y = canvas.height - 240; // Kept safely above the bottom thumb control layout zone
-        }
-
-        // Instant Touch Event Listeners for smooth control
-        btnLeft.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            player.movingLeft = true;
-        }, { passive: false });
-
-        btnLeft.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            player.movingLeft = false;
-        }, { passive: false });
-
-        btnRight.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            player.movingRight = true;
-        }, { passive: false });
-
-        btnRight.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            player.movingRight = false;
-        }, { passive: false });
-
-        // Restart Handler with Touchstart
-        btnRestart.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            resetGame();
-        }, { passive: false });
-
-        // Obstacle Constructor
-        function Obstacle() {
-            this.width = Math.random() * (90 - 40) + 40;
-            this.height = 30;
-            this.x = Math.random() * (canvas.width - this.width);
-            this.y = -this.height;
-            this.speed = (Math.random() * (baseSpeed + 2 - baseSpeed) + baseSpeed) * speedMultiplier;
-            this.color = '#ff6b6b';
-        }
-
-        // Standard bounding box collision check
-        function checkCollision(rect1, rect2) {
-            return rect1.x < rect2.x + rect2.width &&
-                   rect1.x + rect1.width > rect2.x &&
-                   rect1.y < rect2.y + rect2.height &&
-                   rect1.y + rect1.height > rect2.y;
-        }
-
-        function resetGame() {
-            score = 0;
-            obstacles = [];
-            spawnTimer = 0;
-            speedMultiplier = 1;
-            scoreVal.textContent = score;
-            initPlayer();
-            gameOverScreen.classList.add('hidden');
-            gameActive = true;
-            animate();
-        }
-
-        // Core Game Loop
-        function animate() {
-            if (!gameActive) return;
-
-            // Clear framework
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Handle instantaneous movement inputs
-            if (player.movingLeft && player.x > 0) {
-                player.x -= player.speed;
-            }
-            if (player.movingRight && player.x < canvas.width - player.width) {
-                player.x += player.speed;
-            }
-
-            // Draw Player Entity
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-
-            // Spawning Mechanism
-            spawnTimer++;
-            if (spawnTimer >= spawnInterval) {
-                obstacles.push(new Obstacle());
-                spawnTimer = 0;
-                
-                // Gradually increase game speed scaling over time
-                speedMultiplier += 0.03;
-            }
-
-            // Update, draw, and track obstacles
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                let obs = obstacles[i];
-                obs.y += obs.speed;
-
-                // Draw Obstacle Entity
-                ctx.fillStyle = obs.color;
-                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-
-                // Collision Detection Pass
-                if (checkCollision(player, obs)) {
-                    gameActive = false;
-                    finalScore.textContent = score;
-                    gameOverScreen.classList.remove('hidden');
-                    return;
-                }
-
-                // Despawning safely outside frame bounds & counting points
-                if (obs.y > canvas.height) {
-                    obstacles.splice(i, 1);
-                    score++;
-                    scoreVal.textContent = score;
-                }
-            }
-
-            requestAnimationFrame(animate);
-        }
-
-        // Bootstrap on startup
-        initPlayer();
-        animate();
-    </script>
+<main id="game">
+  <canvas id="canvas" aria-label="Three-lane star journey"></canvas>
+  <div id="top"><button class="round" id="home" aria-label="Home">⌂</button><div class="hud"><span>⭐</span><span id="stars">0</span></div><button class="round" id="sound" aria-label="Sound on">🔊</button></div>
+  <div id="progress"><div id="progressFill"></div></div>
+  <div id="controls"><button class="move" id="left" aria-label="Move left">◀</button><button class="move" id="right" aria-label="Move right">▶</button></div>
+  <div id="message">NICE!</div><div id="countdown">3</div>
+  <section class="overlay" id="start"><div class="logo">⭐</div><h1>LITTLE STAR RUN</h1><p class="sub">Pick a ride. Tap left or right. Reach the rainbow!</p><div class="pick" aria-label="Choose a ride"><button class="vehicle on" data-v="🚂" aria-label="Train">🚂</button><button class="vehicle" data-v="🚀" aria-label="Rocket">🚀</button><button class="vehicle" data-v="✈️" aria-label="Airplane">✈️</button></div><button class="big" id="play">PLAY</button><button class="secondary" id="startHome">⌂ HOME</button></section>
+  <section class="overlay hidden" id="finish"><div class="logo">🌈</div><h1>YOU MADE IT!</h1><p class="sub">You found <strong id="finalStars">0</strong> stars!</p><button class="big" id="again">GO AGAIN</button><button class="secondary" id="finishHome">⌂ HOME</button></section>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),canvas=$('canvas'),c=canvas.getContext('2d');
+let W=0,H=0,DPR=1,last=0,raf=0,playing=false,paused=false,lane=1,vehicle='🚂',elapsed=0,starCount=0,spawnAt=2.8,objects=[],clouds=[],shake=0,muted=localStorage.getItem('littleStarMuted')==='1',audio=null;
+const RUN_TIME=46;
+function ac(){if(muted)return null;if(!audio)audio=new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();return audio}
+function tone(f,d=.12,type='sine',vol=.1,delay=0){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain(),n=a.currentTime+delay;o.type=type;o.frequency.value=f;g.gain.setValueAtTime(vol,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(a.destination);o.start(n);o.stop(n+d+.02)}
+const sfx={move:()=>tone(360,.09,'sine',.1),star:()=>{tone(660,.12,'sine',.12);tone(990,.2,'sine',.1,.1)},bump:()=>tone(150,.25,'triangle',.13),go:()=>[440,660,880].forEach((f,i)=>tone(f,.18,'sine',.12,i*.13)),win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.35,'sine',.13,i*.14))};
+function updateSound(){$('sound').textContent=muted?'🔇':'🔊';$('sound').setAttribute('aria-label',muted?'Sound off':'Sound on')}
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);c.setTransform(DPR,0,0,DPR,0,0);makeClouds()}
+function makeClouds(){clouds=Array.from({length:9},(_,i)=>({x:(i*173+40)%Math.max(W,1),y:100+(i%5)*82,s:24+(i%3)*10}))}
+function laneX(n){return W*(.25+n*.25)}function roundRect(x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);c.fill()}
+function drawBackground(dt){const themes=[['#173b73','#85cef3','#155e64'],['#18174a','#674ea3','#32265f'],['#255f85','#d4f2ff','#7fc4db']],t=themes[(Number(localStorage.getItem('littleStarTrips'))||0)%themes.length],g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,t[0]);g.addColorStop(.56,t[1]);g.addColorStop(1,t[2]);c.fillStyle=g;c.fillRect(0,0,W,H);c.fillStyle='rgba(255,255,255,.72)';clouds.forEach((cl,i)=>{cl.y+=dt*(12+i%3*3);if(cl.y>H+50){cl.y=-70;cl.x=Math.random()*W}c.beginPath();c.arc(cl.x,cl.y,cl.s,0,Math.PI*2);c.arc(cl.x+cl.s*.8,cl.y+5,cl.s*.7,0,Math.PI*2);c.arc(cl.x-cl.s*.7,cl.y+8,cl.s*.6,0,Math.PI*2);c.fill()});c.fillStyle='rgba(8,25,53,.48)';roundRect(W*.12,88,W*.76,H-130,45);c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=5;c.setLineDash([28,28]);for(let i=0;i<2;i++){c.beginPath();c.moveTo(W*(.375+i*.25),100);c.lineTo(W*(.375+i*.25),H);c.stroke()}c.setLineDash([]);c.fillStyle='#ff6b7f';c.font='38px sans-serif';c.textAlign='center';c.fillText('🌈',W/2,128)}
+function spawn(){const bad=Math.random()<.48,objectLane=Math.floor(Math.random()*3);if(bad&&objects.some(o=>o.bad&&o.y<260))return;objects.push({lane:objectLane,y:-70,bad,emoji:bad?['☁️','🪨','🚧'][Math.floor(Math.random()*3)]:'⭐',hit:false})}
+function showMessage(text,bad=false){const m=$('message');m.textContent=text;m.style.background=bad?'#ff9f9f':'#ffcf4b';m.classList.add('show');clearTimeout(showMessage.t);showMessage.t=setTimeout(()=>m.classList.remove('show'),800)}
+function move(dir){if(!playing||paused)return;const next=Math.max(0,Math.min(2,lane+dir));if(next!==lane){lane=next;sfx.move()}}
+function drawPlayer(){const x=laneX(lane);c.save();if(shake>0)c.translate((Math.random()-.5)*10,(Math.random()-.5)*8);c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.ellipse(x,H-178,48,15,0,0,Math.PI*2);c.fill();c.font='70px Apple Color Emoji, sans-serif';c.textAlign='center';c.fillText(vehicle,x,H-182);c.restore()}
+function updateObjects(dt){const speed=155+Math.min(elapsed,30)*1.8;for(let i=objects.length-1;i>=0;i--){const o=objects[i];o.y+=speed*dt;const x=laneX(o.lane);c.font=(o.bad?'58':'50')+'px Apple Color Emoji, sans-serif';c.textAlign='center';c.fillText(o.emoji,x,o.y);if(!o.hit&&o.lane===lane&&o.y>H-280&&o.y<H-125){o.hit=true;if(o.bad){shake=.35;sfx.bump();showMessage('BOUNCE!',true)}else{starCount++;$('stars').textContent=starCount;sfx.star();showMessage(['NICE!','STAR!','GREAT!'][starCount%3])}}if(o.y>H+80)objects.splice(i,1)}}
+function frame(now){if(!playing)return;const dt=Math.min((now-last)/1000||0,.05);last=now;if(!paused){elapsed+=dt;shake=Math.max(0,shake-dt);spawnAt-=dt;if(spawnAt<=0){spawn();spawnAt=1.6+Math.random()*1.1}drawBackground(dt);updateObjects(dt);drawPlayer();$('progressFill').style.width=Math.min(100,elapsed/RUN_TIME*100)+'%';if(elapsed>=RUN_TIME){complete();return}}raf=requestAnimationFrame(frame)}
+async function countdown(){const el=$('countdown');for(const n of ['3','2','1','GO!']){el.textContent=n;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');if(n==='GO!')sfx.go();await new Promise(r=>setTimeout(r,n==='GO!'?650:700))}el.classList.remove('show')}
+async function startRun(){ac();$('start').classList.add('hidden');$('finish').classList.add('hidden');playing=false;cancelAnimationFrame(raf);lane=1;elapsed=0;starCount=0;spawnAt=3.6;objects=[];$('stars').textContent='0';$('progressFill').style.width='0';await countdown();playing=true;last=performance.now();raf=requestAnimationFrame(frame)}
+function complete(){playing=false;cancelAnimationFrame(raf);localStorage.setItem('littleStarTrips',String((Number(localStorage.getItem('littleStarTrips'))||0)+1));$('finalStars').textContent=starCount;$('finish').classList.remove('hidden');sfx.win()}
+document.querySelectorAll('.vehicle').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.vehicle').forEach(x=>x.classList.remove('on'));b.classList.add('on');vehicle=b.dataset.v;localStorage.setItem('littleStarVehicle',vehicle);sfx.move()}));const saved=localStorage.getItem('littleStarVehicle');if(saved){const b=document.querySelector(`[data-v="${saved}"]`);if(b){document.querySelectorAll('.vehicle').forEach(x=>x.classList.remove('on'));b.classList.add('on');vehicle=saved}}
+$('left').addEventListener('pointerdown',e=>{e.preventDefault();move(-1)});$('right').addEventListener('pointerdown',e=>{e.preventDefault();move(1)});addEventListener('keydown',e=>{if(e.key==='ArrowLeft')move(-1);if(e.key==='ArrowRight')move(1)});$('play').onclick=startRun;$('again').onclick=startRun;function goHome(){location.href='index.html'}$('home').onclick=goHome;$('startHome').onclick=goHome;$('finishHome').onclick=goHome;
+$('sound').onclick=()=>{muted=!muted;localStorage.setItem('littleStarMuted',muted?'1':'0');if(muted&&audio)audio.suspend();updateSound()};document.addEventListener('visibilitychange',()=>{paused=document.hidden;if(!paused&&playing){last=performance.now();if(audio&&!muted)audio.resume().catch(()=>{})}});addEventListener('resize',resize);resize();updateSound();drawBackground(0);drawPlayer();
+</script>
 </body>
 </html>
