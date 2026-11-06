@@ -1,0 +1,429 @@
+{
+  "_version": 1,
+  "_status": "draft - Japanese + English, ready for voice cloning",
+  "_readme": "All spoken lines for train-205.html. Edit 'lines' (ja/en templates). Station lines (per_station) can use {name} (this station), {next} (the next station) and {transfer}. 'only': 'transfer' = stations with connecting lines, 'last' = Utsunomiya only; 'skip_first' / 'skip_last' leave out Tokyo / Utsunomiya. Then run `node tools/build_train_205.mjs` - it regenerates 'renders' (every final sentence with its target audio file) and re-embeds this file into train-205.html. Any render whose audio file exists is played; otherwise the game falls back to the iPad's text-to-speech using the same text and language.",
+  "_how_to_record": "Clone each voice in 'voices', then render every entry in 'renders' to its 'file' path (mp3). Japanese files live under audio/train-205/ja/, English under audio/train-205/en/; 'common' folders are shared by all stations. Each render has a 'when' note saying when the game plays it. Real sound effects (horn, door chime, departure melodies, crossing bell...) can be dropped in at the paths listed in 'sfx' - any file that exists replaces the built-in synthesised sound. See audio/train-205/README.md.",
+  "voices": {
+    "conductor": {
+      "description": "Train conductor (車掌). Calm, nasal, sing-song JR PA voice.",
+      "rate": 0.95,
+      "pitch": 1
+    },
+    "auto": {
+      "description": "Automatic train announcement. Clear, bright female voice (JR East style).",
+      "rate": 0.95,
+      "pitch": 1.1
+    },
+    "platform": {
+      "description": "Station platform announcer. Echoey, polite female voice.",
+      "rate": 0.95,
+      "pitch": 1.05
+    },
+    "driver": {
+      "description": "The player's train driver callouts (指差喚呼). Short, crisp, enthusiastic.",
+      "rate": 1.05,
+      "pitch": 1
+    },
+    "announcer": {
+      "description": "Race announcer. Excited, cheerful, kid-friendly (like a sports-day MC).",
+      "rate": 1.05,
+      "pitch": 1.15
+    }
+  },
+  "lines": [
+    {
+      "id": "welcome",
+      "role": "auto",
+      "when": "Game start at Tokyo",
+      "ja": "今日も、JR東日本をご利用いただきまして、ありがとうございます。この電車は、宇都宮線、宇都宮行きです。",
+      "en": "Thank you for riding JR East. This is the Utsunomiya Line train bound for Utsunomiya."
+    },
+    {
+      "id": "approaching",
+      "role": "auto",
+      "when": "700 m before a station",
+      "per_station": true,
+      "skip_first": true,
+      "skip_last": true,
+      "ja": "まもなく、{name}です。お出口は、左側です。",
+      "en": "We will soon make a brief stop at {name}. The doors on the left side will open."
+    },
+    {
+      "id": "approaching_last",
+      "role": "auto",
+      "when": "700 m before Utsunomiya",
+      "per_station": true,
+      "only": "last",
+      "ja": "まもなく、終点、{name}です。お出口は、左側です。今日も、ご乗車ありがとうございました。",
+      "en": "We will soon arrive at {name}, the last stop. The doors on the left side will open. Thank you for riding with us today."
+    },
+    {
+      "id": "transfer",
+      "role": "auto",
+      "when": "After the approaching announcement",
+      "per_station": true,
+      "only": "transfer",
+      "skip_first": true,
+      "ja": "{transfer}は、お乗り換えです。",
+      "en": "Please change here for {transfer}."
+    },
+    {
+      "id": "arrived",
+      "role": "conductor",
+      "when": "Doors open at a station",
+      "per_station": true,
+      "skip_first": true,
+      "skip_last": true,
+      "ja": "{name}、{name}です。ご乗車、ありがとうございます。",
+      "en": "{name}. {name}. Thank you for riding."
+    },
+    {
+      "id": "arrived_last",
+      "role": "conductor",
+      "when": "Doors open at Utsunomiya",
+      "per_station": true,
+      "only": "last",
+      "ja": "{name}、{name}、終点です。お忘れ物の、ございませんよう、ご注意ください。",
+      "en": "{name}. This is the last stop. Please make sure you have all your belongings."
+    },
+    {
+      "id": "doors_open",
+      "role": "auto",
+      "when": "Doors start opening",
+      "ja": "ドアが開きます。",
+      "en": "The doors are opening."
+    },
+    {
+      "id": "doors_close",
+      "role": "conductor",
+      "when": "Doors start closing (after the departure melody)",
+      "ja": "ドアが閉まります。ご注意ください。",
+      "en": "The doors are closing. Please be careful."
+    },
+    {
+      "id": "next",
+      "role": "auto",
+      "when": "Leaving a station",
+      "per_station": true,
+      "skip_last": true,
+      "ja": "次は、{next}です。",
+      "en": "The next station is {next}."
+    },
+    {
+      "id": "platform_arriving",
+      "role": "platform",
+      "when": "Platform camera, train coming",
+      "ja": "まもなく、1番線に、宇都宮行きが、参ります。危ないですから、黄色い線の内側まで、お下がりください。",
+      "en": "A train bound for Utsunomiya is now arriving at track number one. For your safety, please stand behind the yellow line."
+    },
+    {
+      "id": "platform_departing",
+      "role": "platform",
+      "when": "Platform camera, departure melody",
+      "ja": "1番線、ドアが閉まります。ご注意ください。",
+      "en": "The doors on track number one are closing. Please be careful."
+    },
+    {
+      "id": "close_doors_first",
+      "role": "driver",
+      "when": "Go pressed while the doors are open",
+      "ja": "ドアを しめてから、しゅっぱつ しよう！",
+      "en": "Close the doors first, then we can go!"
+    },
+    {
+      "id": "press_doors",
+      "role": "driver",
+      "when": "Stopped at a platform (hint)",
+      "ja": "ドアボタンを おしてね！",
+      "en": "Press the Doors button!"
+    },
+    {
+      "id": "perfect_stop",
+      "role": "driver",
+      "when": "Stopped right at the 3 marker",
+      "ja": "ぴったり、ていし！すごい！",
+      "en": "Perfect stop! Great job!"
+    },
+    {
+      "id": "passed_station",
+      "role": "driver",
+      "when": "Drove past a station",
+      "ja": "あっ、とおりすぎちゃった！つぎの えきで とまろう。",
+      "en": "Oops, we passed the station! Let's stop at the next one."
+    },
+    {
+      "id": "departure_ok",
+      "role": "driver",
+      "when": "Departing, signal green",
+      "ja": "しゅっぱつ、しんこう！",
+      "en": "Signal is green. Let's go!"
+    },
+    {
+      "id": "race_intro",
+      "role": "announcer",
+      "when": "Race start at Omiya",
+      "ja": "大宮から宇都宮まで、HU300と、きょうそうだ！",
+      "en": "It's a race from Omiya to Utsunomiya against the HU300!"
+    },
+    {
+      "id": "race_go",
+      "role": "announcer",
+      "when": "Countdown reaches GO",
+      "ja": "スタート！",
+      "en": "Go!"
+    },
+    {
+      "id": "race_lead_205",
+      "role": "announcer",
+      "when": "The 205 takes the lead",
+      "ja": "205系が、リードしています！",
+      "en": "The 205 is in the lead!"
+    },
+    {
+      "id": "race_lead_hu300",
+      "role": "announcer",
+      "when": "The HU300 takes the lead",
+      "ja": "HU300が、前に出ました！がんばれ！",
+      "en": "The HU300 is ahead! Keep going!"
+    },
+    {
+      "id": "race_close",
+      "role": "announcer",
+      "when": "Trains neck and neck",
+      "ja": "せっせんです！どっちが勝つかな？",
+      "en": "It's a close race! Who will win?"
+    },
+    {
+      "id": "race_hidden",
+      "role": "announcer",
+      "when": "HU300 leaves on its own track",
+      "ja": "あれ？HU300が、見えなくなった！",
+      "en": "Where did the HU300 go?"
+    },
+    {
+      "id": "race_back",
+      "role": "announcer",
+      "when": "HU300 comes back",
+      "ja": "HU300が、もどってきた！",
+      "en": "The HU300 is back!"
+    },
+    {
+      "id": "race_final",
+      "role": "announcer",
+      "when": "About 1 km before the finish",
+      "ja": "もうすぐゴール、宇都宮です！",
+      "en": "Almost at the finish line, Utsunomiya!"
+    },
+    {
+      "id": "race_win",
+      "role": "announcer",
+      "when": "The 205 wins",
+      "ja": "やったー！205系の勝ち！おめでとう！",
+      "en": "Hooray! The 205 wins! Congratulations!"
+    },
+    {
+      "id": "race_lose",
+      "role": "announcer",
+      "when": "The HU300 wins",
+      "ja": "HU300の勝ち！つぎは、がんばろう！",
+      "en": "The HU300 wins this time! Let's try again!"
+    },
+    {
+      "id": "yellow_signal",
+      "role": "driver",
+      "when": "A yellow (caution) signal ahead",
+      "ja": "きいろ しんごう！スピードを おとそう。",
+      "en": "Yellow signal! Let's slow down."
+    },
+    {
+      "id": "slow_good",
+      "role": "driver",
+      "when": "He pressed Slow for the yellow signal",
+      "ja": "じょうず！ゆっくり すすもう。",
+      "en": "Good job! Nice and slow."
+    },
+    {
+      "id": "green_again",
+      "role": "driver",
+      "when": "Past the yellow signal, next one is green",
+      "ja": "みどり しんごう。はやく してもいいよ！",
+      "en": "Green signal. We can go fast again!"
+    },
+    {
+      "id": "tunnel",
+      "role": "driver",
+      "when": "Coming up to a tunnel",
+      "ja": "トンネルに はいるよ！",
+      "en": "Here comes a tunnel!"
+    },
+    {
+      "id": "bridge",
+      "role": "driver",
+      "when": "Coming up to a big river bridge",
+      "ja": "おおきな てっきょうを わたるよ！",
+      "en": "We're crossing a big bridge!"
+    },
+    {
+      "id": "crossing_horn",
+      "role": "driver",
+      "when": "Horn sign before a level crossing",
+      "ja": "ふみきりだ。ホーンを ならそう！",
+      "en": "A railroad crossing! Let's blow the horn!"
+    },
+    {
+      "id": "shinkansen",
+      "role": "driver",
+      "when": "An E5 Shinkansen passes on the viaduct",
+      "ja": "しんかんせんが きた！はやい！",
+      "en": "Here comes the Shinkansen! So fast!"
+    }
+  ],
+  "sfx": {
+    "horn": "audio/train-205/sfx/horn.mp3",
+    "doorOpen": "audio/train-205/sfx/doorOpen.mp3",
+    "doorChime": "audio/train-205/sfx/doorChime.mp3",
+    "doorThump": "audio/train-205/sfx/doorThump.mp3",
+    "air": "audio/train-205/sfx/air.mp3",
+    "squeal": "audio/train-205/sfx/squeal.mp3",
+    "arrive": "audio/train-205/sfx/arrive.mp3",
+    "switch": "audio/train-205/sfx/switch.mp3",
+    "tram": "audio/train-205/sfx/tram.mp3",
+    "crossing_bell": "audio/train-205/sfx/crossing_bell.mp3",
+    "click": "audio/train-205/sfx/click.mp3",
+    "wiper": "audio/train-205/sfx/wiper.mp3",
+    "melody_tokyo": "audio/train-205/sfx/melody_tokyo.mp3",
+    "melody_ueno": "audio/train-205/sfx/melody_ueno.mp3",
+    "melody_akabane": "audio/train-205/sfx/melody_akabane.mp3",
+    "melody_urawa": "audio/train-205/sfx/melody_urawa.mp3",
+    "melody_omiya": "audio/train-205/sfx/melody_omiya.mp3",
+    "melody_kuki": "audio/train-205/sfx/melody_kuki.mp3",
+    "melody_koga": "audio/train-205/sfx/melody_koga.mp3",
+    "melody_oyama": "audio/train-205/sfx/melody_oyama.mp3",
+    "melody_ishibashi": "audio/train-205/sfx/melody_ishibashi.mp3",
+    "melody_utsunomiya": "audio/train-205/sfx/melody_utsunomiya.mp3"
+  },
+  "renders": [
+    {"key":"common|welcome|ja","line_id":"welcome","role":"auto","lang":"ja","station":null,"when":"Game start at Tokyo","text":"今日も、JR東日本をご利用いただきまして、ありがとうございます。この電車は、宇都宮線、宇都宮行きです。","file":"audio/train-205/ja/common/welcome.mp3"},
+    {"key":"common|welcome|en","line_id":"welcome","role":"auto","lang":"en","station":null,"when":"Game start at Tokyo","text":"Thank you for riding JR East. This is the Utsunomiya Line train bound for Utsunomiya.","file":"audio/train-205/en/common/welcome.mp3"},
+    {"key":"ueno|approaching|ja","line_id":"approaching","role":"auto","lang":"ja","station":"ueno","when":"700 m before a station","text":"まもなく、うえのです。お出口は、左側です。","file":"audio/train-205/ja/ueno/approaching.mp3"},
+    {"key":"ueno|approaching|en","line_id":"approaching","role":"auto","lang":"en","station":"ueno","when":"700 m before a station","text":"We will soon make a brief stop at Ueno. The doors on the left side will open.","file":"audio/train-205/en/ueno/approaching.mp3"},
+    {"key":"akabane|approaching|ja","line_id":"approaching","role":"auto","lang":"ja","station":"akabane","when":"700 m before a station","text":"まもなく、あかばねです。お出口は、左側です。","file":"audio/train-205/ja/akabane/approaching.mp3"},
+    {"key":"akabane|approaching|en","line_id":"approaching","role":"auto","lang":"en","station":"akabane","when":"700 m before a station","text":"We will soon make a brief stop at Akabane. The doors on the left side will open.","file":"audio/train-205/en/akabane/approaching.mp3"},
+    {"key":"urawa|approaching|ja","line_id":"approaching","role":"auto","lang":"ja","station":"urawa","when":"700 m before a station","text":"まもなく、うらわです。お出口は、左側です。","file":"audio/train-205/ja/urawa/approaching.mp3"},
+    {"key":"urawa|approaching|en","line_id":"approaching","role":"auto","lang":"en","station":"urawa","when":"700 m before a station","text":"We will soon make a brief stop at Urawa. The doors on the left side will open.","file":"audio/train-205/en/urawa/approaching.mp3"},
+    {"key":"omiya|approaching|ja","line_id":"approaching","role":"auto","lang":"ja","station":"omiya","when":"700 m before a station","text":"まもなく、おおみやです。お出口は、左側です。","file":"audio/train-205/ja/omiya/approaching.mp3"},
+    {"key":"omiya|approaching|en","line_id":"approaching","role":"auto","lang":"en","station":"omiya","when":"700 m before a station","text":"We will soon make a brief stop at Omiya. The doors on the left side will open.","file":"audio/train-205/en/omiya/approaching.mp3"},
+    {"key":"kuki|approaching|ja","line_id":"approaching","role":"auto","lang":"ja","station":"kuki","when":"700 m before a station","text":"まもなく、くきです。お出口は、左側です。","file":"audio/train-205/ja/kuki/approaching.mp3"},
+    {"key":"kuki|approaching|en","line_id":"approaching","role":"auto","lang":"en","station":"kuki","when":"700 m before a station","text":"We will soon make a brief stop at Kuki. The doors on the left side will open.","file":"audio/train-205/en/kuki/approaching.mp3"},
+    {"key":"koga|approaching|ja","line_id":"approaching","role":"auto","lang":"ja","station":"koga","when":"700 m before a station","text":"まもなく、こがです。お出口は、左側です。","file":"audio/train-205/ja/koga/approaching.mp3"},
+    {"key":"koga|approaching|en","line_id":"approaching","role":"auto","lang":"en","station":"koga","when":"700 m before a station","text":"We will soon make a brief stop at Koga. The doors on the left side will open.","file":"audio/train-205/en/koga/approaching.mp3"},
+    {"key":"oyama|approaching|ja","line_id":"approaching","role":"auto","lang":"ja","station":"oyama","when":"700 m before a station","text":"まもなく、おやまです。お出口は、左側です。","file":"audio/train-205/ja/oyama/approaching.mp3"},
+    {"key":"oyama|approaching|en","line_id":"approaching","role":"auto","lang":"en","station":"oyama","when":"700 m before a station","text":"We will soon make a brief stop at Oyama. The doors on the left side will open.","file":"audio/train-205/en/oyama/approaching.mp3"},
+    {"key":"ishibashi|approaching|ja","line_id":"approaching","role":"auto","lang":"ja","station":"ishibashi","when":"700 m before a station","text":"まもなく、いしばしです。お出口は、左側です。","file":"audio/train-205/ja/ishibashi/approaching.mp3"},
+    {"key":"ishibashi|approaching|en","line_id":"approaching","role":"auto","lang":"en","station":"ishibashi","when":"700 m before a station","text":"We will soon make a brief stop at Ishibashi. The doors on the left side will open.","file":"audio/train-205/en/ishibashi/approaching.mp3"},
+    {"key":"utsunomiya|approaching_last|ja","line_id":"approaching_last","role":"auto","lang":"ja","station":"utsunomiya","when":"700 m before Utsunomiya","text":"まもなく、終点、うつのみやです。お出口は、左側です。今日も、ご乗車ありがとうございました。","file":"audio/train-205/ja/utsunomiya/approaching_last.mp3"},
+    {"key":"utsunomiya|approaching_last|en","line_id":"approaching_last","role":"auto","lang":"en","station":"utsunomiya","when":"700 m before Utsunomiya","text":"We will soon arrive at Utsunomiya, the last stop. The doors on the left side will open. Thank you for riding with us today.","file":"audio/train-205/en/utsunomiya/approaching_last.mp3"},
+    {"key":"ueno|transfer|ja","line_id":"transfer","role":"auto","lang":"ja","station":"ueno","when":"After the approaching announcement","text":"新幹線、山手線、京浜東北線、地下鉄銀座線は、お乗り換えです。","file":"audio/train-205/ja/ueno/transfer.mp3"},
+    {"key":"ueno|transfer|en","line_id":"transfer","role":"auto","lang":"en","station":"ueno","when":"After the approaching announcement","text":"Please change here for the Shinkansen, the Yamanote Line, the Keihin-Tohoku Line, and the Ginza Subway Line.","file":"audio/train-205/en/ueno/transfer.mp3"},
+    {"key":"akabane|transfer|ja","line_id":"transfer","role":"auto","lang":"ja","station":"akabane","when":"After the approaching announcement","text":"埼京線、京浜東北線は、お乗り換えです。","file":"audio/train-205/ja/akabane/transfer.mp3"},
+    {"key":"akabane|transfer|en","line_id":"transfer","role":"auto","lang":"en","station":"akabane","when":"After the approaching announcement","text":"Please change here for the Saikyo Line and the Keihin-Tohoku Line.","file":"audio/train-205/en/akabane/transfer.mp3"},
+    {"key":"urawa|transfer|ja","line_id":"transfer","role":"auto","lang":"ja","station":"urawa","when":"After the approaching announcement","text":"京浜東北線は、お乗り換えです。","file":"audio/train-205/ja/urawa/transfer.mp3"},
+    {"key":"urawa|transfer|en","line_id":"transfer","role":"auto","lang":"en","station":"urawa","when":"After the approaching announcement","text":"Please change here for the Keihin-Tohoku Line.","file":"audio/train-205/en/urawa/transfer.mp3"},
+    {"key":"omiya|transfer|ja","line_id":"transfer","role":"auto","lang":"ja","station":"omiya","when":"After the approaching announcement","text":"東北・上越・北陸新幹線、川越線、ニューシャトルは、お乗り換えです。","file":"audio/train-205/ja/omiya/transfer.mp3"},
+    {"key":"omiya|transfer|en","line_id":"transfer","role":"auto","lang":"en","station":"omiya","when":"After the approaching announcement","text":"Please change here for the Tohoku, Joetsu and Hokuriku Shinkansen, the Kawagoe Line, and the New Shuttle.","file":"audio/train-205/en/omiya/transfer.mp3"},
+    {"key":"kuki|transfer|ja","line_id":"transfer","role":"auto","lang":"ja","station":"kuki","when":"After the approaching announcement","text":"東武伊勢崎線は、お乗り換えです。","file":"audio/train-205/ja/kuki/transfer.mp3"},
+    {"key":"kuki|transfer|en","line_id":"transfer","role":"auto","lang":"en","station":"kuki","when":"After the approaching announcement","text":"Please change here for the Tobu Isesaki Line.","file":"audio/train-205/en/kuki/transfer.mp3"},
+    {"key":"oyama|transfer|ja","line_id":"transfer","role":"auto","lang":"ja","station":"oyama","when":"After the approaching announcement","text":"新幹線、両毛線、水戸線は、お乗り換えです。","file":"audio/train-205/ja/oyama/transfer.mp3"},
+    {"key":"oyama|transfer|en","line_id":"transfer","role":"auto","lang":"en","station":"oyama","when":"After the approaching announcement","text":"Please change here for the Shinkansen, the Ryomo Line, and the Mito Line.","file":"audio/train-205/en/oyama/transfer.mp3"},
+    {"key":"utsunomiya|transfer|ja","line_id":"transfer","role":"auto","lang":"ja","station":"utsunomiya","when":"After the approaching announcement","text":"新幹線、日光線、ライトラインは、お乗り換えです。","file":"audio/train-205/ja/utsunomiya/transfer.mp3"},
+    {"key":"utsunomiya|transfer|en","line_id":"transfer","role":"auto","lang":"en","station":"utsunomiya","when":"After the approaching announcement","text":"Please change here for the Shinkansen, the Nikko Line, and the Light Line.","file":"audio/train-205/en/utsunomiya/transfer.mp3"},
+    {"key":"ueno|arrived|ja","line_id":"arrived","role":"conductor","lang":"ja","station":"ueno","when":"Doors open at a station","text":"うえの、うえのです。ご乗車、ありがとうございます。","file":"audio/train-205/ja/ueno/arrived.mp3"},
+    {"key":"ueno|arrived|en","line_id":"arrived","role":"conductor","lang":"en","station":"ueno","when":"Doors open at a station","text":"Ueno. Ueno. Thank you for riding.","file":"audio/train-205/en/ueno/arrived.mp3"},
+    {"key":"akabane|arrived|ja","line_id":"arrived","role":"conductor","lang":"ja","station":"akabane","when":"Doors open at a station","text":"あかばね、あかばねです。ご乗車、ありがとうございます。","file":"audio/train-205/ja/akabane/arrived.mp3"},
+    {"key":"akabane|arrived|en","line_id":"arrived","role":"conductor","lang":"en","station":"akabane","when":"Doors open at a station","text":"Akabane. Akabane. Thank you for riding.","file":"audio/train-205/en/akabane/arrived.mp3"},
+    {"key":"urawa|arrived|ja","line_id":"arrived","role":"conductor","lang":"ja","station":"urawa","when":"Doors open at a station","text":"うらわ、うらわです。ご乗車、ありがとうございます。","file":"audio/train-205/ja/urawa/arrived.mp3"},
+    {"key":"urawa|arrived|en","line_id":"arrived","role":"conductor","lang":"en","station":"urawa","when":"Doors open at a station","text":"Urawa. Urawa. Thank you for riding.","file":"audio/train-205/en/urawa/arrived.mp3"},
+    {"key":"omiya|arrived|ja","line_id":"arrived","role":"conductor","lang":"ja","station":"omiya","when":"Doors open at a station","text":"おおみや、おおみやです。ご乗車、ありがとうございます。","file":"audio/train-205/ja/omiya/arrived.mp3"},
+    {"key":"omiya|arrived|en","line_id":"arrived","role":"conductor","lang":"en","station":"omiya","when":"Doors open at a station","text":"Omiya. Omiya. Thank you for riding.","file":"audio/train-205/en/omiya/arrived.mp3"},
+    {"key":"kuki|arrived|ja","line_id":"arrived","role":"conductor","lang":"ja","station":"kuki","when":"Doors open at a station","text":"くき、くきです。ご乗車、ありがとうございます。","file":"audio/train-205/ja/kuki/arrived.mp3"},
+    {"key":"kuki|arrived|en","line_id":"arrived","role":"conductor","lang":"en","station":"kuki","when":"Doors open at a station","text":"Kuki. Kuki. Thank you for riding.","file":"audio/train-205/en/kuki/arrived.mp3"},
+    {"key":"koga|arrived|ja","line_id":"arrived","role":"conductor","lang":"ja","station":"koga","when":"Doors open at a station","text":"こが、こがです。ご乗車、ありがとうございます。","file":"audio/train-205/ja/koga/arrived.mp3"},
+    {"key":"koga|arrived|en","line_id":"arrived","role":"conductor","lang":"en","station":"koga","when":"Doors open at a station","text":"Koga. Koga. Thank you for riding.","file":"audio/train-205/en/koga/arrived.mp3"},
+    {"key":"oyama|arrived|ja","line_id":"arrived","role":"conductor","lang":"ja","station":"oyama","when":"Doors open at a station","text":"おやま、おやまです。ご乗車、ありがとうございます。","file":"audio/train-205/ja/oyama/arrived.mp3"},
+    {"key":"oyama|arrived|en","line_id":"arrived","role":"conductor","lang":"en","station":"oyama","when":"Doors open at a station","text":"Oyama. Oyama. Thank you for riding.","file":"audio/train-205/en/oyama/arrived.mp3"},
+    {"key":"ishibashi|arrived|ja","line_id":"arrived","role":"conductor","lang":"ja","station":"ishibashi","when":"Doors open at a station","text":"いしばし、いしばしです。ご乗車、ありがとうございます。","file":"audio/train-205/ja/ishibashi/arrived.mp3"},
+    {"key":"ishibashi|arrived|en","line_id":"arrived","role":"conductor","lang":"en","station":"ishibashi","when":"Doors open at a station","text":"Ishibashi. Ishibashi. Thank you for riding.","file":"audio/train-205/en/ishibashi/arrived.mp3"},
+    {"key":"utsunomiya|arrived_last|ja","line_id":"arrived_last","role":"conductor","lang":"ja","station":"utsunomiya","when":"Doors open at Utsunomiya","text":"うつのみや、うつのみや、終点です。お忘れ物の、ございませんよう、ご注意ください。","file":"audio/train-205/ja/utsunomiya/arrived_last.mp3"},
+    {"key":"utsunomiya|arrived_last|en","line_id":"arrived_last","role":"conductor","lang":"en","station":"utsunomiya","when":"Doors open at Utsunomiya","text":"Utsunomiya. This is the last stop. Please make sure you have all your belongings.","file":"audio/train-205/en/utsunomiya/arrived_last.mp3"},
+    {"key":"common|doors_open|ja","line_id":"doors_open","role":"auto","lang":"ja","station":null,"when":"Doors start opening","text":"ドアが開きます。","file":"audio/train-205/ja/common/doors_open.mp3"},
+    {"key":"common|doors_open|en","line_id":"doors_open","role":"auto","lang":"en","station":null,"when":"Doors start opening","text":"The doors are opening.","file":"audio/train-205/en/common/doors_open.mp3"},
+    {"key":"common|doors_close|ja","line_id":"doors_close","role":"conductor","lang":"ja","station":null,"when":"Doors start closing (after the departure melody)","text":"ドアが閉まります。ご注意ください。","file":"audio/train-205/ja/common/doors_close.mp3"},
+    {"key":"common|doors_close|en","line_id":"doors_close","role":"conductor","lang":"en","station":null,"when":"Doors start closing (after the departure melody)","text":"The doors are closing. Please be careful.","file":"audio/train-205/en/common/doors_close.mp3"},
+    {"key":"tokyo|next|ja","line_id":"next","role":"auto","lang":"ja","station":"tokyo","when":"Leaving a station","text":"次は、うえのです。","file":"audio/train-205/ja/tokyo/next.mp3"},
+    {"key":"tokyo|next|en","line_id":"next","role":"auto","lang":"en","station":"tokyo","when":"Leaving a station","text":"The next station is Ueno.","file":"audio/train-205/en/tokyo/next.mp3"},
+    {"key":"ueno|next|ja","line_id":"next","role":"auto","lang":"ja","station":"ueno","when":"Leaving a station","text":"次は、あかばねです。","file":"audio/train-205/ja/ueno/next.mp3"},
+    {"key":"ueno|next|en","line_id":"next","role":"auto","lang":"en","station":"ueno","when":"Leaving a station","text":"The next station is Akabane.","file":"audio/train-205/en/ueno/next.mp3"},
+    {"key":"akabane|next|ja","line_id":"next","role":"auto","lang":"ja","station":"akabane","when":"Leaving a station","text":"次は、うらわです。","file":"audio/train-205/ja/akabane/next.mp3"},
+    {"key":"akabane|next|en","line_id":"next","role":"auto","lang":"en","station":"akabane","when":"Leaving a station","text":"The next station is Urawa.","file":"audio/train-205/en/akabane/next.mp3"},
+    {"key":"urawa|next|ja","line_id":"next","role":"auto","lang":"ja","station":"urawa","when":"Leaving a station","text":"次は、おおみやです。","file":"audio/train-205/ja/urawa/next.mp3"},
+    {"key":"urawa|next|en","line_id":"next","role":"auto","lang":"en","station":"urawa","when":"Leaving a station","text":"The next station is Omiya.","file":"audio/train-205/en/urawa/next.mp3"},
+    {"key":"omiya|next|ja","line_id":"next","role":"auto","lang":"ja","station":"omiya","when":"Leaving a station","text":"次は、くきです。","file":"audio/train-205/ja/omiya/next.mp3"},
+    {"key":"omiya|next|en","line_id":"next","role":"auto","lang":"en","station":"omiya","when":"Leaving a station","text":"The next station is Kuki.","file":"audio/train-205/en/omiya/next.mp3"},
+    {"key":"kuki|next|ja","line_id":"next","role":"auto","lang":"ja","station":"kuki","when":"Leaving a station","text":"次は、こがです。","file":"audio/train-205/ja/kuki/next.mp3"},
+    {"key":"kuki|next|en","line_id":"next","role":"auto","lang":"en","station":"kuki","when":"Leaving a station","text":"The next station is Koga.","file":"audio/train-205/en/kuki/next.mp3"},
+    {"key":"koga|next|ja","line_id":"next","role":"auto","lang":"ja","station":"koga","when":"Leaving a station","text":"次は、おやまです。","file":"audio/train-205/ja/koga/next.mp3"},
+    {"key":"koga|next|en","line_id":"next","role":"auto","lang":"en","station":"koga","when":"Leaving a station","text":"The next station is Oyama.","file":"audio/train-205/en/koga/next.mp3"},
+    {"key":"oyama|next|ja","line_id":"next","role":"auto","lang":"ja","station":"oyama","when":"Leaving a station","text":"次は、いしばしです。","file":"audio/train-205/ja/oyama/next.mp3"},
+    {"key":"oyama|next|en","line_id":"next","role":"auto","lang":"en","station":"oyama","when":"Leaving a station","text":"The next station is Ishibashi.","file":"audio/train-205/en/oyama/next.mp3"},
+    {"key":"ishibashi|next|ja","line_id":"next","role":"auto","lang":"ja","station":"ishibashi","when":"Leaving a station","text":"次は、うつのみやです。","file":"audio/train-205/ja/ishibashi/next.mp3"},
+    {"key":"ishibashi|next|en","line_id":"next","role":"auto","lang":"en","station":"ishibashi","when":"Leaving a station","text":"The next station is Utsunomiya.","file":"audio/train-205/en/ishibashi/next.mp3"},
+    {"key":"common|platform_arriving|ja","line_id":"platform_arriving","role":"platform","lang":"ja","station":null,"when":"Platform camera, train coming","text":"まもなく、1番線に、宇都宮行きが、参ります。危ないですから、黄色い線の内側まで、お下がりください。","file":"audio/train-205/ja/common/platform_arriving.mp3"},
+    {"key":"common|platform_arriving|en","line_id":"platform_arriving","role":"platform","lang":"en","station":null,"when":"Platform camera, train coming","text":"A train bound for Utsunomiya is now arriving at track number one. For your safety, please stand behind the yellow line.","file":"audio/train-205/en/common/platform_arriving.mp3"},
+    {"key":"common|platform_departing|ja","line_id":"platform_departing","role":"platform","lang":"ja","station":null,"when":"Platform camera, departure melody","text":"1番線、ドアが閉まります。ご注意ください。","file":"audio/train-205/ja/common/platform_departing.mp3"},
+    {"key":"common|platform_departing|en","line_id":"platform_departing","role":"platform","lang":"en","station":null,"when":"Platform camera, departure melody","text":"The doors on track number one are closing. Please be careful.","file":"audio/train-205/en/common/platform_departing.mp3"},
+    {"key":"common|close_doors_first|ja","line_id":"close_doors_first","role":"driver","lang":"ja","station":null,"when":"Go pressed while the doors are open","text":"ドアを しめてから、しゅっぱつ しよう！","file":"audio/train-205/ja/common/close_doors_first.mp3"},
+    {"key":"common|close_doors_first|en","line_id":"close_doors_first","role":"driver","lang":"en","station":null,"when":"Go pressed while the doors are open","text":"Close the doors first, then we can go!","file":"audio/train-205/en/common/close_doors_first.mp3"},
+    {"key":"common|press_doors|ja","line_id":"press_doors","role":"driver","lang":"ja","station":null,"when":"Stopped at a platform (hint)","text":"ドアボタンを おしてね！","file":"audio/train-205/ja/common/press_doors.mp3"},
+    {"key":"common|press_doors|en","line_id":"press_doors","role":"driver","lang":"en","station":null,"when":"Stopped at a platform (hint)","text":"Press the Doors button!","file":"audio/train-205/en/common/press_doors.mp3"},
+    {"key":"common|perfect_stop|ja","line_id":"perfect_stop","role":"driver","lang":"ja","station":null,"when":"Stopped right at the 3 marker","text":"ぴったり、ていし！すごい！","file":"audio/train-205/ja/common/perfect_stop.mp3"},
+    {"key":"common|perfect_stop|en","line_id":"perfect_stop","role":"driver","lang":"en","station":null,"when":"Stopped right at the 3 marker","text":"Perfect stop! Great job!","file":"audio/train-205/en/common/perfect_stop.mp3"},
+    {"key":"common|passed_station|ja","line_id":"passed_station","role":"driver","lang":"ja","station":null,"when":"Drove past a station","text":"あっ、とおりすぎちゃった！つぎの えきで とまろう。","file":"audio/train-205/ja/common/passed_station.mp3"},
+    {"key":"common|passed_station|en","line_id":"passed_station","role":"driver","lang":"en","station":null,"when":"Drove past a station","text":"Oops, we passed the station! Let's stop at the next one.","file":"audio/train-205/en/common/passed_station.mp3"},
+    {"key":"common|departure_ok|ja","line_id":"departure_ok","role":"driver","lang":"ja","station":null,"when":"Departing, signal green","text":"しゅっぱつ、しんこう！","file":"audio/train-205/ja/common/departure_ok.mp3"},
+    {"key":"common|departure_ok|en","line_id":"departure_ok","role":"driver","lang":"en","station":null,"when":"Departing, signal green","text":"Signal is green. Let's go!","file":"audio/train-205/en/common/departure_ok.mp3"},
+    {"key":"common|race_intro|ja","line_id":"race_intro","role":"announcer","lang":"ja","station":null,"when":"Race start at Omiya","text":"大宮から宇都宮まで、HU300と、きょうそうだ！","file":"audio/train-205/ja/common/race_intro.mp3"},
+    {"key":"common|race_intro|en","line_id":"race_intro","role":"announcer","lang":"en","station":null,"when":"Race start at Omiya","text":"It's a race from Omiya to Utsunomiya against the HU300!","file":"audio/train-205/en/common/race_intro.mp3"},
+    {"key":"common|race_go|ja","line_id":"race_go","role":"announcer","lang":"ja","station":null,"when":"Countdown reaches GO","text":"スタート！","file":"audio/train-205/ja/common/race_go.mp3"},
+    {"key":"common|race_go|en","line_id":"race_go","role":"announcer","lang":"en","station":null,"when":"Countdown reaches GO","text":"Go!","file":"audio/train-205/en/common/race_go.mp3"},
+    {"key":"common|race_lead_205|ja","line_id":"race_lead_205","role":"announcer","lang":"ja","station":null,"when":"The 205 takes the lead","text":"205系が、リードしています！","file":"audio/train-205/ja/common/race_lead_205.mp3"},
+    {"key":"common|race_lead_205|en","line_id":"race_lead_205","role":"announcer","lang":"en","station":null,"when":"The 205 takes the lead","text":"The 205 is in the lead!","file":"audio/train-205/en/common/race_lead_205.mp3"},
+    {"key":"common|race_lead_hu300|ja","line_id":"race_lead_hu300","role":"announcer","lang":"ja","station":null,"when":"The HU300 takes the lead","text":"HU300が、前に出ました！がんばれ！","file":"audio/train-205/ja/common/race_lead_hu300.mp3"},
+    {"key":"common|race_lead_hu300|en","line_id":"race_lead_hu300","role":"announcer","lang":"en","station":null,"when":"The HU300 takes the lead","text":"The HU300 is ahead! Keep going!","file":"audio/train-205/en/common/race_lead_hu300.mp3"},
+    {"key":"common|race_close|ja","line_id":"race_close","role":"announcer","lang":"ja","station":null,"when":"Trains neck and neck","text":"せっせんです！どっちが勝つかな？","file":"audio/train-205/ja/common/race_close.mp3"},
+    {"key":"common|race_close|en","line_id":"race_close","role":"announcer","lang":"en","station":null,"when":"Trains neck and neck","text":"It's a close race! Who will win?","file":"audio/train-205/en/common/race_close.mp3"},
+    {"key":"common|race_hidden|ja","line_id":"race_hidden","role":"announcer","lang":"ja","station":null,"when":"HU300 leaves on its own track","text":"あれ？HU300が、見えなくなった！","file":"audio/train-205/ja/common/race_hidden.mp3"},
+    {"key":"common|race_hidden|en","line_id":"race_hidden","role":"announcer","lang":"en","station":null,"when":"HU300 leaves on its own track","text":"Where did the HU300 go?","file":"audio/train-205/en/common/race_hidden.mp3"},
+    {"key":"common|race_back|ja","line_id":"race_back","role":"announcer","lang":"ja","station":null,"when":"HU300 comes back","text":"HU300が、もどってきた！","file":"audio/train-205/ja/common/race_back.mp3"},
+    {"key":"common|race_back|en","line_id":"race_back","role":"announcer","lang":"en","station":null,"when":"HU300 comes back","text":"The HU300 is back!","file":"audio/train-205/en/common/race_back.mp3"},
+    {"key":"common|race_final|ja","line_id":"race_final","role":"announcer","lang":"ja","station":null,"when":"About 1 km before the finish","text":"もうすぐゴール、宇都宮です！","file":"audio/train-205/ja/common/race_final.mp3"},
+    {"key":"common|race_final|en","line_id":"race_final","role":"announcer","lang":"en","station":null,"when":"About 1 km before the finish","text":"Almost at the finish line, Utsunomiya!","file":"audio/train-205/en/common/race_final.mp3"},
+    {"key":"common|race_win|ja","line_id":"race_win","role":"announcer","lang":"ja","station":null,"when":"The 205 wins","text":"やったー！205系の勝ち！おめでとう！","file":"audio/train-205/ja/common/race_win.mp3"},
+    {"key":"common|race_win|en","line_id":"race_win","role":"announcer","lang":"en","station":null,"when":"The 205 wins","text":"Hooray! The 205 wins! Congratulations!","file":"audio/train-205/en/common/race_win.mp3"},
+    {"key":"common|race_lose|ja","line_id":"race_lose","role":"announcer","lang":"ja","station":null,"when":"The HU300 wins","text":"HU300の勝ち！つぎは、がんばろう！","file":"audio/train-205/ja/common/race_lose.mp3"},
+    {"key":"common|race_lose|en","line_id":"race_lose","role":"announcer","lang":"en","station":null,"when":"The HU300 wins","text":"The HU300 wins this time! Let's try again!","file":"audio/train-205/en/common/race_lose.mp3"},
+    {"key":"common|yellow_signal|ja","line_id":"yellow_signal","role":"driver","lang":"ja","station":null,"when":"A yellow (caution) signal ahead","text":"きいろ しんごう！スピードを おとそう。","file":"audio/train-205/ja/common/yellow_signal.mp3"},
+    {"key":"common|yellow_signal|en","line_id":"yellow_signal","role":"driver","lang":"en","station":null,"when":"A yellow (caution) signal ahead","text":"Yellow signal! Let's slow down.","file":"audio/train-205/en/common/yellow_signal.mp3"},
+    {"key":"common|slow_good|ja","line_id":"slow_good","role":"driver","lang":"ja","station":null,"when":"He pressed Slow for the yellow signal","text":"じょうず！ゆっくり すすもう。","file":"audio/train-205/ja/common/slow_good.mp3"},
+    {"key":"common|slow_good|en","line_id":"slow_good","role":"driver","lang":"en","station":null,"when":"He pressed Slow for the yellow signal","text":"Good job! Nice and slow.","file":"audio/train-205/en/common/slow_good.mp3"},
+    {"key":"common|green_again|ja","line_id":"green_again","role":"driver","lang":"ja","station":null,"when":"Past the yellow signal, next one is green","text":"みどり しんごう。はやく してもいいよ！","file":"audio/train-205/ja/common/green_again.mp3"},
+    {"key":"common|green_again|en","line_id":"green_again","role":"driver","lang":"en","station":null,"when":"Past the yellow signal, next one is green","text":"Green signal. We can go fast again!","file":"audio/train-205/en/common/green_again.mp3"},
+    {"key":"common|tunnel|ja","line_id":"tunnel","role":"driver","lang":"ja","station":null,"when":"Coming up to a tunnel","text":"トンネルに はいるよ！","file":"audio/train-205/ja/common/tunnel.mp3"},
+    {"key":"common|tunnel|en","line_id":"tunnel","role":"driver","lang":"en","station":null,"when":"Coming up to a tunnel","text":"Here comes a tunnel!","file":"audio/train-205/en/common/tunnel.mp3"},
+    {"key":"common|bridge|ja","line_id":"bridge","role":"driver","lang":"ja","station":null,"when":"Coming up to a big river bridge","text":"おおきな てっきょうを わたるよ！","file":"audio/train-205/ja/common/bridge.mp3"},
+    {"key":"common|bridge|en","line_id":"bridge","role":"driver","lang":"en","station":null,"when":"Coming up to a big river bridge","text":"We're crossing a big bridge!","file":"audio/train-205/en/common/bridge.mp3"},
+    {"key":"common|crossing_horn|ja","line_id":"crossing_horn","role":"driver","lang":"ja","station":null,"when":"Horn sign before a level crossing","text":"ふみきりだ。ホーンを ならそう！","file":"audio/train-205/ja/common/crossing_horn.mp3"},
+    {"key":"common|crossing_horn|en","line_id":"crossing_horn","role":"driver","lang":"en","station":null,"when":"Horn sign before a level crossing","text":"A railroad crossing! Let's blow the horn!","file":"audio/train-205/en/common/crossing_horn.mp3"},
+    {"key":"common|shinkansen|ja","line_id":"shinkansen","role":"driver","lang":"ja","station":null,"when":"An E5 Shinkansen passes on the viaduct","text":"しんかんせんが きた！はやい！","file":"audio/train-205/ja/common/shinkansen.mp3"},
+    {"key":"common|shinkansen|en","line_id":"shinkansen","role":"driver","lang":"en","station":null,"when":"An E5 Shinkansen passes on the viaduct","text":"Here comes the Shinkansen! So fast!","file":"audio/train-205/en/common/shinkansen.mp3"}
+  ]
+}

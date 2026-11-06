@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Densha 205">
+<meta name="theme-color" content="#1f9a48">
+<link rel="apple-touch-icon" href="icons/train-205-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/train-205-192.png">
+<link rel="manifest" href="train-205.webmanifest">
+<title>Densha Driver 205</title>
+<!-- GENERATED FILE: edit src/train-205/* and train_205_scripts.json, then run: node tools/build_train_205.mjs -->
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100dvh;overflow:hidden;background:#0d1a10;
+  font-family:-apple-system,'Hiragino Sans','Helvetica Neue',Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+button{border:none;outline:none;background:none;-webkit-tap-highlight-color:transparent;cursor:pointer;font-family:inherit}
+.screen{position:absolute;inset:0;overflow:hidden}
+.gone{display:none!important}
+
+/* ═══ TITLE ═══ */
+#scr-title{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+  background:linear-gradient(180deg,#8fd0ff 0%,#cfeeff 55%,#9fd88a 56%,#5fae55 100%)}
+#t-logo{text-align:center}
+#t-logo b{display:block;font-size:64px;font-weight:900;letter-spacing:6px;color:#fff;
+  text-shadow:0 4px 0 #1f8a3c,0 8px 18px rgba(0,0,0,.25)}
+#t-logo span{display:inline-block;margin-top:10px;font-size:20px;font-weight:800;letter-spacing:4px;color:#1d5c2c;
+  background:#fff;border-radius:30px;padding:6px 22px;box-shadow:0 3px 0 #f08a24}
+#t-stripe{width:min(560px,80vw);height:22px;border-radius:11px;
+  background:linear-gradient(180deg,#f08a24 0 45%,#1f9a48 45% 100%);box-shadow:0 3px 10px rgba(0,0,0,.2)}
+#t-modes{display:flex;gap:26px}
+.mode-b{width:250px;height:190px;border-radius:30px;color:#fff;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:8px;box-shadow:0 8px 0 rgba(0,0,0,.25),0 14px 30px rgba(0,0,0,.2);transition:transform .1s}
+.mode-b:active{transform:translateY(5px) scale(.97);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.mode-b i{font-style:normal;font-size:70px;line-height:1}
+.mode-b b{font-size:30px;font-weight:900;letter-spacing:3px}
+.mode-b small{font-size:15px;font-weight:700;opacity:.9;letter-spacing:1px}
+#m-reg{background:linear-gradient(160deg,#2db35a,#17803a)}
+#m-race{background:linear-gradient(160deg,#ffc21a,#e08a00)}
+#m-race.soon{filter:grayscale(.7);opacity:.6}
+#loading{position:fixed;inset:0;z-index:200;background:#0d1a10;color:#bff2c8;display:none;align-items:center;
+  justify-content:center;flex-direction:column;gap:14px;font-weight:800;letter-spacing:4px;font-size:22px}
+#loading.show{display:flex}
+#loading small{color:rgba(255,255,255,.55);letter-spacing:1px;font-weight:500;font-size:14px;max-width:80%;text-align:center}
+
+/* ═══ GAME ═══ */
+#scr-game{background:#000}
+#gl{position:absolute;inset:0}
+#gl canvas{display:block;width:100%!important;height:100%!important}
+
+/* top strip: next station */
+#top{position:absolute;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:20;
+  display:flex;align-items:center;gap:12px;background:rgba(10,20,14,.78);border-radius:22px;padding:8px 20px 8px 10px;
+  color:#fff;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#top .lab{font-size:13px;font-weight:900;letter-spacing:2px;background:#1f9a48;border-radius:12px;padding:5px 10px}
+#top .nm{font-size:30px;font-weight:900;letter-spacing:3px;line-height:1}
+#top .en{font-size:14px;font-weight:700;color:#bfe6c9;letter-spacing:1px}
+#home{position:absolute;top:calc(10px + env(safe-area-inset-top));left:12px;z-index:30;width:56px;height:56px;border-radius:50%;
+  background:rgba(10,20,14,.78);color:#fff;font-size:26px;display:grid;place-items:center;border:2px solid rgba(255,255,255,.3)}
+#home::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:5px solid #ffe36b;
+  clip-path:inset(100% 0 0 0);pointer-events:none}
+#home.arming::after{animation:homeArm .9s linear forwards}
+@keyframes homeArm{from{clip-path:inset(100% 0 0 0)}to{clip-path:inset(0 0 0 0)}}
+#t-install{position:absolute;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+  font-size:15px;font-weight:700;color:#1d5c2c;background:rgba(255,255,255,.85);border-radius:20px;padding:8px 18px;white-space:nowrap}
+#mute{position:absolute;top:calc(10px + env(safe-area-inset-top));left:76px;z-index:30;width:56px;height:56px;border-radius:50%;
+  background:rgba(10,20,14,.78);color:#fff;font-size:24px;display:grid;place-items:center;border:2px solid rgba(255,255,255,.3)}
+
+/* speedometer */
+#speedo{position:absolute;right:14px;top:calc(10px + env(safe-area-inset-top));z-index:20;width:150px;height:150px;pointer-events:none;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+
+/* camera button */
+#cam{position:absolute;right:14px;top:calc(172px + env(safe-area-inset-top));z-index:30;width:150px;height:74px;border-radius:20px;
+  background:rgba(10,20,14,.8);border:3px solid rgba(255,255,255,.35);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px}
+#cam i{font-style:normal;font-size:34px}
+#cam b{font-size:15px;font-weight:900;letter-spacing:1px;text-align:left;line-height:1.15}
+#cam:active{transform:scale(.94)}
+
+/* control deck */
+#deck{position:absolute;left:0;right:0;bottom:0;z-index:25;padding:12px 14px calc(14px + env(safe-area-inset-bottom));
+  display:flex;align-items:flex-end;justify-content:center;gap:12px;
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.35) 30%,rgba(0,0,0,.55))}
+.cb{width:104px;height:104px;border-radius:26px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;background:linear-gradient(170deg,#3b4a40,#222c26);border:3px solid rgba(255,255,255,.28);
+  box-shadow:0 6px 0 rgba(0,0,0,.45);transition:transform .08s,box-shadow .08s,filter .2s;position:relative}
+.cb:active,.cb.press{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.45)}
+.cb i{font-style:normal;font-size:44px;line-height:1;pointer-events:none}
+.cb b{font-size:15px;font-weight:900;letter-spacing:1px;pointer-events:none}
+.cb.on{border-color:#ffe36b;box-shadow:0 6px 0 rgba(0,0,0,.45),0 0 18px rgba(255,227,107,.65)}
+.cb.dis{filter:grayscale(1) brightness(.6);pointer-events:none}
+.cb.hint{animation:hintP .9s ease-in-out infinite;border-color:#ffe36b}
+@keyframes hintP{0%,100%{transform:scale(1);box-shadow:0 6px 0 rgba(0,0,0,.45)}50%{transform:scale(1.12);box-shadow:0 6px 0 rgba(0,0,0,.45),0 0 26px rgba(255,227,107,.9)}}
+#b-door{background:linear-gradient(170deg,#3c6fb8,#1f4680)}
+#b-go{width:150px;height:150px;border-radius:75px}
+#b-go i{font-size:62px}
+#b-go b{font-size:20px}
+#b-go.go{background:radial-gradient(circle at 40% 30%,#4fe07a,#169a3c 70%)}
+#b-go.stop{background:radial-gradient(circle at 40% 30%,#ff6a5c,#c81e14 70%)}
+#b-fast.fast{background:linear-gradient(170deg,#ff9b3d,#e2620a)}
+#b-fast.slow{background:linear-gradient(170deg,#4fa6ff,#1c63c9)}
+#b-lc .dot{width:44px;height:44px;border-radius:50%;border:4px solid rgba(255,255,255,.8);pointer-events:none}
+#b-lc.white .dot{background:radial-gradient(circle at 40% 35%,#fff,#e9f2ff 60%,#b8c8de);box-shadow:0 0 16px #fff}
+#b-lc.red .dot{background:radial-gradient(circle at 40% 35%,#ffb0a8,#ff2a1a 60%,#a00);box-shadow:0 0 16px #ff3020}
+.deck-gap{width:12px}
+
+/* big centre message */
+#msg{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%) scale(.8);z-index:28;font-size:64px;font-weight:900;
+  letter-spacing:4px;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 30px rgba(255,255,255,.4);opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;white-space:nowrap;text-align:center}
+#msg small{display:block;font-size:24px;letter-spacing:2px;margin-top:6px}
+#msg.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+#subtitle{position:absolute;left:50%;bottom:190px;transform:translateX(-50%);max-width:min(80%,760px);z-index:26;
+  background:rgba(0,0,0,.66);color:#fff;font-size:17px;line-height:1.4;padding:8px 16px;border-radius:14px;
+  opacity:0;transition:opacity .3s;pointer-events:none;text-align:center}
+#subtitle.show{opacity:1}
+#subtitle .en{display:block;font-size:13px;color:#cde;margin-top:2px}
+
+/* race */
+#minimap{position:absolute;left:12px;top:calc(76px + env(safe-area-inset-top));width:270px;height:135px;z-index:20;pointer-events:none}
+#race-hud{position:absolute;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:14px;
+  background:rgba(10,20,14,.8);border-radius:22px;padding:8px 18px;color:#fff;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#race-hud .vs{font-size:20px;font-weight:900;letter-spacing:1px}
+#race-hud .g{color:#4ff07f}#race-hud .y{color:#ffc93a}
+#race-pos{font-size:26px;font-weight:900;border-radius:14px;padding:2px 12px}
+#race-pos.first{background:#ffc93a;color:#3a2a00}#race-pos.second{background:#c9d2d8;color:#222}
+#race-dist{font-size:13px;font-weight:700;color:#cfe;letter-spacing:1px}
+#countdown{position:absolute;top:36%;left:50%;transform:translate(-50%,-50%) scale(.4);z-index:40;font-size:170px;font-weight:900;
+  text-shadow:0 6px 0 rgba(0,0,0,.35),0 0 40px rgba(255,255,255,.4);opacity:0;pointer-events:none}
+#countdown.show{animation:cd 1s ease-out forwards}
+@keyframes cd{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.3)}}
+#result{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.25),rgba(0,0,0,.7));opacity:0;pointer-events:none;transition:opacity .6s}
+#result.show{opacity:1;pointer-events:auto}
+#res-t{font-size:72px;font-weight:900;letter-spacing:3px;color:#fff;text-shadow:0 5px 0 rgba(0,0,0,.4)}
+#result.win #res-t{color:#ffd94a}#result.lose #res-t{color:#ffc93a}
+#res-s{font-size:22px;font-weight:800;color:#fff;text-shadow:0 2px 6px #000}
+#res-btns{display:flex;gap:18px;margin-top:10px}
+.res-b{font-size:24px;font-weight:900;color:#fff;border-radius:22px;padding:20px 34px;min-width:200px;box-shadow:0 6px 0 rgba(0,0,0,.35)}
+#res-again{background:linear-gradient(160deg,#ffc21a,#e08a00)}#res-home{background:linear-gradient(160deg,#2db35a,#17803a)}
+#confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+#confetti i{position:absolute;top:-20px;width:12px;height:18px;border-radius:3px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+#rotate{position:fixed;inset:0;z-index:300;background:#0d1a10;color:#fff;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;font-size:24px;font-weight:800;text-align:center}
+#rotate i{font-style:normal;font-size:80px}
+@media (orientation:portrait){#rotate{display:flex}}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="rotate"><i>📱↻</i>iPadを よこに してね<br><small style="font-size:16px;opacity:.7">Turn the iPad sideways</small></div>
+<div id="loading"><div id="loading-msg">じゅんび ちゅう…</div><small id="loading-sub">Loading the railway</small></div>
+
+<!-- TITLE -->
+<div class="screen" id="scr-title">
+  <div id="t-logo"><b>でんしゃ 205</b><span>DENSHA DRIVER · 宇都宮線</span></div>
+  <div id="t-stripe"></div>
+  <div id="t-modes">
+    <button class="mode-b" id="m-reg"><i>🚉</i><b>Regular</b><small>Stop at the stations</small></button>
+    <button class="mode-b" id="m-race"><i>🏁</i><b>Race</b><small>vs HU300 · Omiya → Utsunomiya</small></button>
+  </div>
+  <div id="t-install" class="gone">Tip for grown-ups: Share ⬆︎ › Add to Home Screen for full screen</div>
+</div>
+
+<!-- GAME -->
+<div class="screen gone" id="scr-game">
+  <div id="gl"></div>
+  <button id="home" aria-label="Home">🏠</button>
+  <button id="mute" aria-label="Sound">🔊</button>
+  <div id="top"><span class="lab">NEXT</span><div><div class="nm" id="nx-ja">Ueno</div><div class="en" id="nx-en">上野</div></div></div>
+  <canvas id="speedo" width="300" height="300"></canvas>
+  <canvas id="minimap" width="540" height="270"></canvas>
+  <div id="race-hud" class="gone"><span id="race-pos" class="first">1st</span><span class="vs"><span class="g">● 205</span> vs <span class="y">● HU300</span></span><span id="race-dist"></span></div>
+  <div id="countdown"></div>
+  <div id="result"><div id="confetti"></div><div id="res-t"></div><div id="res-s"></div>
+    <div id="res-btns"><button class="res-b" id="res-again">🏁 Race again</button><button class="res-b" id="res-home">🏠 Home</button></div></div>
+  <button id="cam"><i id="cam-i">🎥</i><b id="cam-l">Camera<br>Outside</b></button>
+  <div id="msg"></div>
+  <div id="subtitle"></div>
+  <div id="deck">
+    <button class="cb" id="b-lt"><i>💡</i><b>Light</b></button>
+    <button class="cb white" id="b-lc"><span class="dot"></span><b id="b-lc-t">White</b></button>
+    <button class="cb" id="b-wf"><i>🪟</i><b>Front Wiper</b></button>
+    <button class="cb" id="b-wb"><i>🪟</i><b>Back Wiper</b></button>
+    <div class="deck-gap"></div>
+    <button class="cb go" id="b-go"><i>▶</i><b>Go</b></button>
+    <div class="deck-gap"></div>
+    <button class="cb fast" id="b-fast"><i>🐇</i><b>Fast</b></button>
+    <button class="cb" id="b-horn"><i>📯</i><b>Horn</b></button>
+    <button class="cb dis" id="b-door"><i>🚪</i><b>Open Doors</b></button>
+  </div>
+</div>
+
+<script id="stations-data" type="application/json">%%STATIONS%%</script>
+<script id="train-scripts" type="application/json">%%SCRIPTS%%</script>
+<script>
+setTimeout(function(){ if(!window.__t205ok){ var l=document.getElementById('loading'); l.classList.add('show');
+  document.getElementById('loading-msg').textContent='Could not load the 3D engine (three.js).';
+  document.getElementById('loading-sub').textContent='Check the internet connection and reload.'; } }, 9000);
+</script>
+<script type="module">
+%%JS%%
+</script>
+</body>
+</html>

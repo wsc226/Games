@@ -1,0 +1,12 @@
+[
+  {"id": "tokyo", "ja": "東京", "ja_read": "とうきょう", "en": "Tokyo", "ko": "도쿄", "no": "JU01", "three": "TYO", "zone": "city", "leg": 1400, "transfer_ja": "新幹線、山手線、中央線", "transfer_en": "the Shinkansen, the Yamanote Line, and the Chuo Line"},
+  {"id": "ueno", "ja": "上野", "ja_read": "うえの", "en": "Ueno", "ko": "우에노", "no": "JU02", "three": "UEN", "zone": "city", "leg": 2100, "transfer_ja": "新幹線、山手線、京浜東北線、地下鉄銀座線", "transfer_en": "the Shinkansen, the Yamanote Line, the Keihin-Tohoku Line, and the Ginza Subway Line"},
+  {"id": "akabane", "ja": "赤羽", "ja_read": "あかばね", "en": "Akabane", "ko": "아카바네", "no": "JU04", "three": "ABN", "zone": "city", "leg": 2000, "transfer_ja": "埼京線、京浜東北線", "transfer_en": "the Saikyo Line and the Keihin-Tohoku Line"},
+  {"id": "urawa", "ja": "浦和", "ja_read": "うらわ", "en": "Urawa", "ko": "우라와", "no": "JU05", "three": "URW", "zone": "city", "leg": 1500, "transfer_ja": "京浜東北線", "transfer_en": "the Keihin-Tohoku Line"},
+  {"id": "omiya", "ja": "大宮", "ja_read": "おおみや", "en": "Omiya", "ko": "오미야", "no": "JU07", "three": "OMY", "zone": "city", "leg": 2400, "transfer_ja": "東北・上越・北陸新幹線、川越線、ニューシャトル", "transfer_en": "the Tohoku, Joetsu and Hokuriku Shinkansen, the Kawagoe Line, and the New Shuttle"},
+  {"id": "kuki", "ja": "久喜", "ja_read": "くき", "en": "Kuki", "ko": "구키", "no": "", "three": "", "zone": "suburb", "leg": 2100, "transfer_ja": "東武伊勢崎線", "transfer_en": "the Tobu Isesaki Line"},
+  {"id": "koga", "ja": "古河", "ja_read": "こが", "en": "Koga", "ko": "고가", "no": "", "three": "", "zone": "suburb", "leg": 2100},
+  {"id": "oyama", "ja": "小山", "ja_read": "おやま", "en": "Oyama", "ko": "오야마", "no": "", "three": "", "zone": "country", "leg": 2100, "transfer_ja": "新幹線、両毛線、水戸線", "transfer_en": "the Shinkansen, the Ryomo Line, and the Mito Line"},
+  {"id": "ishibashi", "ja": "石橋", "ja_read": "いしばし", "en": "Ishibashi", "ko": "이시바시", "no": "", "three": "", "zone": "country", "leg": 1900},
+  {"id": "utsunomiya", "ja": "宇都宮", "ja_read": "うつのみや", "en": "Utsunomiya", "ko": "우쓰노미야", "no": "", "three": "", "zone": "country", "leg": 0, "transfer_ja": "新幹線、日光線、ライトライン", "transfer_en": "the Shinkansen, the Nikko Line, and the Light Line"}
+]
