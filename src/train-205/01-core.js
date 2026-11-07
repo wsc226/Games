@@ -39,8 +39,7 @@ function initA() {
     A = new (window.AudioContext || window.webkitAudioContext)();
     master = A.createGain(); master.gain.value = muted ? 0 : 1; master.connect(A.destination);
   }
-  if (A.state !== 'running') A.resume().catch(() => {});   // iOS: 'suspended' or 'interrupted'
-  unlockVoice();
+  if (A.state !== 'running' && !G.paused) A.resume().catch(() => {});   // iOS: 'suspended' or 'interrupted'
   loadSfxFiles();
 }
 function tone(f, d, ty = 'sine', g = .14, f2 = null, when = 0, dest = null) {
@@ -130,8 +129,10 @@ function say(id, opts = {}) {
   voiceEl.pause(); stopSpeech();
   playParts(parts, 0, seq, done);
 }
-/* iOS only lets speech (and <audio>) start later on if one was started inside a tap,
-   so the first tap speaks a silent word. Missing mp3 files are remembered and skipped. */
+/* iOS only lets speech start later on if one was started inside a tap - and only a
+   finger LIFTING (touchend/click) counts, not touchstart, which is what the game buttons
+   use. So every lift tries the unlock until it works, and again after the app was hidden.
+   Missing mp3 files are remembered and skipped. */
 let voiceUnlocked = false;
 const NOFILE = new Set();
 function unlockVoice() {
@@ -140,6 +141,10 @@ function unlockVoice() {
   if (SPEAK.ios) try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) {}
   if (!jaVoice || !enVoice) pickVoices();
 }
+const liftUnlock = () => { if (A && A.state !== 'running' && !G.paused) A.resume().catch(() => {}); unlockVoice(); };
+document.addEventListener('touchend', liftUnlock, { capture: true, passive: true });
+document.addEventListener('click', liftUnlock, true);
+document.addEventListener('visibilitychange', () => { if (document.hidden) voiceUnlocked = false; });
 let jaVoice = null, enVoice = null;
 function pickVoices() {
   try {
@@ -161,7 +166,7 @@ function playParts(parts, i, seq, done) {
     const v = SCRIPTS.voices?.[p.role] || {};
     const u = new SpeechSynthesisUtterance(p.text);
     u.lang = p.lang === 'ja' ? 'ja-JP' : 'en-US'; u.rate = v.rate || 1; u.pitch = v.pitch || 1;
-    const vo = p.lang === 'ja' ? jaVoice : enVoice; if (vo) u.voice = vo;
+    const vo = p.lang === 'ja' ? jaVoice : enVoice; if (vo && !SPEAK.ios) u.voice = vo;
     let fired = false; const fin = () => { if (!fired) { fired = true; next(); } };
     u.onend = u.onerror = () => { if (SPEAK.retrying !== u) fin(); }; setTimeout(fin, 4500 + p.text.length * (p.lang === 'ja' ? 260 : 110));
     speakNow(u, () => !fired && seq === voiceSeq);

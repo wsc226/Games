@@ -147,7 +147,7 @@ function buildStation(st) {
     // queue marks at each door of a train stopped on the "3" marker (player platform)
     if (side > 0) {
       const q = [];
-      for (let i = 0; i < 3; i++) for (const dx of C205.doors) {
+      for (let i = 0; i < C205.cars; i++) for (const dx of C205.doors) {
         const ds = st.stopS - 10 - i * 20.5 + dx;
         for (const o of [-.9, .9]) q.push(placeGeo(new THREE.PlaneGeometry(.12, 1.2).rotateX(-Math.PI / 2), ds + o, E + 1.6, Y + .012));
       }
@@ -189,7 +189,7 @@ function buildStationBuilding(st, g) {
 
 /* ── platform screen doors (ホームドア): waist-high gates that open with the train doors ── */
 const PSD = { lat: PLAT.E + .38, h: 1.3, gap: 2.0 };
-function psdDoorS(st) { const out = []; for (let i = 0; i < 3; i++) for (const dx of C205.doors) out.push(st.stopS - 10 - i * 20.5 + dx); return out.sort((a, b) => a - b); }
+function psdDoorS(st) { const out = []; for (let i = 0; i < C205.cars; i++) for (const dx of C205.doors) out.push(st.stopS - 10 - i * 20.5 + dx); return out.sort((a, b) => a - b); }
 function buildScreenDoors(st, g) {
   if (!STMAT.psd) {
     STMAT.psd = new THREE.MeshStandardMaterial({ color: 0xe9ecee, roughness: .45, metalness: .2 });

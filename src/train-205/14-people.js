@@ -104,7 +104,7 @@ function populateStations() {
   for (const st of STATIONS) {
     st.waiting = [];
     // queues at the doors of a train that stops on the "3" marker
-    for (let i = 0; i < 3; i++) for (const dx of C205.doors) {
+    for (let i = 0; i < C205.cars; i++) for (const dx of C205.doors) {
       const ds = st.stopS - 10 - i * 20.5 + dx;
       const n = R() < .25 ? 0 : 1 + Math.floor(R() * (st.big ? 3 : 2));
       for (let q = 0; q < n; q++) {
@@ -128,7 +128,7 @@ function newPerson(st, s, lat, face, extra = {}) {
 function walkTo(p, pts) { p.path = pts.map(([s, lat]) => ({ s, lat })); }
 /* doors are open at station st: some people get off, then the queue gets on */
 function startPassengerFlow(st, train) {
-  let doors = C205.doors.flatMap(dx => [0, 1, 2].map(i => train.s - 10 - i * 20.5 + dx)).filter(d => Math.abs(d - st.s) < TRACK.PLAT_HALF - 2);
+  let doors = C205.doors.flatMap(dx => train.cars.map((c, i) => train.s - 10 - i * 20.5 + dx)).filter(d => Math.abs(d - st.s) < TRACK.PLAT_HALF - 2);
   if (!doors.length) return;
   const inLat = TRACK.PLAYER + .4, edge = PLAT.E + .2;
   const nOff = st.idx === 0 ? 0 : st.idx === STATIONS.length - 1 ? 16 : 3 + Math.floor(Math.random() * 6);

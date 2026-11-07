@@ -38,6 +38,7 @@ function resetRun() {
   train.place(); updateCamera(0, train);
 }
 function goHome() {
+  setPaused(false);
   G.running = false; cancelVoice(); stopTrainSound(); hornOff(); stopRace(); keepAwake(false);
   $('scr-game').classList.add('gone'); $('scr-title').classList.remove('gone');
 }
@@ -98,6 +99,7 @@ function loop(now) {
   if (!G.running) return;
   const raw = (now - lastT) / 1000;
   const dt = Math.min(.05, raw); lastT = now;
+  if (G.paused) { W.renderer.render(W.scene, W.camera); requestAnimationFrame(loop); return; }
   watchQuality(raw);
   tick(dt);
   updateTrainSound(dt, train.v, DRV.state === 'go' && train.v < targetSpeed() - .3, DRV.state === 'braking', LOOK_VIEWS.includes(CAM.view), trainSoundEnv(train));
@@ -110,6 +112,15 @@ tap($('m-reg'), () => startGame('regular'));
 tap($('m-race'), () => startGame('race'));
 tap($('res-again'), () => { resetRun(); startRace(); });
 tap($('res-home'), goHome);
+/* ── pause: freeze the world, hush every sound, big ▶ to carry on ── */
+function setPaused(p) {
+  if (!!G.paused === p) return;
+  G.paused = p; $('paused').classList.toggle('show', p);
+  if (p) { cancelVoice(); hornOff(); if (A) A.suspend().catch(() => {}); }
+  else { if (A) A.resume().catch(() => {}); lastT = performance.now(); }
+}
+tap($('pause'), () => setPaused(true));
+tap($('resume'), () => setPaused(false));
 setMuted(muted);
 /* ── iPad niceties ── */
 // no pinch / double-tap zoom, no long-press menus, no rubber-band scrolling
@@ -126,7 +137,7 @@ async function keepAwake(on) {
 // back from the Home Screen / sleep: wake the sound up and re-take the wake lock
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
-  if (A && A.state !== 'running') A.resume().catch(() => {});
+  if (A && A.state !== 'running' && !G.paused) A.resume().catch(() => {});
   if (G.running) { keepAwake(true); lastT = performance.now(); }
 });
 // grown-up tip when it is opened in Safari instead of from the Home Screen

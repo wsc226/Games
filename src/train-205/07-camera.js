@@ -68,7 +68,7 @@ function updateCamera(dt, train) {
     posAt(st.stopS + 14, PLAT.E + 1.3, PLAT.Y + 1.75, cam.position);   // inside the column line, so no pillar blocks the view
     const near = train.s > st.s - 600 && train.s < st.s + 200;
     const tgt = near ? lead.position.clone().add(new THREE.Vector3(0, 2.7, 0)) : posAt(st.s - 260, train.off, 2.5);
-    if (near && train.s > st.stopS + 4) tgt.copy(train.cars[2].position).setY(tgt.y);
+    if (near && train.s > st.stopS + 4) tgt.copy(train.cars[train.cars.length - 1].position).setY(tgt.y);
     if (CAM.snap || CAM.lastSt !== st.idx) { CAM.look.copy(tgt); CAM.snap = false; CAM.lastSt = st.idx; } else CAM.look.lerp(tgt, 1 - Math.exp(-4 * dt));
     cam.lookAt(CAM.look); cam.fov = 58;
     if (G.mode === 'regular' && train.s > st.s - 650 && train.s < st.s - 180 && DRV.state === 'go' && !DRV.announced['plat' + st.idx]) {
@@ -91,7 +91,7 @@ function updateCamera(dt, train) {
     car.localToWorld(_ce.set(3.4, .28, 0)); car.localToWorld(_cl);
     cam.position.copy(_ce); cam.lookAt(_cl); cam.fov = 72;
   } else if (CAM.view === 'top') {
-    mid.getWorldPosition(CAM.anchor);
+    CAM.anchor.copy(lead.position).lerp(train.cars[train.cars.length - 1].position, .5);   // middle of the whole train
     const h = 55 + CAM.dist * .6;
     const want = CAM.anchor.clone().add(new THREE.Vector3(0, h, 0));
     if (CAM.snap) { CAM.pos.copy(want); CAM.snap = false; } else CAM.pos.lerp(want, 1 - Math.exp(-8 * dt));

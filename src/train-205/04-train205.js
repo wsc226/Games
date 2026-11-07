@@ -1,4 +1,4 @@
-/* ═══ 205 SERIES (3 cars: クハ + モハ + クハ) ═══
+/* ═══ 205 SERIES (4 cars: クハ205 + モハ205 + モハ204 + クハ204) ═══
    Car local space: +x = forward along the car, y up from rail top, +z = right side.
    Car body 20 m, 2.8 m wide. Bogie centres at ±6.95 m. */
 const ROOF_Y = z => C205.sideY1 + .27 * Math.sqrt(Math.max(0, 1 - (z / 1.4) ** 2));
@@ -11,7 +11,7 @@ function mats205() {
     return [new THREE.MeshStandardMaterial({ map: t, metalness: .55, roughness: .38, alphaTest: .5 }),
             new THREE.MeshStandardMaterial({ map: tm, metalness: .55, roughness: .38, alphaTest: .5 })];
   };
-  M205.side = { cabF: mk('cabF'), mid: mk('mid'), cabR: mk('cabR') };
+  M205.side = { cabF: mk('cabF'), mid: mk('mid'), mid2: mk('mid2'), cabR: mk('cabR') };
   M205.roof = new THREE.MeshStandardMaterial({ map: roofTex205(), color: 0xb0b4b8, metalness: .4, roughness: .6 });
   M205.front = new THREE.MeshStandardMaterial({ map: frontTex205(), metalness: .45, roughness: .35, alphaTest: .5 });
   M205.end = new THREE.MeshStandardMaterial({ map: endTex205(), metalness: .5, roughness: .4 });
@@ -304,12 +304,13 @@ function setCarDoors(car, k) {
   });
   car.doorLeaves.instanceMatrix.needsUpdate = true;
 }
-/* ── Train: 3 cars placed on the track by their bogie positions ── */
+/* ── Train: C205.cars cars placed on the track by their bogie positions ── */
 const _lodV = new THREE.Vector3();
 class Train205 {
   constructor(scene, opts = {}) {
     const detail = opts.detail ?? true;
-    this.cars = [buildCar205('cabF', detail), buildCar205('mid', detail), buildCar205('cabR', detail)];
+    const kinds = ['cabF', 'mid', 'mid2', 'mid', 'mid2'].slice(0, C205.cars - 1).concat('cabR');
+    this.cars = kinds.map(k => buildCar205(k, detail));
     this.root = new THREE.Group(); this.cars.forEach(c => this.root.add(c)); scene.add(this.root);
     this.dir = opts.dir || 1;
     this.s = 0; this.v = 0; this.off = opts.off ?? TRACK.PLAYER; this.wheelRot = 0;
@@ -391,7 +392,7 @@ class Train205 {
       glow.visible = lit; glow.material.color.set(col);
     };
     // front cab: big lamps show the chosen colour; rear cab: red tail lamps (like the real train)
-    const F = this.cars[0].cab.lamps, B = this.cars[2].cab.lamps;
+    const F = this.cars[0].cab.lamps, B = this.cars[this.cars.length - 1].cab.lamps;
     F.head.forEach((m, i) => set(m, F.glowHead[i], red ? 0xff2a1a : 0xfff8e8, on));
     F.tail.forEach((m, i) => set(m, F.glowTail[i], 0xff2a1a, on && red));
     B.head.forEach((m, i) => set(m, B.glowHead[i], 0xff2a1a, false));

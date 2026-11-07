@@ -24,6 +24,7 @@ function speckle(g, w, h, n, colors, size = [1, 3]) {
    Side canvas maps car x ∈ [-10, 10] m  →  0..2048 px
                     car y ∈ [1.00, 3.45] m →  256..0 px          */
 const C205 = {
+  cars: 4,                     // クハ205 + モハ205 + モハ204 + クハ204
   len: 20, half: 10, width: 2.8, sideY0: 1.0, sideY1: 3.45, roofTop: 3.72, floor: 1.15,
   doors: [-7.25, -2.42, 2.42, 7.25], doorW: 1.3,
   orange: '#f08a24', green: '#1f9a48', stain: '#c9ccd0',
@@ -31,7 +32,7 @@ const C205 = {
 const SX = x => (x + 10) * 102.4;
 const SY = y => (3.45 - y) * (256 / 2.45);
 function sideTex205(kind, mirror = false) {
-  // kind: 'cabF' (cab at +x end), 'cabR' (cab at -x end) or 'mid'
+  // kind: 'cabF' (cab at +x end), 'cabR' (cab at -x end), 'mid' (with pantograph) or 'mid2'
   // mirror: the left side - same layout flipped end to end, but the writing still reads normally
   return canvasTex(2048, 256, (g, W, H) => {
     if (mirror) { g.translate(W, 0); g.scale(-1, 1); }
@@ -84,7 +85,7 @@ function sideTex205(kind, mirror = false) {
     g.fillStyle = '#fff'; g.font = 'bold 20px "Hiragino Sans",sans-serif'; g.textAlign = 'center'; txt('宇都宮', SX(dsx), SY(3.21) + 21);
     // car number plate next to the first door
     g.fillStyle = '#fff'; g.fillRect(SX(-6.3), SY(3.04), 22, 22);
-    g.fillStyle = '#111'; g.font = 'bold 18px Arial'; txt(kind === 'cabF' ? '1' : kind === 'mid' ? '2' : '3', SX(-6.3) + 11, SY(3.04) + 18);
+    g.fillStyle = '#111'; g.font = 'bold 18px Arial'; txt(String({ cabF: 1, mid: 2, mid2: 3, cabR: 4 }[kind]), SX(-6.3) + 11, SY(3.04) + 18);
     // small door-lamp (orange)
     g.fillStyle = '#ffae2e'; for (const dx of C205.doors) g.fillRect(SX(dx + .78), SY(3.2), 6, 8);
   });
