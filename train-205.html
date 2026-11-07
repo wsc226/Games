@@ -197,7 +197,7 @@ button{border:none;outline:none;background:none;-webkit-tap-highlight-color:tran
     <button class="cb go" id="b-go"><i>▶</i><b>Go</b></button>
     <div class="deck-gap"></div>
     <button class="cb fast" id="b-fast"><i>🐇</i><b>Fast</b></button>
-    <button class="cb" id="b-horn"><i>📯</i><b>Horn</b></button>
+    <button class="cb" id="b-horn"><i>📢</i><b>Horn</b></button>
     <button class="cb dis" id="b-door"><i>🚪</i><b>Open Doors</b></button>
   </div>
 </div>
@@ -303,7 +303,29 @@ function showSub(ja, en) {
   const s = $('subtitle'); s.innerHTML = `${ja || ''}${en ? `<span class="en">${en}</span>` : ''}`; s.classList.add('show');
   clearTimeout(subT); subT = setTimeout(() => s.classList.remove('show'), Math.max(3500, ((ja || '').length + (en || '').length) * 85));
 }
-function cancelVoice() { voiceSeq++; voiceBusy = false; voiceEl.pause(); try { speechSynthesis.cancel(); } catch (e) {} }
+function cancelVoice() { voiceSeq++; voiceBusy = false; voiceEl.pause(); stopSpeech(); }
+/* Browser speech is fragile: an utterance spoken right after cancel() can be dropped,
+   Chrome may forget an utterance before it ends, cuts long ones off after ~15 s, and
+   sometimes never starts one. speakNow() works around all of that. */
+const SPEAK = {
+  keep: null, ka: 0, cancelAt: -1e9,
+  ios: /iP(ad|hone|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1),
+  chrome: /Chrome\//.test(navigator.userAgent),
+};
+function stopSpeech() {
+  try { if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); SPEAK.cancelAt = performance.now(); } } catch (e) {}
+}
+function speakNow(u, ok = () => true) {
+  const ss = speechSynthesis; SPEAK.keep = u;
+  let started = false, retried = false; u.addEventListener('start', () => { started = true; });
+  const go = () => { SPEAK.retrying = null; if (!ok()) return; try { ss.resume(); ss.speak(u); } catch (e) {} };
+  const wait = SPEAK.cancelAt + 150 - performance.now();
+  if (ss.speaking || ss.pending) { ss.cancel(); setTimeout(go, 150); } else if (wait > 0) setTimeout(go, wait); else go();
+  // nothing happened? clear the jammed queue and try once more
+  setTimeout(() => { if (!started && !retried && ok()) { retried = true; SPEAK.retrying = u; ss.cancel(); setTimeout(go, 150); } }, 2500);
+  clearInterval(SPEAK.ka);
+  if (SPEAK.chrome && !SPEAK.ios) SPEAK.ka = setInterval(() => { if (!ss.speaking) clearInterval(SPEAK.ka); else { ss.pause(); ss.resume(); } }, 9000);
+}
 let voiceBusy = false, lastCallout = -99;
 // driver callouts: only when nothing else is being announced, and not too often
 function sayIfFree(id, opts = {}, gap = 7) {
@@ -318,7 +340,7 @@ function say(id, opts = {}) {
   voiceBusy = true;
   const done = () => { if (seq === voiceSeq) { voiceBusy = false; opts.cb && opts.cb(); } };
   if (muted) { setTimeout(done, 1500); return; }
-  voiceEl.pause(); try { speechSynthesis.cancel(); } catch (e) {}
+  voiceEl.pause(); stopSpeech();
   playParts(parts, 0, seq, done);
 }
 /* iOS only lets speech (and <audio>) start later on if one was started inside a tap,
@@ -327,7 +349,8 @@ let voiceUnlocked = false;
 const NOFILE = new Set();
 function unlockVoice() {
   if (voiceUnlocked) return; voiceUnlocked = true;
-  try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) {}
+  // only iPad/iPhone need it; on a computer the silent word can jam the speech queue
+  if (SPEAK.ios) try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) {}
   if (!jaVoice || !enVoice) pickVoices();
 }
 let jaVoice = null, enVoice = null;
@@ -353,8 +376,8 @@ function playParts(parts, i, seq, done) {
     u.lang = p.lang === 'ja' ? 'ja-JP' : 'en-US'; u.rate = v.rate || 1; u.pitch = v.pitch || 1;
     const vo = p.lang === 'ja' ? jaVoice : enVoice; if (vo) u.voice = vo;
     let fired = false; const fin = () => { if (!fired) { fired = true; next(); } };
-    u.onend = fin; u.onerror = fin; setTimeout(fin, 2000 + p.text.length * (p.lang === 'ja' ? 260 : 110));
-    speechSynthesis.speak(u);
+    u.onend = u.onerror = () => { if (SPEAK.retrying !== u) fin(); }; setTimeout(fin, 4500 + p.text.length * (p.lang === 'ja' ? 260 : 110));
+    speakNow(u, () => !fired && seq === voiceSeq);
   };
   if (!p.file || NOFILE.has(p.file)) { tts(); return; }
   const miss = () => { if (seq === voiceSeq && voiceEl.error) NOFILE.add(p.file); tts(); };
