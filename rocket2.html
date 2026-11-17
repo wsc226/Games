@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Playroom">
+<title>Mission Control — SLS Rocket Launch 3D</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100dvh;overflow:hidden;background:#05060e;color:#fff;
+  font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-tap-highlight-color:transparent;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+button{font-family:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;border:none;background:none;color:inherit;touch-action:manipulation}
+body{display:flex;flex-direction:column}
+
+/* ───────── 3D view ───────── */
+#view{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;background:#7fb8e6}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hud{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.pin{position:absolute;left:0;top:0;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;
+  background:rgba(10,16,30,.86);border:2px solid #ffd45c;font-size:19px;line-height:34px;text-align:center;
+  pointer-events:auto;box-shadow:0 2px 8px rgba(0,0,0,.5);will-change:transform}
+.pin.sel{background:#ffd45c;border-color:#fff}
+.pin:active{filter:brightness(1.4)}
+.scene-tools{position:absolute;top:calc(9px + env(safe-area-inset-top));left:calc(9px + env(safe-area-inset-left));z-index:20;display:flex;gap:7px}
+.scene-tool{width:46px;height:46px;border-radius:50%;background:rgba(5,8,18,.72);color:#fff;font-size:21px;font-weight:900;
+  box-shadow:0 3px 12px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.28);text-decoration:none;display:grid;place-items:center}
+.scene-tool:active{transform:scale(.9)}
+.scene-tool[aria-pressed="true"]{background:rgba(145,32,66,.88)}
+#camTag{position:absolute;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:6px 14px;border-radius:999px;
+  background:rgba(5,8,18,.6);font:800 13px/1 "Helvetica Neue",Arial;letter-spacing:1.5px;pointer-events:none;white-space:nowrap}
+#camTag small{font-weight:600;letter-spacing:.3px;opacity:.8;margin-left:8px}
+#big{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font:900 22vmin/1 "Helvetica Neue",Arial;
+  color:#fff;text-shadow:0 6px 30px rgba(0,0,0,.6);opacity:0;transition:opacity .25s}
+#big.on{opacity:.92}
+#fade{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .7s}
+#card{position:absolute;left:calc(10px + env(safe-area-inset-left));bottom:10px;max-width:min(430px,78%);padding:12px 44px 12px 14px;border-radius:14px;
+  background:rgba(8,14,28,.9);border:2px solid #ffd45c;box-shadow:0 6px 24px rgba(0,0,0,.5);z-index:15}
+#card[hidden]{display:none}
+#card .ic{font-size:30px;float:left;margin-right:10px;line-height:1}
+#card h2{font-size:22px;line-height:1.1}
+#card h4{font-size:12px;font-weight:600;opacity:.7;margin:2px 0 6px}
+#card p{font-size:15px;line-height:1.3;clear:both}
+#card p+p{margin-top:5px;color:#ffe9a8}
+#cardX{position:absolute;top:6px;right:6px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);font-size:18px;font-weight:900}
+
+/* ───────── control panel ───────── */
+#panel{flex:0 0 auto;height:clamp(262px,39dvh,336px);padding:8px calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+  display:grid;grid-template-columns:minmax(238px,1.05fr) minmax(330px,2fr) minmax(128px,.6fr) minmax(206px,.95fr);gap:8px;
+  background:
+    radial-gradient(circle at 12px 12px,#3a3c3e 0 3px,#b9bbb6 3.5px 5px,transparent 5.5px),
+    radial-gradient(circle at calc(100% - 12px) 12px,#3a3c3e 0 3px,#b9bbb6 3.5px 5px,transparent 5.5px),
+    linear-gradient(180deg,#a4a6a1 0%,#8e908b 55%,#7d7f7a 100%);
+  border-top:3px solid #55575a;box-shadow:inset 0 2px 0 rgba(255,255,255,.35)}
+.grp{position:relative;min-width:0;min-height:0;border:2px solid #1e1f21;border-radius:7px;padding:17px 7px 7px;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(0,0,0,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.grp>h3{position:absolute;top:-2px;left:10px;padding:1px 7px 2px;background:#1e1f21;color:#f1f1ec;border-radius:0 0 5px 5px;
+  font:800 10px/1.2 "Helvetica Neue",Arial;letter-spacing:1.6px}
+
+/* data group */
+.g-data{display:grid;grid-template-rows:1fr auto;gap:7px}
+#crt{min-height:0;border-radius:7px;border:3px solid #17181a;background:#03140a;color:#52ff7e;padding:6px 9px;
+  font-family:Menlo,"Courier New",monospace;text-shadow:0 0 6px rgba(82,255,126,.55);overflow:hidden;position:relative;
+  display:flex;flex-direction:column;box-shadow:inset 0 0 18px rgba(0,0,0,.9)}
+#crt::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);pointer-events:none}
+#crtPhase{font-size:11px;font-weight:700;letter-spacing:1.5px;opacity:.85}
+#crtMsg{flex:1;display:flex;align-items:center;font-size:clamp(14px,1.75vw,19px);font-weight:700;line-height:1.15;font-family:"Helvetica Neue",Arial,sans-serif}
+#crt.ask{color:#ffe26b;text-shadow:0 0 6px rgba(255,226,107,.6)}
+#crtRow{display:flex;justify-content:space-between;gap:6px;font-size:12px;font-weight:700;white-space:nowrap}
+#crtRow b{font-size:13px}
+.dataLow{display:flex;gap:8px;align-items:center}
+#gauge{width:66px;height:66px;flex:0 0 auto}
+#cw{flex:1;min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;container-type:inline-size}
+.cw{height:29px;border-radius:4px;border:2px solid #17181a;background:#2b2c2e;color:#6a6d70;display:grid;place-items:center;
+  font:800 clamp(7px,4.4cqi,9.5px)/1 "Helvetica Neue",Arial;letter-spacing:0;overflow:hidden;white-space:nowrap}
+.cw.amber{background:#c98a1c;color:#fff6d8;box-shadow:0 0 8px #ffb53d}
+.cw.green{background:#1f8a43;color:#e2ffe9;box-shadow:0 0 8px #37d86c}
+.cw.red{animation:late .5s steps(1) infinite}
+
+/* sequence group: every button shares one layout (number, icon slot, label) */
+.g-seq{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:7px}
+.ctl{position:relative;min-width:0;min-height:0;border-radius:8px;border:3px solid #17181a;background:#2a2b2e;color:#74787d;
+  box-shadow:inset 0 0 0 2px #45474b,0 3px 0 #111,0 4px 8px rgba(0,0,0,.45);
+  display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;align-items:center;padding:14px 3px 7px;
+  font:900 clamp(10px,1.2vw,14px)/1 "Helvetica Neue",Arial;letter-spacing:.2px;text-transform:uppercase;transition:transform .05s}
+.ctl:active{transform:translateY(2px);box-shadow:inset 0 0 0 2px #45474b,0 1px 0 #111}
+.ctl .n{position:absolute;top:4px;left:6px;font-size:10px;opacity:.75}
+.ctl .ic{height:34px;width:100%;display:grid;place-items:center}
+.ctl .e{font-size:clamp(18px,2.2vw,25px);line-height:1;filter:grayscale(.9) brightness(.7)}
+.g-seq .ctl,.opt{container-type:inline-size}
+.ctl .lb{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip;font-size:clamp(9px,16cqi,16px);letter-spacing:0}
+.opt .lb{font-size:clamp(8px,12cqi,11.5px)}
+.ctl.ready{background:#b97a18;color:#fff5d0;animation:pulse 1s ease-in-out infinite}
+.ctl.ready .e,.ctl.done .e,.ctl.late .e{filter:none}
+.ctl.done{background:#1c7c3b;color:#dcffe4;box-shadow:inset 0 0 0 2px #2fae58,0 3px 0 #111,0 0 12px rgba(55,216,108,.6)}
+.ctl.late{animation:late .5s steps(1) infinite}
+.ctl.wrong{animation:wrong .16s steps(1) 3}
+@keyframes pulse{0%,100%{box-shadow:inset 0 0 0 2px #e0a23a,0 3px 0 #111,0 0 6px rgba(255,181,61,.5)}50%{box-shadow:inset 0 0 0 2px #ffd27a,0 3px 0 #111,0 0 20px rgba(255,181,61,1)}}
+@keyframes late{0%{background:#ff2a1f;color:#fff;box-shadow:0 0 22px #ff3b2f}50%{background:#4d0e0a;color:#ff9c95;box-shadow:none}}
+@keyframes wrong{0%{background:#ff2a1f;color:#fff}50%{background:#2a2b2e}}
+/* toggle switch (fits the same 34px icon slot) */
+.sw{position:relative;width:30px;height:34px;border-radius:5px;background:linear-gradient(180deg,#5c5e61,#3c3e41);border:2px solid #17181a}
+.sw::before{content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px;border-radius:50%;background:#1b1c1e}
+.lever{position:absolute;left:50%;top:15px;width:10px;height:19px;margin-left:-5px;border-radius:5px;
+  background:linear-gradient(90deg,#8d8f92,#f4f5f2 45%,#9b9da0);box-shadow:0 2px 4px rgba(0,0,0,.6);transition:top .12s}
+.done .lever,.on .lever{top:-2px}
+
+/* answer + abort */
+.g-ans{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:7px}
+#yn{display:grid;grid-template-columns:1fr 1fr;gap:6px;min-height:0}
+#yn .ctl{display:grid;place-items:center;padding:0;font-size:clamp(14px,1.7vw,19px);letter-spacing:.5px}
+#bYes{background:#1c8a40;color:#eafff0;box-shadow:inset 0 0 0 2px #3ad06d,0 3px 0 #111,0 0 14px rgba(55,216,108,.8)}
+#bNo{background:#b3261c;color:#fff0ee;box-shadow:inset 0 0 0 2px #ff6a5e,0 3px 0 #111,0 0 14px rgba(255,80,66,.8)}
+#yn.hide .ctl{background:#1d1e20;color:transparent;box-shadow:inset 0 3px 8px rgba(0,0,0,.8);pointer-events:none;animation:none}
+#yn.nag .ctl{animation:nag .6s ease-in-out infinite}
+@keyframes nag{50%{filter:brightness(1.6);transform:scale(1.04)}}
+.abortBox{position:relative;height:64px;border-radius:8px;padding:6px;
+  background:repeating-linear-gradient(135deg,#e9c21a 0 9px,#1b1b1b 9px 18px);border:2px solid #17181a;perspective:260px}
+#bAbort{width:100%;height:100%;border-radius:6px;background:radial-gradient(circle at 50% 35%,#ff5a4d,#b0160d);color:#fff;
+  font:900 16px/1 "Helvetica Neue",Arial;letter-spacing:1.5px;border:2px solid #5a0b06;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25)}
+#bAbort:active{filter:brightness(.8)}
+#abortCover{position:absolute;inset:6px;border-radius:6px;border:2px solid rgba(255,255,255,.7);
+  background:linear-gradient(180deg,rgba(214,60,48,.96),rgba(150,22,14,.96));transform-origin:50% 0;transition:transform .25s;
+  display:grid;place-items:center;font:900 12px/1 "Helvetica Neue",Arial;letter-spacing:2px;color:#fff;text-shadow:0 1px 2px #000}
+#abortCover.open{transform:rotateX(-112deg);pointer-events:none}
+
+/* camera selector + options */
+.g-cam{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:7px}
+.camSel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;min-height:0}
+#knob{position:relative;width:58px;height:58px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#6b6d70,#232426 70%);border:3px solid #111;
+  box-shadow:0 0 0 4px #c9cbc6,0 0 0 6px #17181a,0 4px 8px rgba(0,0,0,.6),inset 0 2px 3px rgba(255,255,255,.25);transition:transform .2s;margin:0 4px}
+#knob i{position:absolute;left:50%;top:3px;width:5px;height:20px;margin-left:-2.5px;border-radius:3px;background:#f4f4ef}
+.camList{display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:4px;height:100%;min-height:0}
+.kl{display:flex;align-items:center;gap:6px;min-height:0;padding:0 6px;border-radius:5px;border:2px solid #17181a;background:#2a2b2e;color:#9a9ea3;
+  font:800 clamp(10px,1.05vw,12px)/1 "Helvetica Neue",Arial;letter-spacing:.4px;text-transform:uppercase;text-align:left}
+.kl::before{content:"";flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:#45474b;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.kl.on{color:#ffd45c;background:#15161a}
+.kl.on::before{background:#ffd45c;box-shadow:0 0 6px #ffd45c}
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.opt{height:62px;padding:5px 2px 6px;font-size:clamp(9.5px,1vw,11.5px)}
+.opt .ic{height:30px}
+.opt .sw{width:24px;height:28px}
+.opt .lever{width:8px;height:16px;margin-left:-4px;top:12px}
+.opt.on .lever{top:-2px}
+.opt .sw::before{width:10px;height:10px;margin:-5px}
+.opt.on{background:#274b7a;color:#e4f0ff;box-shadow:inset 0 0 0 2px #4d88d6,0 3px 0 #111}
+
+/* overlays */
+.ov{position:fixed;inset:0;z-index:50;display:grid;place-items:center;text-align:center;padding:20px;
+  background:radial-gradient(circle at 50% 30%,rgba(18,30,62,.92),rgba(3,5,12,.97))}
+.ov[hidden]{display:none}
+.ov h1{font-size:clamp(30px,6vw,60px);font-weight:900;letter-spacing:1px;line-height:1.05}
+.ov h1 small{display:block;font-size:.36em;font-weight:700;opacity:.75;letter-spacing:4px;margin-top:10px}
+.ov p{margin-top:14px;font-size:clamp(15px,2.2vw,20px);opacity:.85}
+.ov .row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+.bigBtn{min-width:190px;padding:20px 26px;border-radius:16px;font-size:clamp(20px,3vw,30px);font-weight:900;letter-spacing:1px;
+  background:#1c8a40;color:#fff;box-shadow:0 6px 0 #0e4d23,0 10px 24px rgba(0,0,0,.5)}
+.bigBtn.alt{background:#c98a1c;box-shadow:0 6px 0 #74500f,0 10px 24px rgba(0,0,0,.5)}
+.bigBtn:active{transform:translateY(4px);box-shadow:0 2px 0 #0e4d23}
+.bigBtn[disabled]{opacity:.4}
+#stars{font-size:clamp(30px,6vw,56px);margin-top:10px;letter-spacing:6px}
+
+/* portrait / narrow */
+@media (max-aspect-ratio: 1/1){
+  #panel{height:clamp(420px,50dvh,560px);grid-template-columns:1.25fr 1fr;grid-template-rows:auto 1fr auto}
+  .g-data{grid-column:1;grid-row:1}.g-cam{grid-column:2;grid-row:1}
+  .g-seq{grid-column:1 / 3;grid-row:2}
+  .g-ans{grid-column:1 / 3;grid-row:3;grid-template-rows:auto;grid-template-columns:1.6fr 1fr}
+  #yn .ctl{height:64px}
+  .abortBox{height:64px}
+  #crt{min-height:92px}
+}
+@media (max-height: 560px) and (min-aspect-ratio: 1/1){
+  #panel{height:clamp(200px,46dvh,262px)}
+  #gauge{width:52px;height:52px}.cw{height:22px}.opt{height:50px}.opt .ic{height:24px}.abortBox{height:52px}
+  .ctl{padding:12px 3px 5px}.ctl .ic{height:28px}.sw{transform:scale(.85)}#knob{width:46px;height:46px}
+}
+</style>
+</head>
+<body>
+
+<div id="view">
+  <canvas id="c"></canvas>
+  <div id="hud"></div>
+  <div class="scene-tools">
+    <a class="scene-tool" id="btnHome" href="index.html" aria-label="Back to game menu">⌂</a>
+    <button class="scene-tool" id="btnSound" aria-label="Sound" aria-pressed="false">🔊</button>
+  </div>
+  <div id="camTag">OUTSIDE VIEW<small>drag to look · pinch to zoom</small></div>
+  <div id="big"></div>
+  <div id="card" hidden>
+    <button id="cardX" aria-label="Close">✕</button>
+    <span class="ic" id="cardIcon"></span>
+    <h2 id="cardKid"></h2><h4 id="cardName"></h4>
+    <p id="cardWhat"></p><p id="cardWhy"></p>
+  </div>
+  <div id="fade"></div>
+</div>
+
+<div id="panel">
+  <section class="grp g-data">
+    <h3>FLIGHT DATA</h3>
+    <div id="crt">
+      <div id="crtPhase">LOADING</div>
+      <div id="crtMsg">Getting the rocket ready…</div>
+      <div id="crtRow"><span id="crtClock">T-00:10</span><span>ALT <b id="crtAlt">0 m</b></span><span>SPD <b id="crtSpd">0</b></span></div>
+    </div>
+    <div class="dataLow">
+      <svg id="gauge" viewBox="0 0 100 100" aria-label="Fuel gauge">
+        <circle cx="50" cy="50" r="47" fill="#17181a"/><circle cx="50" cy="50" r="42" fill="#f1f0e8"/>
+        <path d="M50 50 L84.6 30 A40 40 0 0 1 84.6 70 Z" fill="#3fbf63" opacity=".85" />
+        <g id="gTicks" stroke="#17181a" stroke-width="2"></g>
+        <text x="50" y="76" text-anchor="middle" font-size="12" font-weight="900" fill="#17181a" font-family="Helvetica Neue,Arial">FUEL</text>
+        <text x="21" y="70" font-size="9" font-weight="800" fill="#17181a" font-family="Arial">E</text>
+        <text x="74" y="70" font-size="9" font-weight="800" fill="#17181a" font-family="Arial">F</text>
+        <line id="gNeedle" x1="50" y1="50" x2="50" y2="14" stroke="#d3261a" stroke-width="3.5" stroke-linecap="round" transform="rotate(-120 50 50)"/>
+        <circle cx="50" cy="50" r="5" fill="#17181a"/>
+      </svg>
+      <div id="cw">
+        <div class="cw" data-cw="fuel">FUEL</div><div class="cw" data-cw="hatch">HATCH</div>
+        <div class="cw" data-cw="engine">ENGINE</div><div class="cw" data-cw="boost">BOOST</div>
+        <div class="cw" data-cw="tower">TOWER</div><div class="cw" data-cw="stage">STAGE</div>
+        <div class="cw" data-cw="chute">CHUTE</div><div class="cw" data-cw="alarm">ALARM</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grp g-seq">
+    <h3>LAUNCH SEQUENCE</h3>
+    <button class="ctl" data-b="roll"><span class="n">1</span><span class="ic"><span class="e">🚜</span></span><span class="lb">Roll</span></button>
+    <button class="ctl" data-b="fuel"><span class="n">2</span><span class="ic"><span class="e">⛽</span></span><span class="lb">Fuel</span></button>
+    <button class="ctl" data-b="hatch"><span class="n">3</span><span class="ic"><span class="e">🚪</span></span><span class="lb">Hatch</span></button>
+    <button class="ctl tg" data-b="ignite"><span class="n">4</span><span class="ic"><span class="sw"><span class="lever"></span></span></span><span class="lb">Ignite</span></button>
+    <button class="ctl tg" data-b="launch"><span class="n">5</span><span class="ic"><span class="sw"><span class="lever"></span></span></span><span class="lb">Launch</span></button>
+    <button class="ctl" data-b="boost"><span class="n">6</span><span class="ic"><span class="e">🎆</span></span><span class="lb">Boosters</span></button>
+    <button class="ctl" data-b="tower"><span class="n">7</span><span class="ic"><span class="e">🚨</span></span><span class="lb">Tower</span></button>
+    <button class="ctl" data-b="stage"><span class="n">8</span><span class="ic"><span class="e">🟧</span></span><span class="lb">Stage</span></button>
+    <button class="ctl" data-b="home"><span class="n">9</span><span class="ic"><span class="e">🌍</span></span><span class="lb">Home</span></button>
+    <button class="ctl" data-b="chute"><span class="n">10</span><span class="ic"><span class="e">🪂</span></span><span class="lb">Chute</span></button>
+  </section>
+
+  <section class="grp g-ans">
+    <h3>ANSWER</h3>
+    <div id="yn" class="hide">
+      <button class="ctl" id="bYes">Yes</button>
+      <button class="ctl" id="bNo">No</button>
+    </div>
+    <div class="abortBox">
+      <button id="bAbort">ABORT</button>
+      <div id="abortCover">LIFT</div>
+    </div>
+  </section>
+
+  <section class="grp g-cam">
+    <h3>CAMERA</h3>
+    <div class="camSel">
+      <button id="knob" aria-label="Next camera"><i></i></button>
+      <div class="camList">
+        <button class="kl" data-cam="inside">Inside</button>
+        <button class="kl on" data-cam="outside">Outside</button>
+        <button class="kl" data-cam="sky">Sky</button>
+        <button class="kl" data-cam="spectator">Spectator</button>
+      </div>
+    </div>
+    <div class="opts">
+      <button class="ctl tg opt" id="optParts"><span class="ic"><span class="sw"><span class="lever"></span></span></span><span class="lb">Parts</span></button>
+      <button class="ctl tg opt" id="optCut"><span class="ic"><span class="sw"><span class="lever"></span></span></span><span class="lb">Cutaway</span></button>
+      <button class="ctl tg opt" id="optLevel"><span class="ic"><span class="sw"><span class="lever"></span></span></span><span class="lb" id="optLevelTxt">Easy</span></button>
+    </div>
+  </section>
+</div>
+
+<div class="ov" id="start">
+  <div>
+    <h1>ROCKET LAUNCH<small>SLS + ORION · MISSION CONTROL</small></h1>
+    <p id="loadMsg">Loading the rocket…</p>
+    <div class="row">
+      <button class="bigBtn" id="goEasy" disabled>⭐ EASY</button>
+      <button class="bigBtn alt" id="goNormal" disabled>🌟 NORMAL</button>
+    </div>
+  </div>
+</div>
+<div class="ov" id="end" hidden>
+  <div>
+    <h1 id="endTitle">SPLASHDOWN!<small id="endSub">WELCOME HOME</small></h1>
+    <div id="stars"></div>
+    <div class="row"><button class="bigBtn" id="again">FLY AGAIN</button></div>
+  </div>
+</div>
+
+<script type="importmap">{"imports":{"three":"./assets/vendor/three/three.module.min.js"}}</script>
+<script>
+window.addEventListener('error', function (e) {
+  var m = document.getElementById('loadMsg');
+  if (m && !window.__r2ready) m.textContent = 'Could not start the 3D game: ' + (e.message || 'error');
+});
+</script>
+<script type="module" src="src/rocket2/main.js"></script>
+</body>
+</html>

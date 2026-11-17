@@ -1,0 +1,168 @@
+{
+  "version": 1,
+  "about": "Learning icons for rocket2.html. Edit the text freely. 'frame' says what the anchor is measured from: rocket (metres from the rocket's base centre: x right, y up, z toward the default camera), ml (mobile launcher), crawler, or site (launch pad centre at ground level). 'attached' is the piece the icon rides on; the icon hides once that piece is gone. 'view' is outside, cutaway, or both.",
+  "parts": [
+    {
+      "id": "las", "name": "Launch Abort System", "kid": "Escape Tower", "icon": "🚨",
+      "frame": "rocket", "anchor": [0.5, 93.5, 0.5], "attached": "las", "view": "both",
+      "what": "A small rocket on the very top.",
+      "why": "If something goes wrong, it pulls the astronauts away fast to keep them safe."
+    },
+    {
+      "id": "cm", "name": "Orion Crew Module", "kid": "Crew Capsule", "icon": "🧑‍🚀",
+      "frame": "rocket", "anchor": [1.9, 85.4, 1.9], "attached": "cm", "view": "both",
+      "what": "The little room where the astronauts sit.",
+      "why": "It keeps the astronauts safe, with air to breathe, all the way to space and back home."
+    },
+    {
+      "id": "seats", "name": "Crew Seats", "kid": "Seats", "icon": "💺",
+      "frame": "rocket", "anchor": [0.9, 84.5, 0.6], "attached": "cm", "view": "cutaway",
+      "what": "Four seats. The astronauts lie on their backs.",
+      "why": "Lying down helps their bodies when the rocket pushes very hard."
+    },
+    {
+      "id": "heatshield", "name": "Heat Shield", "kid": "Heat Shield", "icon": "🔥",
+      "frame": "rocket", "anchor": [1.3, 83.3, 1.3], "attached": "cm", "view": "cutaway",
+      "what": "A thick plate under the capsule.",
+      "why": "Coming home is very, very hot. The heat shield stops the capsule from burning."
+    },
+    {
+      "id": "sm", "name": "European Service Module", "kid": "Service Module", "icon": "🔋",
+      "frame": "rocket", "anchor": [2.0, 80.6, 2.0], "attached": "sm", "view": "both",
+      "what": "The helper part under the capsule.",
+      "why": "It carries air, water, power and a small engine for the astronauts."
+    },
+    {
+      "id": "solar", "name": "Solar Array Wings", "kid": "Solar Wings", "icon": "☀️",
+      "frame": "rocket", "anchor": [1.65, 81.8, 1.65], "attached": "sm", "view": "cutaway",
+      "what": "Four folded wings covered in solar panels.",
+      "why": "In space they open and turn sunlight into electricity."
+    },
+    {
+      "id": "icps", "name": "Upper Stage (ICPS)", "kid": "Upper Stage", "icon": "🚀",
+      "frame": "rocket", "anchor": [1.9, 74.4, 1.9], "attached": "icps", "view": "both",
+      "what": "A small rocket stage near the top.",
+      "why": "When the big rocket is empty, this stage gives the last push in space."
+    },
+    {
+      "id": "rl10", "name": "RL10 Engine", "kid": "Upper Engine", "icon": "⚙️",
+      "frame": "rocket", "anchor": [0.9, 66.0, 0.9], "attached": "icps", "view": "cutaway",
+      "what": "One engine hiding inside the cone.",
+      "why": "It is the engine of the upper stage. It works in space."
+    },
+    {
+      "id": "lvsa", "name": "Stage Adapter", "kid": "Adapter Cone", "icon": "🔗",
+      "frame": "rocket", "anchor": [-2.6, 68.4, 2.4], "attached": "core", "view": "both",
+      "what": "A cone that joins the wide rocket to the narrow top.",
+      "why": "It holds the two parts together and covers the upper engine."
+    },
+    {
+      "id": "lox", "name": "Liquid Oxygen Tank", "kid": "Oxygen Tank", "icon": "🧊",
+      "frame": "rocket", "anchor": [2.1, 57.5, 2.1], "attached": "core", "view": "cutaway",
+      "what": "A tank full of very cold liquid oxygen.",
+      "why": "Fire needs oxygen to burn. There is no air in space, so the rocket brings its own."
+    },
+    {
+      "id": "intertank", "name": "Intertank", "kid": "Intertank", "icon": "🧱",
+      "frame": "rocket", "anchor": [2.6, 50.4, 2.6], "attached": "core", "view": "cutaway",
+      "what": "The strong ring between the two tanks.",
+      "why": "The boosters push on the rocket here, so it must be very strong."
+    },
+    {
+      "id": "core", "name": "Core Stage", "kid": "Core Stage", "icon": "🟧",
+      "frame": "rocket", "anchor": [-3.0, 38.0, 3.0], "attached": "core", "view": "both",
+      "what": "The big orange middle of the rocket.",
+      "why": "It holds the two huge tanks and feeds the four main engines."
+    },
+    {
+      "id": "lh2", "name": "Liquid Hydrogen Tank", "kid": "Fuel Tank", "icon": "⛽",
+      "frame": "rocket", "anchor": [2.2, 27.0, 2.2], "attached": "core", "view": "cutaway",
+      "what": "The biggest tank. It is full of liquid hydrogen.",
+      "why": "Hydrogen is the fuel. The engines burn it with oxygen to push the rocket up."
+    },
+    {
+      "id": "feedline", "name": "Oxygen Feed Line", "kid": "Fuel Pipe", "icon": "🧪",
+      "frame": "rocket", "anchor": [-2.9, 18.0, 3.45], "attached": "core", "view": "both",
+      "what": "A long pipe on the outside of the rocket.",
+      "why": "It carries the oxygen from the top tank down to the engines."
+    },
+    {
+      "id": "srb", "name": "Solid Rocket Booster", "kid": "Booster", "icon": "🎆",
+      "frame": "rocket", "anchor": [7.5, 33.0, 1.6], "attached": "srb", "view": "both",
+      "what": "Two tall white rockets, one on each side.",
+      "why": "They give the biggest push at the start. When they are empty, they fall away."
+    },
+    {
+      "id": "propellant", "name": "Solid Propellant", "kid": "Solid Fuel", "icon": "🕯️",
+      "frame": "rocket", "anchor": [7.4, 20.0, 1.0], "attached": "srb", "view": "cutaway",
+      "what": "Grey solid fuel, like a giant candle with a hole in the middle.",
+      "why": "It burns from the inside out and makes a huge flame."
+    },
+    {
+      "id": "rs25", "name": "RS-25 Engines", "kid": "Main Engines", "icon": "🔧",
+      "frame": "rocket", "anchor": [1.9, 1.3, 2.4], "attached": "core", "view": "both",
+      "what": "Four big engines under the orange tank.",
+      "why": "They burn hydrogen and oxygen and push the rocket for eight minutes."
+    },
+    {
+      "id": "nozzle", "name": "Booster Nozzle", "kid": "Nozzle", "icon": "🔔",
+      "frame": "rocket", "anchor": [-6.4, 0.6, 2.4], "attached": "srb", "view": "both",
+      "what": "The bell shape at the bottom.",
+      "why": "It points the fire down, so the rocket goes up."
+    },
+    {
+      "id": "tower", "name": "Mobile Launcher Tower", "kid": "Launch Tower", "icon": "🏗️",
+      "frame": "ml", "anchor": [6.5, 122, -11], "attached": "site", "view": "both",
+      "what": "A tall steel tower next to the rocket.",
+      "why": "It holds pipes, power and an elevator for the people who get the rocket ready."
+    },
+    {
+      "id": "crewarm", "name": "Crew Access Arm", "kid": "Crew Bridge", "icon": "🚪",
+      "frame": "ml", "anchor": [-3.2, 113.5, -7], "attached": "site", "view": "both",
+      "what": "A bridge from the tower to the capsule.",
+      "why": "The astronauts walk across it to get into the capsule."
+    },
+    {
+      "id": "umbilical", "name": "Umbilical Arms", "kid": "Fuel Arms", "icon": "🔌",
+      "frame": "ml", "anchor": [2.2, 90.5, -8], "attached": "site", "view": "both",
+      "what": "Arms that plug into the rocket.",
+      "why": "They fill the tanks and give power. They swing away at liftoff."
+    },
+    {
+      "id": "crawler", "name": "Crawler-Transporter", "kid": "Crawler", "icon": "🚜",
+      "frame": "crawler", "anchor": [14, 7, 16], "attached": "site", "view": "both",
+      "what": "A giant truck with tank tracks.",
+      "why": "It carries the rocket and the tower slowly to the launch pad."
+    },
+    {
+      "id": "trench", "name": "Flame Trench", "kid": "Flame Trench", "icon": "🌋",
+      "frame": "site", "anchor": [0, 6, 78], "attached": "site", "view": "both",
+      "what": "A deep channel under the rocket.",
+      "why": "It sends the fire and smoke away to the sides so the rocket is not hurt."
+    },
+    {
+      "id": "lightning", "name": "Lightning Towers", "kid": "Lightning Tower", "icon": "⚡",
+      "frame": "site", "anchor": [160, 150, 95], "attached": "site", "view": "both",
+      "what": "Three very tall towers around the pad.",
+      "why": "Lightning hits them instead of the rocket."
+    },
+    {
+      "id": "water", "name": "Water Tower", "kid": "Water Tower", "icon": "💧",
+      "frame": "site", "anchor": [190, 82, -150], "attached": "site", "view": "both",
+      "what": "A big tank of water high in the air.",
+      "why": "At liftoff the water floods the pad to soften the very loud noise."
+    },
+    {
+      "id": "sphere", "name": "Liquid Hydrogen Storage", "kid": "Fuel Ball", "icon": "⚪",
+      "frame": "site", "anchor": [430, 27, -380], "attached": "site", "view": "both",
+      "what": "A giant white ball.",
+      "why": "It keeps the very cold fuel until it is pumped into the rocket."
+    },
+    {
+      "id": "vab", "name": "Vehicle Assembly Building", "kid": "Rocket Garage", "icon": "🏢",
+      "frame": "site", "anchor": [0, 125, 1870], "attached": "site", "view": "both",
+      "what": "One of the biggest buildings in the world.",
+      "why": "The rocket is put together inside, standing up."
+    }
+  ]
+}

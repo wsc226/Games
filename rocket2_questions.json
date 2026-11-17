@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "about": "Yes/No questions for rocket2.html. 'when' is the mission moment (start, fuel, hatch, ready, orbit, chute). 'levels' lists the modes that ask it. type 'choice': both answers are fine; yesAction/noAction tell the game what to do (continue, later, next, learn_parts, go_home). type 'check': the game knows the true answer; 'right' is spoken for the correct answer, 'wrong' for the other one, then it asks again.",
+  "questions": [
+    {
+      "id": "start", "when": "start", "levels": ["easy", "normal"], "type": "choice",
+      "text": "Do you want to fly the rocket today?",
+      "yes": "Yes! Let's fly the rocket.", "yesAction": "continue",
+      "no": "No. OK. Let's look at the rocket first. Tap a picture to learn a part.", "noAction": "learn_parts",
+      "again": "Do you want to fly the rocket now?"
+    },
+    {
+      "id": "fuel_full", "when": "fuel", "levels": ["normal"], "type": "check",
+      "text": "Is the fuel tank full?",
+      "right": { "yes": "Yes! The tank is full.", "no": "No! The tank is not full yet." },
+      "wrong": "Look again. Look at the fuel gauge."
+    },
+    {
+      "id": "hatch_closed", "when": "hatch", "levels": ["normal"], "type": "check",
+      "text": "Is the hatch closed?",
+      "right": { "yes": "Yes! The hatch is closed.", "no": "No! The hatch is still open." },
+      "wrong": "Look again. Look at the hatch light."
+    },
+    {
+      "id": "ready", "when": "ready", "levels": ["easy", "normal"], "type": "choice",
+      "text": "Are you ready to launch?",
+      "yes": "Yes! We are ready.", "yesAction": "continue",
+      "no": "No. OK. We can wait.", "noAction": "later",
+      "again": "Are you ready to launch now?"
+    },
+    {
+      "id": "home", "when": "orbit", "levels": ["easy", "normal"], "type": "choice",
+      "text": "Do you want to go home now?",
+      "yes": "Yes! Let's go home.", "yesAction": "go_home",
+      "no": "No. OK. Let's fly around the Earth a little more.", "noAction": "later",
+      "again": "Do you want to go home now?"
+    },
+    {
+      "id": "chute", "when": "chute", "levels": ["easy", "normal"], "type": "choice",
+      "text": "Do you want to open the parachutes?",
+      "yes": "Yes! Open the parachutes.", "yesAction": "continue",
+      "no": "No? We need the parachutes to land slowly!", "noAction": "later",
+      "again": "Do you want to open the parachutes?"
+    }
+  ]
+}
