@@ -8,6 +8,7 @@ let pushProg = 0, thrustProg = 0, vrOn = false, alt = 0;
 let pushT = null, thrustT = null, decayT = null, beepT = null, altT = null;
 let pushHeld = false, thrustHeld = false, wrongN = {}, wrongLast = null;
 const TK = { speed: 0, yBase: 0, pitch: 0, pitchT: 0, vx: 0, callouts: {}, tug: null, bridge: null, clouds: null, deck: null, flapsCmd: 0, gearCmd: 0, ctlCheck: 0, ias: 0, lateTok: 0 };
+const TKM = { state: 'idle', fire: false, fireK: 0, e3: 1, em: null, returning: false };   // takeoff MAYDAY
 const VSPD = { v1: 145, vr: 158, v2: 168 }, KT_PER = 2.03;   // knots per % thrust on the roll (VR zone 78% = 158 kt)
 const PUSH_CURVE = new THREE.CubicBezierCurve3(new THREE.Vector3(-150, 0, -300), new THREE.Vector3(-150, 0, -245), new THREE.Vector3(-150, 0, -205), new THREE.Vector3(-110, 0, -205));
 
@@ -27,9 +28,11 @@ function tkSetup() {
     const o = buildPlane(al, { lite: true }); o.root.position.set(x, 0, -300); o.root.rotation.y = GATE.rotY; o.state.beacon = false; W.scene.add(o.root); RT.others.push(o); });
   TK.deck = cloudDeck(1000, 120000, 6000); TK.deck.group.visible = false;
   TK.clouds = cloudField({ count: 60, yMin: 640, yMax: 1100, radius: 9000, size: 520, mat: W.cloudMat }); TK.clouds.group.visible = false;
+  fxInit();
   RT.tick = tkTick;
 }
 function tkTeardown() {
+  fxClear();
   if (TK.clouds) TK.clouds.dispose(); if (TK.deck) W.scene.remove(TK.deck.group); W.deck = null;
   RT.others.forEach(o => W.scene.remove(o.root)); RT.others = [];
   if (W.airport) { W.scene.remove(W.airport); W.airport = null; }
@@ -80,7 +83,12 @@ function tkTick(dt, t) {
   if (!RT.cmpT || RT.t - RT.cmpT > .25) { RT.cmpT = RT.t; const h = Math.round(wrapDeg(AL.hdg - P.root.rotation.y / DEG)) % 360; $('cmp-b').textContent = String(h).padStart(3, '0') + '°'; $('cmp-p').textContent = ['N','NE','E','SE','S','SW','W','NW'][Math.round(h / 45) % 8]; }
   bulkT -= dt; if (bulkT <= 0 && cabinOn) { bulkT = 1; P.drawBulkhead(alt, phaseName()); }
   RT.instrT -= dt; if (RT.instrT <= 0) { RT.instrT = .08;
-    panelInstr(tkInstr(), engData(st.n1, { msg: ST === S.ROLL ? 'TO THRUST' : st.n1 > .05 ? '' : 'ENG OFF', msgCol: COL.green })); }
+    const md = TKM.state !== 'idle';
+    panelInstr(tkInstr(), engData(st.n1, { out: [false, false, md, false], spool: TKM.e3 * st.n1 * 100, fire: [false, false, TKM.fireK > .3, false],
+      msg: TKM.fire ? 'FIRE ENG 3' : md ? 'ENG 3 SHUTDOWN' : ST === S.ROLL ? 'TO THRUST' : st.n1 > .05 ? '' : 'ENG OFF', msgCol: TKM.fire ? COL.red : md ? COL.amber : COL.green })); }
+  TKM.fireK = damp(TKM.fireK, TKM.fire ? 1 : 0, TKM.fire ? 1.5 : 1.2, dt); if (TKM.em) TKM.em.forEach(e => e.k = TKM.fireK);
+  if (TKM.state !== 'idle') TKM.e3 = damp(TKM.e3, 0, .7, dt);
+  fxTick(dt);
   const nOn = st.n1 > 0 ? st.n1 : 0; engineSet(ST === S.AIR ? 0 : nOn);
 }
 function phaseName() { return { GATE: 'Boarding', DOORS: 'Boarding complete', PUSHRDY: 'Ready for pushback', PUSHING: 'Pushing back', WELRDY: 'Engines starting',
@@ -126,8 +134,11 @@ function remind(id, line, extra = 0) {
 }
 function unlock(...ids) { ids.forEach(id => $(id).classList.remove('lkd')); }
 function guide(...ids) { if (level === 'easy') ids.forEach(id => $(id).classList.add('guide')); }
+const AIRBORNE = () => [S.AIRB, S.CLIMB, S.CLEAN, S.CRUISE].includes(ST);
 function updBtns() {
   lockAll();
+  $('guard').classList.toggle('lkd', !(TKM.state === 'fire' || (TKM.state === 'idle' && AIRBORNE())));
+  if (TKM.state !== 'idle') return;
   switch (ST) {
     case S.GATE: unlock('k-ann', 'k-belt'); guide('k-ann'); break;
     case S.PUSHRDY: unlock('k-push', 'k-belt'); guide('k-push'); break;
@@ -319,6 +330,29 @@ function tkReset() {
   $('spd-fill').style.width = '0%'; $('pf').style.width = '0%'; $('tf').style.width = '0%';
   closeDrawer();
 }
+/* ── MAYDAY in the air: engine 3 fire → pull the handle → turn back for an emergency landing ── */
+function tkMaydayPress() {
+  if (TKM.state === 'idle' && AIRBORNE()) tkDeclareMayday(); else if (TKM.state === 'fire') tkPullFire();
+}
+function tkDeclareMayday() {
+  TKM.state = 'fire'; TKM.fire = true; mdUiFire(); lockAll(); closeDrawer(); clearInterval(altT); altT = null;
+  sfx('fire_bell'); const bell = () => { if (TKM.fire) { sfx('fire_bell'); later(4000, bell); } }; later(4000, bell);
+  TKM.em = engineFireFx(); setPreset({ az: 70, el: 6, dist: 75 });
+  say('landing.captain.mayday_call', { cb: () => say('takeoff.tower.mayday_return', { cb: () => say('landing.first_officer.fire_handle') }) });
+  later(18000, () => { if (TKM.state === 'fire') { $('guard').classList.add('active'); sfx('master_caution'); say('landing.first_officer.fire_remind'); } });
+  later(32000, () => { if (TKM.state === 'fire') { say('takeoff.first_officer.turn_back_fire'); later(3500, () => tkReturn('fire')); } });
+}
+function tkPullFire() {
+  TKM.state = 'out'; TKM.fire = false; sfx('extinguisher'); mdUiOut();
+  say('landing.first_officer.fire_out', { cb: () => later(600, () => say('takeoff.first_officer.turn_back')) });
+  later(7500, () => tkReturn('out'));
+}
+function tkReturn(c) {
+  if (TKM.returning || GAME !== 'takeoff') return; TKM.returning = true;
+  fb('TURN BACK', 'ok'); MD_CARRY = c; setGameTab('landing');
+  later(1400, () => startGame('landing'));
+}
 function tkStart() {
+  Object.assign(TKM, { state: 'idle', fire: false, fireK: 0, e3: 1, em: null, returning: false }); mdUiReset();
   document.body.classList.remove('sky'); tkSetup(); tkReset(); setView('chase'); enterGate();
 }

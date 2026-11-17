@@ -223,7 +223,7 @@ function skyInstr() {
 function bindSkyInput() {
   const sc = $('scene'), stick = $('stick'), knob = stick.querySelector('i'); let st = null;
   const isUI = el => el.closest('button, #mode, .corner-tools');
-  sc.addEventListener('pointerdown', e => { if (GAME !== 'sky' || isUI(e.target) || $('end-ov').classList.contains('show')) return;
+  sc.addEventListener('pointerdown', e => { if (!skyFlyable() || isUI(e.target) || $('end-ov').classList.contains('show')) return;
     st = { id: e.pointerId, x: e.clientX, y: e.clientY }; const r = sc.getBoundingClientRect();
     stick.style.left = (e.clientX - r.left) + 'px'; stick.style.top = (e.clientY - r.top) + 'px'; stick.style.display = 'block'; knob.style.transform = '';
     $('stick-hint').classList.remove('show'); initA(); });
@@ -231,7 +231,7 @@ function bindSkyInput() {
     SKY.stick.x = dx; SKY.stick.y = -dy; knob.style.transform = `translate(${dx * 46}px,${dy * 46}px)`; });
   const end = e => { if (!st || e.pointerId !== st.id) return; st = null; SKY.stick.x = SKY.stick.y = 0; stick.style.display = 'none'; };
   addEventListener('pointerup', end); addEventListener('pointercancel', end);
-  addEventListener('keydown', e => { if (GAME !== 'sky') return; SKY.keys[e.key] = true; if (e.key.startsWith('Arrow')) { e.preventDefault(); $('stick-hint').classList.remove('show'); } });
+  addEventListener('keydown', e => { if (!skyFlyable()) return; SKY.keys[e.key] = true; if (e.key.startsWith('Arrow')) { e.preventDefault(); $('stick-hint').classList.remove('show'); } });
   addEventListener('keyup', e => { SKY.keys[e.key] = false; });
   tap($('sb-level'), () => { SKY.autoLevel = !SKY.autoLevel; $('sb-level').classList.toggle('on', SKY.autoLevel); sfx('success'); });
   tap($('sb-belt'), () => { SKY.belt = !SKY.belt; $('sb-belt').classList.toggle('on', SKY.belt); $('sb-belt').classList.remove('guide'); RT.plane.setBelt(SKY.belt); sfx('seatbelt_ding'); });

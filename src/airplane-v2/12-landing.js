@@ -59,7 +59,7 @@ function ldReset() {
   beltOn = true; $('lp-belt').className = 'lamp amb';
   $('kt-lflaps').textContent = 'UP'; $('kt-lgear').textContent = 'UP'; $('kt-lspd').textContent = 'DOWN'; $('kt-lrev').textContent = 'OFF'; $('kt-lbrk').textContent = 'OFF';
   L_KEYS.forEach(id => $(id).classList.remove('lit', 'lit-a'));
-  ldLockAll(); $('guard').className = ''; $('md-t').textContent = 'MAYDAY'; $('md-lbl').textContent = 'MAYDAY'; $('md-hint').textContent = 'LIFT COVER';
+  ldLockAll(); mdUiReset();
   hud('hud-gate', false); hud('hud-cmp', false); hud('taxi-l', false); hud('hud-alt', true);
   $('ld-ra').style.display = 'none'; $('end-ov').classList.remove('crash', 'show');
   ldCard('FINAL APPROACH', 'Runway ' + AL.rwy + ' ahead', 0);
@@ -67,7 +67,9 @@ function ldReset() {
 function ldStart() {
   ldSetup(); ldReset(); setView('chase');
   setPreset({ az: -150, el: 10, dist: 95 }, true); RT.autoOrbit = 0;
-  later(700, () => { ldSay('landing.tower.cleared'); ldSay('landing.captain.prepare'); });
+  const carry = MD_CARRY; MD_CARRY = null;
+  if (carry) { ldApplyCarry(carry); later(700, () => { ldSay('landing.tower.cleared'); if (carry === 'fire') ldSay('landing.first_officer.fire_remind'); }); }
+  else later(700, () => { ldSay('landing.tower.cleared'); ldSay('landing.captain.prepare'); });
 }
 
 /* ── voice queue: step asks / warnings interrupt, chatter waits its turn ── */
@@ -139,7 +141,7 @@ function ldApproach(dt) {
   if (s) {
     if (!LD.stepOn) {
       if (LD.alt <= s.start) { LD.stepOn = true; LD.stepT = 0; LD.warned = false; ldUnlock(s.btn); ldUrgent(s.ask); sfx('call_bell'); }
-      else ldCard('FINAL APPROACH', 'Next: ' + s.t.replace(/^Set |^ARM the /, ''), 1 - (LD.alt - s.start) / 400);
+      else ldCard(LD.mayday !== 'idle' ? 'EMERGENCY RETURN' : 'FINAL APPROACH', 'Next: ' + s.t.replace(/^Set |^ARM the /, ''), 1 - (LD.alt - s.start) / 400);
     }
     if (LD.stepOn) {
       LD.stepT += dt; const W1 = ldWin(), G = ldGrace();
@@ -148,7 +150,7 @@ function ldApproach(dt) {
       if (LD.stepT > W1 && !LD.warned) { LD.warned = true; LD.reds++; const b = $(s.btn); b.classList.remove('guide'); b.classList.add('late'); sfx('master_caution'); ldUrgent(s.warn); }
       if (LD.stepT > W1 + G) ldStepFail(s);
     }
-  } else if (!LD.flareOn && !LD.flared) ldCard('FINAL APPROACH', 'Get ready to FLARE', 1 - (LD.alt - 60) / 700);
+  } else if (!LD.flareOn && !LD.flared) ldCard(LD.mayday !== 'idle' ? 'EMERGENCY RETURN' : 'FINAL APPROACH', 'Get ready to FLARE', 1 - (LD.alt - 60) / 700);
   // flare window
   const top = level === 'easy' ? 100 : 60;
   if (!LD.flareOn && !LD.flared && LD.alt <= top && !LD_STEPS[LD.si]) { LD.flareOn = true; ldUnlock('l-flare'); }
@@ -305,24 +307,39 @@ function ldSpawnTrucks() {
 /* ── MAYDAY: guarded switch → engine 3 fire → pull the fire handle ── */
 function hCover(e) { e.preventDefault(); initA(); const g = $('guard'); if (g.classList.contains('lkd') || g.classList.contains('open')) return;
   g.classList.add('open'); sfx('cover_click'); $('md-hint').textContent = 'PRESS!';
-  later(6000, () => { if (LD.mayday === 'idle' && LD.ph) { g.classList.remove('open'); $('md-hint').textContent = 'LIFT COVER'; } }); }
+  later(6000, () => { const idle = GAME === 'takeoff' ? TKM.state === 'idle' : LD.mayday === 'idle' && LD.ph; if (idle) { g.classList.remove('open'); $('md-hint').textContent = 'LIFT COVER'; } }); }
 function hMayday(e) { e.preventDefault(); initA(); const g = $('guard'); if (!g.classList.contains('open') || g.classList.contains('lkd')) return;
+  if (GAME === 'takeoff') return tkMaydayPress();
   if (LD.mayday === 'idle' && (LD.ph === 'APP')) ldDeclareMayday(); else if (LD.mayday === 'fire') ldPullFire(); }
-function ldDeclareMayday() {
-  const P = RT.plane; LD.mayday = 'fire'; LD.fire = true;
-  const g = $('guard'); g.classList.add('fire'); $('md-t').textContent = 'PULL FIRE'; $('md-lbl').textContent = 'ENG 3 FIRE'; $('md-hint').textContent = 'PULL HANDLE';
+/* shared switch looks (takeoff + landing) */
+function mdUiReset() { $('guard').className = ''; $('md-t').textContent = 'MAYDAY'; $('md-lbl').textContent = 'MAYDAY'; $('md-hint').textContent = 'LIFT COVER'; }
+function mdUiFire() { const g = $('guard'); g.classList.add('open', 'fire'); $('md-t').textContent = 'PULL FIRE'; $('md-lbl').textContent = 'ENG 3 FIRE'; $('md-hint').textContent = 'PULL HANDLE'; }
+function mdUiOut() { const g = $('guard'); g.classList.add('open'); g.classList.remove('fire', 'active'); g.classList.add('done'); $('md-lbl').textContent = 'ENG 3 FIRE'; $('md-t').textContent = 'FIRE OUT'; $('md-hint').textContent = ''; }
+/* engine 3 fire + smoke trail, driven by k (0..1) */
+function engineFireFx() { const P = RT.plane, e3 = out => P.engines[2].localToWorld(out.set(-2.5, 0, 0));
+  return [fxEmitter('fire', e3, 40, { k: 0, scale: 1.1 }), fxEmitter('smoke', e3, 16, { k: 0, scale: .9 })]; }
+function ldFireOn() {
+  LD.mayday = 'fire'; LD.fire = true; mdUiFire();
   sfx('fire_bell'); const bell = () => { if (LD.fire && LD.ph === 'APP') { sfx('fire_bell'); later(4000, bell); } }; later(4000, bell);
-  const e3 = out => P.engines[2].localToWorld(out.set(-2.5, 0, 0));
-  LD.engFire = [fxEmitter('fire', e3, 40, { k: 0, scale: 1.1 }), fxEmitter('smoke', e3, 16, { k: 0, scale: .9 })];
+  LD.engFire = engineFireFx();
+  later(16000, function remind() { if (LD.mayday === 'fire' && LD.ph === 'APP') { $('guard').classList.add('active'); sfx('master_caution'); ldUrgent('landing.first_officer.fire_remind'); later(12000, remind); } });
+}
+/* fire trucks roll out and wait beside the runway */
+function ldTrucksStandby() { ldSpawnTrucks(); FX.trucks.forEach((T, i) => truckDrive(T, [[T.root.position.x, -235], [T.root.position.x + 200, -160], [2050 + i * 140, -85]], 14)); }
+function ldDeclareMayday() {
+  ldFireOn(); ldTrucksStandby();
   ldUrgent('landing.captain.mayday_call'); ldSay('landing.tower.mayday_ack'); ldSay('landing.first_officer.fire_handle');
-  later(16000, function remind() { if (LD.mayday === 'fire' && LD.ph === 'APP') { g.classList.add('active'); sfx('master_caution'); ldUrgent('landing.first_officer.fire_remind'); later(12000, remind); } });
-  // fire trucks roll out and wait beside the runway
-  ldSpawnTrucks(); FX.trucks.forEach((T, i) => truckDrive(T, [[T.root.position.x, -235], [T.root.position.x + 200, -160], [2050 + i * 140, -85]], 14));
 }
 function ldPullFire() {
-  LD.mayday = 'out'; LD.fire = false; sfx('extinguisher');
-  const g = $('guard'); g.classList.remove('fire', 'active'); g.classList.add('done'); $('md-t').textContent = 'FIRE OUT'; $('md-hint').textContent = '';
+  LD.mayday = 'out'; LD.fire = false; sfx('extinguisher'); mdUiOut();
   ldUrgent('landing.first_officer.fire_out');
+}
+/* emergency return from Takeoff mode: start Landing already in MAYDAY */
+let MD_CARRY = null;
+function ldApplyCarry(c) {
+  LD.e3 = 0; ldTrucksStandby();
+  if (c === 'fire') ldFireOn(); else { LD.mayday = 'out'; mdUiOut(); }
+  ldCard('EMERGENCY RETURN', 'Runway ' + AL.rwy + ' ahead', 0);
 }
 
 /* ── buttons ── */

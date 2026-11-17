@@ -53,6 +53,11 @@
       "description": "Airport fire and rescue chief on the radio. Calm, strong, reassuring.",
       "rate": 1,
       "pitch": 0.9
+    },
+    "instructor": {
+      "description": "Flight-school teacher for a 4-year-old. Warm, slow, cheerful and very clear. Lots of smiles in the voice.",
+      "rate": 0.88,
+      "pitch": 1.1
     }
   },
   "variables": {
@@ -970,7 +975,7 @@
       "mode": "landing",
       "role": "captain",
       "phase": "mayday",
-      "trigger": "Player lifts the cover and presses MAYDAY.",
+      "trigger": "Player lifts the cover and presses MAYDAY (Landing mode, or Takeoff mode once airborne).",
       "per_airline": true,
       "text": "Mayday, mayday, mayday! {callsign} {flight_spoken}, engine three fire. Request emergency landing."
     },
@@ -988,7 +993,7 @@
       "mode": "landing",
       "role": "first_officer",
       "phase": "mayday",
-      "trigger": "After the tower answers the mayday.",
+      "trigger": "After the tower answers the mayday (both modes).",
       "text": "Engine fire, engine three! Pull the fire handle!"
     },
     {
@@ -1014,6 +1019,640 @@
       "phase": "mayday",
       "trigger": "Fire trucks reach the plane after a MAYDAY landing.",
       "text": "Fire crew here. Engine three is cool now. Great landing, captain!"
+    },
+    {
+      "id": "takeoff.tower.mayday_return",
+      "mode": "takeoff",
+      "role": "tower",
+      "phase": "mayday",
+      "trigger": "After the mayday call in Takeoff mode.",
+      "per_airline": true,
+      "text": "{callsign} {flight_spoken}, mayday acknowledged. Turn back to the airport. Runway {runway_spoken}, cleared to land. Fire and rescue are standing by."
+    },
+    {
+      "id": "takeoff.first_officer.turn_back",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "mayday",
+      "trigger": "After the fire is out in Takeoff mode (then Landing starts).",
+      "text": "Let's turn back and land, captain!"
+    },
+    {
+      "id": "takeoff.first_officer.turn_back_fire",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "mayday",
+      "trigger": "Fire handle never pulled in Takeoff mode (Landing starts with the fire still on).",
+      "text": "We have to land right now, captain! Turning back!"
+    },
+    {
+      "id": "school.instructor.welcome",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "menu",
+      "trigger": "Flight School menu opens.",
+      "text": "Welcome to Flight School, Captain {captain_name}! Pick a lesson."
+    },
+    {
+      "id": "school.instructor.sticker",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "menu",
+      "trigger": "Lesson finished.",
+      "text": "You earned a sticker!"
+    },
+    {
+      "id": "school.instructor.wings",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "menu",
+      "trigger": "Sixth sticker earned.",
+      "text": "Wow! You have all six stickers. You earned your Pilot Wings!"
+    },
+    {
+      "id": "school.instructor.hint_glow",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "any",
+      "trigger": "Child is stuck on a find-the-button step.",
+      "text": "Look for the glowing button!"
+    },
+    {
+      "id": "school.instructor.not_now",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "any",
+      "trigger": "Wrong button in a lesson.",
+      "text": "Not that one. Listen again!"
+    },
+    {
+      "id": "school.instructor.praise_1",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "any",
+      "trigger": "Step done.",
+      "text": "Great job!"
+    },
+    {
+      "id": "school.instructor.praise_2",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "any",
+      "trigger": "Step done.",
+      "text": "You did it!"
+    },
+    {
+      "id": "school.instructor.praise_3",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "any",
+      "trigger": "Step done.",
+      "text": "Super pilot!"
+    },
+    {
+      "id": "school.instructor.l1_intro",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 start.",
+      "text": "Let's meet the buttons! Listen, and find the button I say."
+    },
+    {
+      "id": "school.instructor.l1_find_flaps",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 asks for a button.",
+      "text": "Can you find the FLAPS button?"
+    },
+    {
+      "id": "school.instructor.l1_did_flaps",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 right button.",
+      "text": "Yes! Flaps make the wings bigger, so we can fly slowly."
+    },
+    {
+      "id": "school.instructor.l1_that_flaps",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 wrong button (names the button tapped).",
+      "text": "Oops! That's the flaps button."
+    },
+    {
+      "id": "school.instructor.l1_find_belt",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 asks for a button.",
+      "text": "Can you find the SEAT BELT button?"
+    },
+    {
+      "id": "school.instructor.l1_did_belt",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 right button.",
+      "text": "Ding! Seat belts on. Everybody stay safe!"
+    },
+    {
+      "id": "school.instructor.l1_that_belt",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 wrong button (names the button tapped).",
+      "text": "Oops! That's the seat belt button."
+    },
+    {
+      "id": "school.instructor.l1_find_thrust",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 asks for a button.",
+      "text": "Can you find the THRUST button?"
+    },
+    {
+      "id": "school.instructor.l1_did_thrust",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 right button.",
+      "text": "Vroom! Thrust makes the engines loud and strong."
+    },
+    {
+      "id": "school.instructor.l1_that_thrust",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 wrong button (names the button tapped).",
+      "text": "Oops! That's the thrust button."
+    },
+    {
+      "id": "school.instructor.l1_find_pa",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 asks for a button.",
+      "text": "Can you find the CABIN PA button?"
+    },
+    {
+      "id": "school.instructor.l1_did_pa",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 right button.",
+      "text": "Ding dong! Now the passengers can hear you."
+    },
+    {
+      "id": "school.instructor.l1_that_pa",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 wrong button (names the button tapped).",
+      "text": "Oops! That's the cabin P A button."
+    },
+    {
+      "id": "school.instructor.l1_find_gear",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 asks for a button.",
+      "text": "Can you find the LANDING GEAR button?"
+    },
+    {
+      "id": "school.instructor.l1_did_gear",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 right button.",
+      "text": "Yes! The landing gear is the wheels. We move them in the sky."
+    },
+    {
+      "id": "school.instructor.l1_that_gear",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 wrong button (names the button tapped).",
+      "text": "Oops! That's the landing gear button."
+    },
+    {
+      "id": "school.instructor.l1_find_push",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 asks for a button.",
+      "text": "Can you find the PUSH BACK button?"
+    },
+    {
+      "id": "school.instructor.l1_did_push",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 right button.",
+      "text": "Yes! The push back truck pushes us away from the gate."
+    },
+    {
+      "id": "school.instructor.l1_that_push",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 wrong button (names the button tapped).",
+      "text": "Oops! That's the push back button."
+    },
+    {
+      "id": "school.instructor.l1_done",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "cockpit",
+      "trigger": "Lesson 1 end.",
+      "text": "You know all the cockpit buttons! Great job!"
+    },
+    {
+      "id": "school.instructor.l2_intro",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2 start.",
+      "text": "This is the flying picture. Blue is the sky. Brown is the ground. The yellow wings are our plane!"
+    },
+    {
+      "id": "school.instructor.l2_up",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2.",
+      "text": "Let's fly UP! Put your finger on the window and slide it up."
+    },
+    {
+      "id": "school.instructor.l2_up_ok",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2.",
+      "text": "Up we go! See more blue sky?"
+    },
+    {
+      "id": "school.instructor.l2_down",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2.",
+      "text": "Now fly DOWN! Slide your finger down."
+    },
+    {
+      "id": "school.instructor.l2_down_ok",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2.",
+      "text": "Down we go! See more brown ground?"
+    },
+    {
+      "id": "school.instructor.l2_left",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2.",
+      "text": "Tilt LEFT! Slide your finger to the left."
+    },
+    {
+      "id": "school.instructor.l2_left_ok",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2.",
+      "text": "Wheee! We are turning left!"
+    },
+    {
+      "id": "school.instructor.l2_right",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2.",
+      "text": "Now tilt RIGHT! Slide your finger to the right."
+    },
+    {
+      "id": "school.instructor.l2_right_ok",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2.",
+      "text": "Wheee! We are turning right!"
+    },
+    {
+      "id": "school.instructor.l2_level",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2.",
+      "text": "Now let go. Make the wings flat, right on the line."
+    },
+    {
+      "id": "school.instructor.l2_done",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "level",
+      "trigger": "Lesson 2 end.",
+      "text": "Nice and flat! You fly like a real pilot!"
+    },
+    {
+      "id": "school.instructor.l3_intro",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "speed",
+      "trigger": "Lesson 3 start.",
+      "text": "Thrust makes the plane go fast. Hold the THRUST button and watch the speed bar!"
+    },
+    {
+      "id": "school.instructor.l3_hold",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "speed",
+      "trigger": "Let go before green.",
+      "text": "Keep holding the THRUST button!"
+    },
+    {
+      "id": "school.instructor.l3_green",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "speed",
+      "trigger": "Speed reached green.",
+      "text": "Green! Super fast! Now let go to slow down."
+    },
+    {
+      "id": "school.instructor.l3_letgo",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "speed",
+      "trigger": "Still holding after green.",
+      "text": "Let go of the button!"
+    },
+    {
+      "id": "school.instructor.l3_stop",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "speed",
+      "trigger": "Plane stopped.",
+      "text": "We stopped. Good slowing down!"
+    },
+    {
+      "id": "school.instructor.l3_again",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "speed",
+      "trigger": "Round 2.",
+      "text": "One more time! Hold THRUST, fast to the green!"
+    },
+    {
+      "id": "school.instructor.l3_fly",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "speed",
+      "trigger": "Round 3.",
+      "text": "This time, when it is green, tap ROTATE to fly!"
+    },
+    {
+      "id": "school.instructor.l3_rotate",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "speed",
+      "trigger": "Round 3 green.",
+      "text": "Green! Tap ROTATE!"
+    },
+    {
+      "id": "school.instructor.l3_done",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "speed",
+      "trigger": "Lesson 3 end.",
+      "text": "We are flying! Going fast lets the wings lift us up!"
+    },
+    {
+      "id": "school.instructor.l4_intro",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "gear",
+      "trigger": "Lesson 4 start.",
+      "text": "We just took off! In the sky, the wheels go UP. Tap the LANDING GEAR button!"
+    },
+    {
+      "id": "school.instructor.l4_up_ok",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "gear",
+      "trigger": "Gear up.",
+      "text": "Wheels up! Tucked away like a sleepy bird."
+    },
+    {
+      "id": "school.instructor.l4_remind_up",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "gear",
+      "trigger": "Reminder.",
+      "text": "Tap the LANDING GEAR button to put the wheels up!"
+    },
+    {
+      "id": "school.instructor.l4_turn",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "gear",
+      "trigger": "Transition.",
+      "text": "Let's fly around and come back to the airport."
+    },
+    {
+      "id": "school.instructor.l4_down",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "gear",
+      "trigger": "Approach.",
+      "text": "Look, the runway! Wheels go DOWN to land. Tap the LANDING GEAR button!"
+    },
+    {
+      "id": "school.instructor.l4_down_ok",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "gear",
+      "trigger": "Gear down.",
+      "text": "Three green lights. The wheels are down!"
+    },
+    {
+      "id": "school.instructor.l4_remind_down",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "gear",
+      "trigger": "Reminder.",
+      "text": "We need our wheels to land! Tap the LANDING GEAR button!"
+    },
+    {
+      "id": "school.instructor.l4_help",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "gear",
+      "trigger": "Auto gear down.",
+      "text": "I will help you this time. Wheels down!"
+    },
+    {
+      "id": "school.instructor.l4_done",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "gear",
+      "trigger": "Lesson 4 end.",
+      "text": "Touchdown! Wheels up in the sky, wheels down to land!"
+    },
+    {
+      "id": "school.instructor.l5_intro",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "radio",
+      "trigger": "Lesson 5 start.",
+      "text": "On the radio, our plane has a special name. We are {callsign} {flight_spoken}!",
+      "per_airline": true
+    },
+    {
+      "id": "school.instructor.l5_rule",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "radio",
+      "trigger": "Lesson 5 rule.",
+      "text": "When you hear our name, tap ROGER. If it is a different plane, do not tap!"
+    },
+    {
+      "id": "school.instructor.l5_yes",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "radio",
+      "trigger": "Correct roger.",
+      "text": "Yes! That was us!"
+    },
+    {
+      "id": "school.instructor.l5_good_skip",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "radio",
+      "trigger": "Correctly ignored.",
+      "text": "Good listening! That was a different plane."
+    },
+    {
+      "id": "school.instructor.l5_not_us",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "radio",
+      "trigger": "Tapped for another plane.",
+      "text": "Oops! That was a different plane, not us."
+    },
+    {
+      "id": "school.instructor.l5_was_us",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "radio",
+      "trigger": "Missed our call.",
+      "text": "That was us! Tap ROGER!"
+    },
+    {
+      "id": "school.instructor.l5_done",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "radio",
+      "trigger": "Lesson 5 end.",
+      "text": "Great radio work, Captain!"
+    },
+    {
+      "id": "school.center.call_a",
+      "mode": "school",
+      "role": "center",
+      "phase": "radio",
+      "trigger": "ATC call, spoken after any airline callsign.",
+      "text": "turn left, heading two seven zero."
+    },
+    {
+      "id": "school.center.call_b",
+      "mode": "school",
+      "role": "center",
+      "phase": "radio",
+      "trigger": "ATC call.",
+      "text": "climb to flight level three nine zero."
+    },
+    {
+      "id": "school.center.call_c",
+      "mode": "school",
+      "role": "center",
+      "phase": "radio",
+      "trigger": "ATC call.",
+      "text": "contact Tokyo Control, one two four decimal one."
+    },
+    {
+      "id": "school.center.call_d",
+      "mode": "school",
+      "role": "center",
+      "phase": "radio",
+      "trigger": "ATC call.",
+      "text": "descend to flight level three one zero."
+    },
+    {
+      "id": "school.center.call_e",
+      "mode": "school",
+      "role": "center",
+      "phase": "radio",
+      "trigger": "ATC call.",
+      "text": "turn right, heading zero nine zero."
+    },
+    {
+      "id": "school.captain.roger",
+      "mode": "school",
+      "role": "captain",
+      "phase": "radio",
+      "trigger": "Player tapped ROGER.",
+      "text": "Roger!"
+    },
+    {
+      "id": "school.instructor.l6_intro",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "emergency",
+      "trigger": "Lesson 6 start.",
+      "text": "Sometimes there is an emergency. A good pilot stays calm. Let's practice!"
+    },
+    {
+      "id": "school.instructor.l6_cover",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "emergency",
+      "trigger": "Lesson 6.",
+      "text": "See the yellow and black cover? Lift it up!"
+    },
+    {
+      "id": "school.instructor.l6_press",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "emergency",
+      "trigger": "Lesson 6.",
+      "text": "Now press the red MAYDAY button!"
+    },
+    {
+      "id": "school.instructor.l6_fire",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "emergency",
+      "trigger": "Lesson 6.",
+      "text": "Engine three is on fire! Stay calm, and tap PULL FIRE!"
+    },
+    {
+      "id": "school.instructor.l6_out",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "emergency",
+      "trigger": "Lesson 6.",
+      "text": "The fire is out! You stayed calm."
+    },
+    {
+      "id": "school.instructor.l6_done",
+      "mode": "school",
+      "role": "instructor",
+      "phase": "emergency",
+      "trigger": "Lesson 6 end.",
+      "text": "You are an Emergency Hero! A real captain always stays calm."
     }
   ],
   "renders": [
@@ -1262,6 +1901,107 @@
     {"key":"common|landing.first_officer.fire_handle","line_id":"landing.first_officer.fire_handle","role":"first_officer","airline":null,"variant":null,"text":"Engine fire, engine three! Pull the fire handle!","file":"assets/airplane/voice/common/landing.first_officer.fire_handle.mp3"},
     {"key":"common|landing.first_officer.fire_remind","line_id":"landing.first_officer.fire_remind","role":"first_officer","airline":null,"variant":null,"text":"Captain, pull the fire handle!","file":"assets/airplane/voice/common/landing.first_officer.fire_remind.mp3"},
     {"key":"common|landing.first_officer.fire_out","line_id":"landing.first_officer.fire_out","role":"first_officer","airline":null,"variant":null,"text":"Fire bottle discharged. The fire is out!","file":"assets/airplane/voice/common/landing.first_officer.fire_out.mp3"},
-    {"key":"common|landing.rescue.mayday_safe","line_id":"landing.rescue.mayday_safe","role":"rescue","airline":null,"variant":null,"text":"Fire crew here. Engine three is cool now. Great landing, captain!","file":"assets/airplane/voice/common/landing.rescue.mayday_safe.mp3"}
+    {"key":"common|landing.rescue.mayday_safe","line_id":"landing.rescue.mayday_safe","role":"rescue","airline":null,"variant":null,"text":"Fire crew here. Engine three is cool now. Great landing, captain!","file":"assets/airplane/voice/common/landing.rescue.mayday_safe.mp3"},
+    {"key":"cx|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"cx","variant":null,"text":"Cathay four five one, mayday acknowledged. Turn back to the airport. Runway two five left, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/cx/takeoff.tower.mayday_return.mp3"},
+    {"key":"hx|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"hx","variant":null,"text":"Hong Kong Express two three seven, mayday acknowledged. Turn back to the airport. Runway two five left, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/hx/takeoff.tower.mayday_return.mp3"},
+    {"key":"jl|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"jl","variant":null,"text":"Japan Air seven two three, mayday acknowledged. Turn back to the airport. Runway three four left, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/jl/takeoff.tower.mayday_return.mp3"},
+    {"key":"nh|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"nh","variant":null,"text":"All Nippon eight eight two, mayday acknowledged. Turn back to the airport. Runway three four left, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/nh/takeoff.tower.mayday_return.mp3"},
+    {"key":"zg|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"zg","variant":null,"text":"Zip Air one zero five, mayday acknowledged. Turn back to the airport. Runway three four left, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/zg/takeoff.tower.mayday_return.mp3"},
+    {"key":"ek|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"ek","variant":null,"text":"Emirates three one one, mayday acknowledged. Turn back to the airport. Runway three zero left, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/ek/takeoff.tower.mayday_return.mp3"},
+    {"key":"as|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"as","variant":null,"text":"Alaska six seven, mayday acknowledged. Turn back to the airport. Runway one six left, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/as/takeoff.tower.mayday_return.mp3"},
+    {"key":"mu|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"mu","variant":null,"text":"China Eastern seven three three, mayday acknowledged. Turn back to the airport. Runway three five right, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/mu/takeoff.tower.mayday_return.mp3"},
+    {"key":"vn|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"vn","variant":null,"text":"Vietnam five nine one, mayday acknowledged. Turn back to the airport. Runway two five right, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/vn/takeoff.tower.mayday_return.mp3"},
+    {"key":"aa|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"aa","variant":null,"text":"American two seven three, mayday acknowledged. Turn back to the airport. Runway one eight left, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/aa/takeoff.tower.mayday_return.mp3"},
+    {"key":"dl|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"dl","variant":null,"text":"Delta four one two, mayday acknowledged. Turn back to the airport. Runway two eight, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/dl/takeoff.tower.mayday_return.mp3"},
+    {"key":"ua|takeoff.tower.mayday_return","line_id":"takeoff.tower.mayday_return","role":"tower","airline":"ua","variant":null,"text":"United five five eight, mayday acknowledged. Turn back to the airport. Runway one five left, cleared to land. Fire and rescue are standing by.","file":"assets/airplane/voice/ua/takeoff.tower.mayday_return.mp3"},
+    {"key":"common|takeoff.first_officer.turn_back","line_id":"takeoff.first_officer.turn_back","role":"first_officer","airline":null,"variant":null,"text":"Let's turn back and land, captain!","file":"assets/airplane/voice/common/takeoff.first_officer.turn_back.mp3"},
+    {"key":"common|takeoff.first_officer.turn_back_fire","line_id":"takeoff.first_officer.turn_back_fire","role":"first_officer","airline":null,"variant":null,"text":"We have to land right now, captain! Turning back!","file":"assets/airplane/voice/common/takeoff.first_officer.turn_back_fire.mp3"},
+    {"key":"common|school.instructor.welcome","line_id":"school.instructor.welcome","role":"instructor","airline":null,"variant":null,"text":"Welcome to Flight School, Captain Asher! Pick a lesson.","file":"assets/airplane/voice/common/school.instructor.welcome.mp3"},
+    {"key":"common|school.instructor.sticker","line_id":"school.instructor.sticker","role":"instructor","airline":null,"variant":null,"text":"You earned a sticker!","file":"assets/airplane/voice/common/school.instructor.sticker.mp3"},
+    {"key":"common|school.instructor.wings","line_id":"school.instructor.wings","role":"instructor","airline":null,"variant":null,"text":"Wow! You have all six stickers. You earned your Pilot Wings!","file":"assets/airplane/voice/common/school.instructor.wings.mp3"},
+    {"key":"common|school.instructor.hint_glow","line_id":"school.instructor.hint_glow","role":"instructor","airline":null,"variant":null,"text":"Look for the glowing button!","file":"assets/airplane/voice/common/school.instructor.hint_glow.mp3"},
+    {"key":"common|school.instructor.not_now","line_id":"school.instructor.not_now","role":"instructor","airline":null,"variant":null,"text":"Not that one. Listen again!","file":"assets/airplane/voice/common/school.instructor.not_now.mp3"},
+    {"key":"common|school.instructor.praise_1","line_id":"school.instructor.praise_1","role":"instructor","airline":null,"variant":null,"text":"Great job!","file":"assets/airplane/voice/common/school.instructor.praise_1.mp3"},
+    {"key":"common|school.instructor.praise_2","line_id":"school.instructor.praise_2","role":"instructor","airline":null,"variant":null,"text":"You did it!","file":"assets/airplane/voice/common/school.instructor.praise_2.mp3"},
+    {"key":"common|school.instructor.praise_3","line_id":"school.instructor.praise_3","role":"instructor","airline":null,"variant":null,"text":"Super pilot!","file":"assets/airplane/voice/common/school.instructor.praise_3.mp3"},
+    {"key":"common|school.instructor.l1_intro","line_id":"school.instructor.l1_intro","role":"instructor","airline":null,"variant":null,"text":"Let's meet the buttons! Listen, and find the button I say.","file":"assets/airplane/voice/common/school.instructor.l1_intro.mp3"},
+    {"key":"common|school.instructor.l1_find_flaps","line_id":"school.instructor.l1_find_flaps","role":"instructor","airline":null,"variant":null,"text":"Can you find the FLAPS button?","file":"assets/airplane/voice/common/school.instructor.l1_find_flaps.mp3"},
+    {"key":"common|school.instructor.l1_did_flaps","line_id":"school.instructor.l1_did_flaps","role":"instructor","airline":null,"variant":null,"text":"Yes! Flaps make the wings bigger, so we can fly slowly.","file":"assets/airplane/voice/common/school.instructor.l1_did_flaps.mp3"},
+    {"key":"common|school.instructor.l1_that_flaps","line_id":"school.instructor.l1_that_flaps","role":"instructor","airline":null,"variant":null,"text":"Oops! That's the flaps button.","file":"assets/airplane/voice/common/school.instructor.l1_that_flaps.mp3"},
+    {"key":"common|school.instructor.l1_find_belt","line_id":"school.instructor.l1_find_belt","role":"instructor","airline":null,"variant":null,"text":"Can you find the SEAT BELT button?","file":"assets/airplane/voice/common/school.instructor.l1_find_belt.mp3"},
+    {"key":"common|school.instructor.l1_did_belt","line_id":"school.instructor.l1_did_belt","role":"instructor","airline":null,"variant":null,"text":"Ding! Seat belts on. Everybody stay safe!","file":"assets/airplane/voice/common/school.instructor.l1_did_belt.mp3"},
+    {"key":"common|school.instructor.l1_that_belt","line_id":"school.instructor.l1_that_belt","role":"instructor","airline":null,"variant":null,"text":"Oops! That's the seat belt button.","file":"assets/airplane/voice/common/school.instructor.l1_that_belt.mp3"},
+    {"key":"common|school.instructor.l1_find_thrust","line_id":"school.instructor.l1_find_thrust","role":"instructor","airline":null,"variant":null,"text":"Can you find the THRUST button?","file":"assets/airplane/voice/common/school.instructor.l1_find_thrust.mp3"},
+    {"key":"common|school.instructor.l1_did_thrust","line_id":"school.instructor.l1_did_thrust","role":"instructor","airline":null,"variant":null,"text":"Vroom! Thrust makes the engines loud and strong.","file":"assets/airplane/voice/common/school.instructor.l1_did_thrust.mp3"},
+    {"key":"common|school.instructor.l1_that_thrust","line_id":"school.instructor.l1_that_thrust","role":"instructor","airline":null,"variant":null,"text":"Oops! That's the thrust button.","file":"assets/airplane/voice/common/school.instructor.l1_that_thrust.mp3"},
+    {"key":"common|school.instructor.l1_find_pa","line_id":"school.instructor.l1_find_pa","role":"instructor","airline":null,"variant":null,"text":"Can you find the CABIN PA button?","file":"assets/airplane/voice/common/school.instructor.l1_find_pa.mp3"},
+    {"key":"common|school.instructor.l1_did_pa","line_id":"school.instructor.l1_did_pa","role":"instructor","airline":null,"variant":null,"text":"Ding dong! Now the passengers can hear you.","file":"assets/airplane/voice/common/school.instructor.l1_did_pa.mp3"},
+    {"key":"common|school.instructor.l1_that_pa","line_id":"school.instructor.l1_that_pa","role":"instructor","airline":null,"variant":null,"text":"Oops! That's the cabin P A button.","file":"assets/airplane/voice/common/school.instructor.l1_that_pa.mp3"},
+    {"key":"common|school.instructor.l1_find_gear","line_id":"school.instructor.l1_find_gear","role":"instructor","airline":null,"variant":null,"text":"Can you find the LANDING GEAR button?","file":"assets/airplane/voice/common/school.instructor.l1_find_gear.mp3"},
+    {"key":"common|school.instructor.l1_did_gear","line_id":"school.instructor.l1_did_gear","role":"instructor","airline":null,"variant":null,"text":"Yes! The landing gear is the wheels. We move them in the sky.","file":"assets/airplane/voice/common/school.instructor.l1_did_gear.mp3"},
+    {"key":"common|school.instructor.l1_that_gear","line_id":"school.instructor.l1_that_gear","role":"instructor","airline":null,"variant":null,"text":"Oops! That's the landing gear button.","file":"assets/airplane/voice/common/school.instructor.l1_that_gear.mp3"},
+    {"key":"common|school.instructor.l1_find_push","line_id":"school.instructor.l1_find_push","role":"instructor","airline":null,"variant":null,"text":"Can you find the PUSH BACK button?","file":"assets/airplane/voice/common/school.instructor.l1_find_push.mp3"},
+    {"key":"common|school.instructor.l1_did_push","line_id":"school.instructor.l1_did_push","role":"instructor","airline":null,"variant":null,"text":"Yes! The push back truck pushes us away from the gate.","file":"assets/airplane/voice/common/school.instructor.l1_did_push.mp3"},
+    {"key":"common|school.instructor.l1_that_push","line_id":"school.instructor.l1_that_push","role":"instructor","airline":null,"variant":null,"text":"Oops! That's the push back button.","file":"assets/airplane/voice/common/school.instructor.l1_that_push.mp3"},
+    {"key":"common|school.instructor.l1_done","line_id":"school.instructor.l1_done","role":"instructor","airline":null,"variant":null,"text":"You know all the cockpit buttons! Great job!","file":"assets/airplane/voice/common/school.instructor.l1_done.mp3"},
+    {"key":"common|school.instructor.l2_intro","line_id":"school.instructor.l2_intro","role":"instructor","airline":null,"variant":null,"text":"This is the flying picture. Blue is the sky. Brown is the ground. The yellow wings are our plane!","file":"assets/airplane/voice/common/school.instructor.l2_intro.mp3"},
+    {"key":"common|school.instructor.l2_up","line_id":"school.instructor.l2_up","role":"instructor","airline":null,"variant":null,"text":"Let's fly UP! Put your finger on the window and slide it up.","file":"assets/airplane/voice/common/school.instructor.l2_up.mp3"},
+    {"key":"common|school.instructor.l2_up_ok","line_id":"school.instructor.l2_up_ok","role":"instructor","airline":null,"variant":null,"text":"Up we go! See more blue sky?","file":"assets/airplane/voice/common/school.instructor.l2_up_ok.mp3"},
+    {"key":"common|school.instructor.l2_down","line_id":"school.instructor.l2_down","role":"instructor","airline":null,"variant":null,"text":"Now fly DOWN! Slide your finger down.","file":"assets/airplane/voice/common/school.instructor.l2_down.mp3"},
+    {"key":"common|school.instructor.l2_down_ok","line_id":"school.instructor.l2_down_ok","role":"instructor","airline":null,"variant":null,"text":"Down we go! See more brown ground?","file":"assets/airplane/voice/common/school.instructor.l2_down_ok.mp3"},
+    {"key":"common|school.instructor.l2_left","line_id":"school.instructor.l2_left","role":"instructor","airline":null,"variant":null,"text":"Tilt LEFT! Slide your finger to the left.","file":"assets/airplane/voice/common/school.instructor.l2_left.mp3"},
+    {"key":"common|school.instructor.l2_left_ok","line_id":"school.instructor.l2_left_ok","role":"instructor","airline":null,"variant":null,"text":"Wheee! We are turning left!","file":"assets/airplane/voice/common/school.instructor.l2_left_ok.mp3"},
+    {"key":"common|school.instructor.l2_right","line_id":"school.instructor.l2_right","role":"instructor","airline":null,"variant":null,"text":"Now tilt RIGHT! Slide your finger to the right.","file":"assets/airplane/voice/common/school.instructor.l2_right.mp3"},
+    {"key":"common|school.instructor.l2_right_ok","line_id":"school.instructor.l2_right_ok","role":"instructor","airline":null,"variant":null,"text":"Wheee! We are turning right!","file":"assets/airplane/voice/common/school.instructor.l2_right_ok.mp3"},
+    {"key":"common|school.instructor.l2_level","line_id":"school.instructor.l2_level","role":"instructor","airline":null,"variant":null,"text":"Now let go. Make the wings flat, right on the line.","file":"assets/airplane/voice/common/school.instructor.l2_level.mp3"},
+    {"key":"common|school.instructor.l2_done","line_id":"school.instructor.l2_done","role":"instructor","airline":null,"variant":null,"text":"Nice and flat! You fly like a real pilot!","file":"assets/airplane/voice/common/school.instructor.l2_done.mp3"},
+    {"key":"common|school.instructor.l3_intro","line_id":"school.instructor.l3_intro","role":"instructor","airline":null,"variant":null,"text":"Thrust makes the plane go fast. Hold the THRUST button and watch the speed bar!","file":"assets/airplane/voice/common/school.instructor.l3_intro.mp3"},
+    {"key":"common|school.instructor.l3_hold","line_id":"school.instructor.l3_hold","role":"instructor","airline":null,"variant":null,"text":"Keep holding the THRUST button!","file":"assets/airplane/voice/common/school.instructor.l3_hold.mp3"},
+    {"key":"common|school.instructor.l3_green","line_id":"school.instructor.l3_green","role":"instructor","airline":null,"variant":null,"text":"Green! Super fast! Now let go to slow down.","file":"assets/airplane/voice/common/school.instructor.l3_green.mp3"},
+    {"key":"common|school.instructor.l3_letgo","line_id":"school.instructor.l3_letgo","role":"instructor","airline":null,"variant":null,"text":"Let go of the button!","file":"assets/airplane/voice/common/school.instructor.l3_letgo.mp3"},
+    {"key":"common|school.instructor.l3_stop","line_id":"school.instructor.l3_stop","role":"instructor","airline":null,"variant":null,"text":"We stopped. Good slowing down!","file":"assets/airplane/voice/common/school.instructor.l3_stop.mp3"},
+    {"key":"common|school.instructor.l3_again","line_id":"school.instructor.l3_again","role":"instructor","airline":null,"variant":null,"text":"One more time! Hold THRUST, fast to the green!","file":"assets/airplane/voice/common/school.instructor.l3_again.mp3"},
+    {"key":"common|school.instructor.l3_fly","line_id":"school.instructor.l3_fly","role":"instructor","airline":null,"variant":null,"text":"This time, when it is green, tap ROTATE to fly!","file":"assets/airplane/voice/common/school.instructor.l3_fly.mp3"},
+    {"key":"common|school.instructor.l3_rotate","line_id":"school.instructor.l3_rotate","role":"instructor","airline":null,"variant":null,"text":"Green! Tap ROTATE!","file":"assets/airplane/voice/common/school.instructor.l3_rotate.mp3"},
+    {"key":"common|school.instructor.l3_done","line_id":"school.instructor.l3_done","role":"instructor","airline":null,"variant":null,"text":"We are flying! Going fast lets the wings lift us up!","file":"assets/airplane/voice/common/school.instructor.l3_done.mp3"},
+    {"key":"common|school.instructor.l4_intro","line_id":"school.instructor.l4_intro","role":"instructor","airline":null,"variant":null,"text":"We just took off! In the sky, the wheels go UP. Tap the LANDING GEAR button!","file":"assets/airplane/voice/common/school.instructor.l4_intro.mp3"},
+    {"key":"common|school.instructor.l4_up_ok","line_id":"school.instructor.l4_up_ok","role":"instructor","airline":null,"variant":null,"text":"Wheels up! Tucked away like a sleepy bird.","file":"assets/airplane/voice/common/school.instructor.l4_up_ok.mp3"},
+    {"key":"common|school.instructor.l4_remind_up","line_id":"school.instructor.l4_remind_up","role":"instructor","airline":null,"variant":null,"text":"Tap the LANDING GEAR button to put the wheels up!","file":"assets/airplane/voice/common/school.instructor.l4_remind_up.mp3"},
+    {"key":"common|school.instructor.l4_turn","line_id":"school.instructor.l4_turn","role":"instructor","airline":null,"variant":null,"text":"Let's fly around and come back to the airport.","file":"assets/airplane/voice/common/school.instructor.l4_turn.mp3"},
+    {"key":"common|school.instructor.l4_down","line_id":"school.instructor.l4_down","role":"instructor","airline":null,"variant":null,"text":"Look, the runway! Wheels go DOWN to land. Tap the LANDING GEAR button!","file":"assets/airplane/voice/common/school.instructor.l4_down.mp3"},
+    {"key":"common|school.instructor.l4_down_ok","line_id":"school.instructor.l4_down_ok","role":"instructor","airline":null,"variant":null,"text":"Three green lights. The wheels are down!","file":"assets/airplane/voice/common/school.instructor.l4_down_ok.mp3"},
+    {"key":"common|school.instructor.l4_remind_down","line_id":"school.instructor.l4_remind_down","role":"instructor","airline":null,"variant":null,"text":"We need our wheels to land! Tap the LANDING GEAR button!","file":"assets/airplane/voice/common/school.instructor.l4_remind_down.mp3"},
+    {"key":"common|school.instructor.l4_help","line_id":"school.instructor.l4_help","role":"instructor","airline":null,"variant":null,"text":"I will help you this time. Wheels down!","file":"assets/airplane/voice/common/school.instructor.l4_help.mp3"},
+    {"key":"common|school.instructor.l4_done","line_id":"school.instructor.l4_done","role":"instructor","airline":null,"variant":null,"text":"Touchdown! Wheels up in the sky, wheels down to land!","file":"assets/airplane/voice/common/school.instructor.l4_done.mp3"},
+    {"key":"cx|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"cx","variant":null,"text":"On the radio, our plane has a special name. We are Cathay four five one!","file":"assets/airplane/voice/cx/school.instructor.l5_intro.mp3"},
+    {"key":"hx|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"hx","variant":null,"text":"On the radio, our plane has a special name. We are Hong Kong Express two three seven!","file":"assets/airplane/voice/hx/school.instructor.l5_intro.mp3"},
+    {"key":"jl|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"jl","variant":null,"text":"On the radio, our plane has a special name. We are Japan Air seven two three!","file":"assets/airplane/voice/jl/school.instructor.l5_intro.mp3"},
+    {"key":"nh|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"nh","variant":null,"text":"On the radio, our plane has a special name. We are All Nippon eight eight two!","file":"assets/airplane/voice/nh/school.instructor.l5_intro.mp3"},
+    {"key":"zg|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"zg","variant":null,"text":"On the radio, our plane has a special name. We are Zip Air one zero five!","file":"assets/airplane/voice/zg/school.instructor.l5_intro.mp3"},
+    {"key":"ek|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"ek","variant":null,"text":"On the radio, our plane has a special name. We are Emirates three one one!","file":"assets/airplane/voice/ek/school.instructor.l5_intro.mp3"},
+    {"key":"as|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"as","variant":null,"text":"On the radio, our plane has a special name. We are Alaska six seven!","file":"assets/airplane/voice/as/school.instructor.l5_intro.mp3"},
+    {"key":"mu|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"mu","variant":null,"text":"On the radio, our plane has a special name. We are China Eastern seven three three!","file":"assets/airplane/voice/mu/school.instructor.l5_intro.mp3"},
+    {"key":"vn|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"vn","variant":null,"text":"On the radio, our plane has a special name. We are Vietnam five nine one!","file":"assets/airplane/voice/vn/school.instructor.l5_intro.mp3"},
+    {"key":"aa|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"aa","variant":null,"text":"On the radio, our plane has a special name. We are American two seven three!","file":"assets/airplane/voice/aa/school.instructor.l5_intro.mp3"},
+    {"key":"dl|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"dl","variant":null,"text":"On the radio, our plane has a special name. We are Delta four one two!","file":"assets/airplane/voice/dl/school.instructor.l5_intro.mp3"},
+    {"key":"ua|school.instructor.l5_intro","line_id":"school.instructor.l5_intro","role":"instructor","airline":"ua","variant":null,"text":"On the radio, our plane has a special name. We are United five five eight!","file":"assets/airplane/voice/ua/school.instructor.l5_intro.mp3"},
+    {"key":"common|school.instructor.l5_rule","line_id":"school.instructor.l5_rule","role":"instructor","airline":null,"variant":null,"text":"When you hear our name, tap ROGER. If it is a different plane, do not tap!","file":"assets/airplane/voice/common/school.instructor.l5_rule.mp3"},
+    {"key":"common|school.instructor.l5_yes","line_id":"school.instructor.l5_yes","role":"instructor","airline":null,"variant":null,"text":"Yes! That was us!","file":"assets/airplane/voice/common/school.instructor.l5_yes.mp3"},
+    {"key":"common|school.instructor.l5_good_skip","line_id":"school.instructor.l5_good_skip","role":"instructor","airline":null,"variant":null,"text":"Good listening! That was a different plane.","file":"assets/airplane/voice/common/school.instructor.l5_good_skip.mp3"},
+    {"key":"common|school.instructor.l5_not_us","line_id":"school.instructor.l5_not_us","role":"instructor","airline":null,"variant":null,"text":"Oops! That was a different plane, not us.","file":"assets/airplane/voice/common/school.instructor.l5_not_us.mp3"},
+    {"key":"common|school.instructor.l5_was_us","line_id":"school.instructor.l5_was_us","role":"instructor","airline":null,"variant":null,"text":"That was us! Tap ROGER!","file":"assets/airplane/voice/common/school.instructor.l5_was_us.mp3"},
+    {"key":"common|school.instructor.l5_done","line_id":"school.instructor.l5_done","role":"instructor","airline":null,"variant":null,"text":"Great radio work, Captain!","file":"assets/airplane/voice/common/school.instructor.l5_done.mp3"},
+    {"key":"common|school.center.call_a","line_id":"school.center.call_a","role":"center","airline":null,"variant":null,"text":"turn left, heading two seven zero.","file":"assets/airplane/voice/common/school.center.call_a.mp3"},
+    {"key":"common|school.center.call_b","line_id":"school.center.call_b","role":"center","airline":null,"variant":null,"text":"climb to flight level three nine zero.","file":"assets/airplane/voice/common/school.center.call_b.mp3"},
+    {"key":"common|school.center.call_c","line_id":"school.center.call_c","role":"center","airline":null,"variant":null,"text":"contact Tokyo Control, one two four decimal one.","file":"assets/airplane/voice/common/school.center.call_c.mp3"},
+    {"key":"common|school.center.call_d","line_id":"school.center.call_d","role":"center","airline":null,"variant":null,"text":"descend to flight level three one zero.","file":"assets/airplane/voice/common/school.center.call_d.mp3"},
+    {"key":"common|school.center.call_e","line_id":"school.center.call_e","role":"center","airline":null,"variant":null,"text":"turn right, heading zero nine zero.","file":"assets/airplane/voice/common/school.center.call_e.mp3"},
+    {"key":"common|school.captain.roger","line_id":"school.captain.roger","role":"captain","airline":null,"variant":null,"text":"Roger!","file":"assets/airplane/voice/common/school.captain.roger.mp3"},
+    {"key":"common|school.instructor.l6_intro","line_id":"school.instructor.l6_intro","role":"instructor","airline":null,"variant":null,"text":"Sometimes there is an emergency. A good pilot stays calm. Let's practice!","file":"assets/airplane/voice/common/school.instructor.l6_intro.mp3"},
+    {"key":"common|school.instructor.l6_cover","line_id":"school.instructor.l6_cover","role":"instructor","airline":null,"variant":null,"text":"See the yellow and black cover? Lift it up!","file":"assets/airplane/voice/common/school.instructor.l6_cover.mp3"},
+    {"key":"common|school.instructor.l6_press","line_id":"school.instructor.l6_press","role":"instructor","airline":null,"variant":null,"text":"Now press the red MAYDAY button!","file":"assets/airplane/voice/common/school.instructor.l6_press.mp3"},
+    {"key":"common|school.instructor.l6_fire","line_id":"school.instructor.l6_fire","role":"instructor","airline":null,"variant":null,"text":"Engine three is on fire! Stay calm, and tap PULL FIRE!","file":"assets/airplane/voice/common/school.instructor.l6_fire.mp3"},
+    {"key":"common|school.instructor.l6_out","line_id":"school.instructor.l6_out","role":"instructor","airline":null,"variant":null,"text":"The fire is out! You stayed calm.","file":"assets/airplane/voice/common/school.instructor.l6_out.mp3"},
+    {"key":"common|school.instructor.l6_done","line_id":"school.instructor.l6_done","role":"instructor","airline":null,"variant":null,"text":"You are an Emergency Hero! A real captain always stays calm.","file":"assets/airplane/voice/common/school.instructor.l6_done.mp3"}
   ]
 }

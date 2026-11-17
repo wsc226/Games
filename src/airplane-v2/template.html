@@ -200,11 +200,10 @@ body.sky #views{display:none}
 /* engine gauges + landing grid + guarded MAYDAY switch */
 #tk-eng{flex:none;height:100%;aspect-ratio:320/512;max-width:26vw;border-width:3px}
 #l-grid{display:none;grid-template-columns:repeat(3,1fr);gap:8px 10px;border:2px solid rgba(255,255,255,.75);border-radius:10px;padding:10px 10px 12px;flex:1;min-width:0}
-#mayday-col{display:none;flex:none;width:112px;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+#mayday-col{display:flex;flex:none;width:112px;flex-direction:column;align-items:center;justify-content:center;gap:6px;
   border:2px solid rgba(255,255,255,.75);border-radius:10px;padding:8px 6px;background:rgba(0,0,0,.06)}
 body.landing #k-grid,body.landing #ann-drawer{display:none}
 body.landing #l-grid{display:grid}
-body.landing #mayday-col{display:flex}
 #md-lbl{color:#8a0e0e}
 #guard{position:relative;width:96px;height:110px;perspective:520px}
 #md-btn{position:absolute;inset:9px;border-radius:12px;background:radial-gradient(circle at 40% 32%,#ff6a5a,#c01010 55%,#640404);
@@ -243,6 +242,77 @@ body.landing #ld-card{display:block}
 .korry.late{animation:late .45s ease-in-out infinite alternate;border-color:#ff3b3b}
 .korry.late .kbar-t{color:#ff6b6b;text-shadow:0 0 10px rgba(255,60,60,.95)}
 #rotate-b.late{background:#d01818!important;border-color:#ff8080!important;box-shadow:0 0 30px 8px rgba(255,40,40,.8)!important}
+
+/* ═══ FLIGHT SCHOOL ═══ */
+#gm-tabs{flex-wrap:wrap}
+.gm{min-width:150px}
+#fs-back{display:none;background:#1f6b3a}
+body.school #fs-back{display:grid}
+body.school #mission,body.school #stars,body.school #mode,body.school #stick-hint{display:none!important}
+#fs-card{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:25;display:none;min-width:240px;max-width:min(60%,520px);
+  background:rgba(6,20,40,.82);border:3px solid #ffd84d;border-radius:18px;padding:6px 18px 9px;text-align:center;color:#fff;pointer-events:none}
+body.school #fs-card{display:block}
+#fs-k{display:block;font-size:11px;letter-spacing:2px;color:#ffe08a;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fs-pic{font-size:46px;line-height:1.15;margin-top:2px}
+#fs-pic.word{font-size:30px;font-weight:900;letter-spacing:3px;color:#5cf08a;font-family:Menlo,monospace;text-shadow:0 0 12px rgba(80,240,130,.8);padding:6px 0}
+#fs-dots{display:flex;gap:7px;justify-content:center;margin-top:4px}
+#fs-dots i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.5)}
+#fs-dots i.on{background:#ffd84d;border-color:#fff3b0;box-shadow:0 0 8px rgba(255,216,77,.9)}
+#fs-hand{position:absolute;left:50%;top:55%;z-index:22;font-size:84px;pointer-events:none;display:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6))}
+#fs-hand.show{display:block}
+@keyframes fhU{0%{transform:translate(-50%,40px);opacity:0}20%{opacity:1}100%{transform:translate(-50%,-90px);opacity:0}}
+@keyframes fhD{0%{transform:translate(-50%,-90px);opacity:0}20%{opacity:1}100%{transform:translate(-50%,40px);opacity:0}}
+@keyframes fhL{0%{transform:translate(calc(-50% + 70px),0);opacity:0}20%{opacity:1}100%{transform:translate(calc(-50% - 110px),0);opacity:0}}
+@keyframes fhR{0%{transform:translate(calc(-50% - 70px),0);opacity:0}20%{opacity:1}100%{transform:translate(calc(-50% + 110px),0);opacity:0}}
+#fs-hand.up{animation:fhU 1.4s ease-in-out infinite}#fs-hand.down{animation:fhD 1.4s ease-in-out infinite}
+#fs-hand.left{animation:fhL 1.4s ease-in-out infinite}#fs-hand.right{animation:fhR 1.4s ease-in-out infinite}
+#fs-roger{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:27;width:min(150px,30vh);height:min(150px,30vh);border-radius:50%;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:44px;color:#fff;
+  background:radial-gradient(circle at 40% 30%,#5cf08a,#1d9a4a 60%,#0d5a28);border:5px solid #eaffef;box-shadow:0 6px 18px rgba(0,0,0,.55)}
+#fs-roger b{font-size:20px;letter-spacing:2px}
+#fs-roger.show{display:flex}
+body:has(#fs-roger.show) #subtitle{bottom:calc(min(150px,30vh) + 28px)}
+#fs-roger:active{transform:translateX(-50%) scale(.92)}
+@keyframes fsg{from{box-shadow:0 0 0 rgba(255,216,77,0)}to{box-shadow:0 0 30px 10px rgba(255,216,77,.95)}}
+#fs-roger.fs-glow{animation:fsg .5s ease-in-out infinite alternate}
+#guard.fs-hint #md-cover{animation:fsg .5s ease-in-out infinite alternate}
+body.fs-pfd #sky-panel>.du:first-child{animation:fsg .5s ease-in-out infinite alternate;border-color:#ffd84d}
+#fs-menu,#fs-done{position:absolute;inset:0;z-index:90;display:none;flex-direction:column;align-items:center;overflow-y:auto;touch-action:pan-y;
+  background:radial-gradient(ellipse 110% 70% at 50% 0%,rgba(30,80,150,.9),rgba(6,12,30,.94) 70%);padding:14px 14px 24px;color:#fff}
+#fs-menu.show,#fs-done.show{display:flex}
+#fs-mh{width:100%;max-width:820px;display:flex;align-items:center;gap:12px}
+#fs-mh h1{flex:1;text-align:center;font-size:26px;letter-spacing:4px;font-weight:900;text-shadow:0 2px 20px rgba(255,216,77,.5);padding-right:60px}
+.fs-board{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}
+.fs-wings svg{width:220px;height:66px;display:block}
+.fs-wings.gold svg{filter:drop-shadow(0 0 12px rgba(255,207,58,.8))}
+.fs-slots{display:flex;gap:8px}
+.fs-slots span{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:17px;font-weight:900;color:rgba(255,255,255,.45);
+  border:3px dashed rgba(255,255,255,.35)}
+.fs-slots span.got{font-size:26px;border:3px solid #fff3b0;background:radial-gradient(circle at 40% 30%,#ffe98a,#e8a800);box-shadow:0 0 12px rgba(255,210,60,.7)}
+#fs-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:820px}
+.fs-tile{position:relative;background:linear-gradient(160deg,#ffffff,#e4ecf7);border-radius:20px;min-height:150px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;padding:12px 8px;box-shadow:0 4px 16px rgba(0,0,0,.45);color:#1a2a44;transition:transform .12s}
+.fs-tile:active{transform:scale(.93)}
+.fs-tile .fs-e{font-size:52px;line-height:1}
+.fs-tile b{font-size:14px;letter-spacing:1px;text-align:center;line-height:1.2}
+.fs-tile small{font-size:11px;color:#56657a;text-align:center}
+.fs-tile .fs-n{position:absolute;top:8px;left:10px;width:30px;height:30px;border-radius:50%;background:#1d4d9a;color:#fff;font-weight:900;display:grid;place-items:center}
+.fs-tile.got::after{content:'⭐';position:absolute;top:6px;right:8px;font-size:26px}
+.fs-tile.got{background:linear-gradient(160deg,#fffbe6,#ffe9a6)}
+#fs-done{justify-content:center;gap:12px;text-align:center}
+#fs-st{width:170px;height:170px;border-radius:50%;display:grid;place-items:center;font-size:96px;
+  background:radial-gradient(circle at 40% 30%,#fff1a8,#f0b400 70%);border:6px solid #fff;box-shadow:0 0 40px rgba(255,210,60,.8)}
+@keyframes pop{0%{transform:scale(.2) rotate(-30deg)}70%{transform:scale(1.15) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
+#fs-done.show #fs-st{animation:pop .7s cubic-bezier(.3,1.5,.6,1)}
+#fs-dt{font-size:44px;font-weight:900;letter-spacing:4px;color:#ffd84d;text-shadow:0 0 24px rgba(255,216,77,.6)}
+#fs-done.wings #fs-dt{font-size:52px}
+#fs-done.wings .fs-wings svg{width:320px;height:96px}
+#fs-dn{font-size:16px;letter-spacing:2px;font-weight:800;color:rgba(255,255,255,.8)}
+#fs-dbtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+#fs-dbtns button{font-size:17px;font-weight:900;letter-spacing:2px;color:#fff;border-radius:16px;padding:16px 24px;min-height:62px;min-width:140px}
+#fs-again{background:#0a5c78}#fs-next{background:#1f7a3a}#fs-list{background:#3a1660}
+@media (orientation:portrait){ #fs-tiles{grid-template-columns:repeat(2,1fr)} #fs-card{top:64px;max-width:80%} }
+@media (max-width:600px){ #fs-mh h1{font-size:19px} .fs-tile{min-height:120px} .fs-tile .fs-e{font-size:40px} #fs-st{width:130px;height:130px;font-size:70px} }
 
 /* ═══ SKY CHALLENGE PANEL ═══ */
 #sky-panel{height:min(46vh,400px);background:linear-gradient(180deg,#2b2f35,#1c1f24);border-top:3px solid #0d0f12;
@@ -339,6 +409,7 @@ body.sky #stars{display:block}
     <button class="gm on" id="gm-takeoff"><b>🛫 TAKEOFF</b><span>Gate · pushback · taxi · fly to cruise</span></button>
     <button class="gm" id="gm-sky"><b>⛈ SKY CHALLENGE</b><span>Pilot view · storms · ATC · traffic</span></button>
     <button class="gm" id="gm-land"><b>🛬 LANDING</b><span>Final approach · flare · MAYDAY</span></button>
+    <button class="gm" id="gm-school"><b>🎓 FLIGHT SCHOOL</b><span>6 easy lessons · earn Pilot Wings</span></button>
   </div>
   <div id="a-grid"></div>
 </div>
@@ -363,6 +434,7 @@ body.sky #stars{display:block}
     <div class="corner-tools">
       <button class="corner-btn" id="nav-sim" aria-label="Back to airline menu">⌂</button>
       <button class="corner-btn" id="sound-sim" aria-label="Turn sound off" aria-pressed="false">🔊</button>
+      <button class="corner-btn" id="fs-back" aria-label="Flight School lessons">🎓</button>
     </div>
     <div id="views">
       <button class="vb on" data-v="chase">✈️<small>OUTSIDE</small></button>
@@ -381,6 +453,9 @@ body.sky #stars{display:block}
     <div class="hud" id="taxi-l">TAXIING</div>
     <div id="ld-card"><small id="ld-k">FINAL APPROACH</small><b id="ld-t">Get ready…</b><div class="bar"><i id="ld-bar"></i></div></div>
     <div id="ld-ra"></div>
+    <div id="fs-card"><small id="fs-k">FLIGHT SCHOOL</small><div id="fs-pic"></div><div id="fs-dots"></div></div>
+    <div id="fs-hand">👆</div>
+    <button id="fs-roger">📻<b>ROGER!</b></button>
     <div id="end-ov">
       <div id="end-t">WELL DONE</div>
       <div id="end-s"></div>
@@ -465,6 +540,20 @@ body.sky #stars{display:block}
       </div>
       <button id="ad-close">CLOSE ▾</button>
     </div>
+  </div>
+
+  <!-- FLIGHT SCHOOL menu + sticker screen (cover the whole sim) -->
+  <div id="fs-menu">
+    <div id="fs-mh"><button class="corner-btn" id="fs-home" aria-label="Back to airline menu">⌂</button><h1>🎓 FLIGHT SCHOOL</h1></div>
+    <div class="fs-board" id="fs-board"></div>
+    <div id="fs-tiles"></div>
+  </div>
+  <div id="fs-done">
+    <div id="fs-st">⭐</div>
+    <div id="fs-dt">STICKER!</div>
+    <div id="fs-dn"></div>
+    <div class="fs-board" id="fs-dboard"></div>
+    <div id="fs-dbtns"><button id="fs-again">AGAIN ↻</button><button id="fs-next">NEXT LESSON →</button><button id="fs-list">LESSONS 🎓</button></div>
   </div>
 
   <!-- SKY CHALLENGE INSTRUMENTS -->

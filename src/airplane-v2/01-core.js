@@ -37,7 +37,7 @@ const tod = () => { const h = new Date().getHours(); return h < 12 && h >= 5 ? '
 
 /* ═══ STATE (shared) ═══ */
 let AL = null;            // chosen airline
-let GAME = 'takeoff';     // 'takeoff' | 'sky' | 'landing'
+let GAME = 'takeoff';     // 'takeoff' | 'sky' | 'landing' | 'school'
 let level = 'easy';
 
 /* ═══ AUDIO (synth fallbacks + optional files) ═══ */
@@ -168,7 +168,7 @@ function turbulenceSound(on) {
 const voiceEl = new Audio();
 let voiceSeq = 0;
 const ROLE_LABEL = { captain: 'CAPTAIN', first_officer: 'FIRST OFFICER', purser: 'CABIN CREW', ramp: 'GROUND CREW',
-  ground: 'GROUND CONTROL', tower: 'TOWER', center: 'ATC CENTER', tcas: 'TCAS' };
+  ground: 'GROUND CONTROL', tower: 'TOWER', center: 'ATC CENTER', tcas: 'TCAS', gpws: 'GPWS', rescue: 'FIRE RESCUE', instructor: 'INSTRUCTOR' };
 let subT = null;
 function subtitle(role, text) {
   const s = $('subtitle'); s.innerHTML = `<b>${ROLE_LABEL[role] || role}</b>${text}`; s.classList.add('show');

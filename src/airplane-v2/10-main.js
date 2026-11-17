@@ -2,7 +2,7 @@
 RT.others = [];
 let bound = false;
 function setLvl(l) { level = l; $('m-easy').classList.toggle('on', l === 'easy'); $('m-norm').classList.toggle('on', l === 'normal');
-  if (GAME === 'takeoff') updBtns(); else if (GAME === 'landing') return; else { SKY.autoLevel = l === 'easy'; $('sb-level').classList.toggle('on', SKY.autoLevel); } }
+  if (GAME === 'takeoff') updBtns(); else if (GAME === 'landing' || GAME === 'school') return; else { SKY.autoLevel = l === 'easy'; $('sb-level').classList.toggle('on', SKY.autoLevel); } }
 function bindAll() {
   hold($('k-push'), hPushS, hPushE); hold($('k-thrust'), hThrS, hThrE);
   tap($('k-flaps'), hFlaps); tap($('k-gear'), hGear); tap($('k-belt'), hBelt); tap($('k-ann'), hAnn);
@@ -14,9 +14,11 @@ function bindAll() {
   $$('.vb').forEach(b => tap(b, () => { initA(); setView(b.dataset.v); }));
   bindSkyInput();
   L_KEYS.forEach(id => tap($(id), hL(id))); tap($('md-cover'), hCover); tap($('md-btn'), hMayday);
+  fsBindCapture();
   new ResizeObserver(resize).observe($('scene'));
 }
 function stopAll() {
+  if (document.body.classList.contains('school')) fsTeardown();
   clearTimers(); cancelVoice(); if (document.body.classList.contains('landing')) ldTeardown(); tkReset(); turbulenceSound(false);
   $('b-fly').textContent = 'FLY AGAIN ↻';
   if (GAME === 'sky' || document.body.classList.contains('sky')) skyTeardown();
@@ -30,7 +32,7 @@ function startGame(mode) {
     if (RT.plane) W.scene.remove(RT.plane.root);
     RT.plane = buildPlane(AL, { interior: true }); RT.plane.al = AL; W.scene.add(RT.plane.root);
   }
-  if (mode === 'takeoff') tkStart(); else if (mode === 'landing') ldStart(); else skyStart();
+  if (mode === 'takeoff') tkStart(); else if (mode === 'landing') ldStart(); else if (mode === 'school') fsStart(); else skyStart();
   resize(); startLoop();
 }
 function backToMenu() { stopAll(); stopLoop(); $('scr-sim').classList.add('gone'); $('scr-air').classList.remove('gone'); }
@@ -52,12 +54,13 @@ function grid() {
   AIRLINES.forEach(al => { const t = document.createElement('button'); t.className = 'at';
     t.innerHTML = `<img src="${LOGOS[al.id]}" alt=""><div class="at-n">${al.name}</div>`; tap(t, () => pick(al)); g.appendChild(t); });
 }
-function setGameTab(m) { GAME = m; $('gm-takeoff').classList.toggle('on', m === 'takeoff'); $('gm-sky').classList.toggle('on', m === 'sky'); $('gm-land').classList.toggle('on', m === 'landing'); }
-tap($('gm-takeoff'), () => setGameTab('takeoff')); tap($('gm-sky'), () => setGameTab('sky')); tap($('gm-land'), () => setGameTab('landing'));
+function setGameTab(m) { GAME = m; $('gm-takeoff').classList.toggle('on', m === 'takeoff'); $('gm-sky').classList.toggle('on', m === 'sky'); $('gm-land').classList.toggle('on', m === 'landing'); $('gm-school').classList.toggle('on', m === 'school'); }
+tap($('gm-takeoff'), () => setGameTab('takeoff')); tap($('gm-sky'), () => setGameTab('sky')); tap($('gm-land'), () => setGameTab('landing')); tap($('gm-school'), () => setGameTab('school'));
 $('nav-air').addEventListener('click', () => location.href = 'index.html');
 setMuted(muted);
 if (/[?&]mode=sky/.test(location.search)) setGameTab('sky');
 if (/[?&]mode=landing/.test(location.search)) setGameTab('landing');
+if (/[?&]mode=school/.test(location.search)) setGameTab('school');
 grid();
 // debug hook for testing
-window.__air = { RT, W, SKY, TK, get ST() { return ST; }, pick: id => pick(AIRLINES.find(a => a.id === id)), setGameTab, say, nextCh: k => nextChallenge(k), get LD() { return LD; }, get FX() { return FX; }, ldCrash: r => ldCrash(r), step: (n = 20, dt = .05) => { for (let i = 0; i < n; i++) advance(dt); } };
+window.__air = { RT, W, SKY, TK, get ST() { return ST; }, pick: id => pick(AIRLINES.find(a => a.id === id)), setGameTab, say, nextCh: k => nextChallenge(k), get LD() { return LD; }, get FX() { return FX; }, get FS() { return FS; }, fsGo: n => fsGo(n), fsMenu: () => fsMenu(), ldCrash: r => ldCrash(r), step: (n = 20, dt = .05) => { for (let i = 0; i < n; i++) advance(dt); } };
