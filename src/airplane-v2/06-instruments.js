@@ -52,6 +52,11 @@ function drawPFD(g, d) {
     g.beginPath(); g.moveTo(92, y); g.lineTo(104, y); g.stroke(); if (v % 20 === 0) txt(g, String(v), 82, y, 17, '#fff', 'right'); }
   if (d.selSpd) { const y = clamp(cy - (d.selSpd - d.ias) * kpp, 122, 378); g.strokeStyle = COL.mag; g.lineWidth = 3; g.beginPath(); g.moveTo(104, y - 9); g.lineTo(96, y - 9); g.lineTo(96, y + 9); g.lineTo(104, y + 9); g.stroke(); }
   g.restore();
+  // V-speed bugs (V1 / VR / V2) beside the speed tape
+  if (d.vspd) { g.save(); g.beginPath(); g.rect(100, 118, 30, 264); g.clip();
+    [['1', d.vspd.v1], ['R', d.vspd.vr], ['2', d.vspd.v2]].forEach(([l, v]) => { const y = cy - (v - d.ias) * kpp;
+      g.strokeStyle = COL.green || '#3ee06a'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(104, y); g.lineTo(112, y); g.stroke();
+      txt(g, l, 120, y, 15, COL.green || '#3ee06a'); }); g.restore(); }
   g.fillStyle = '#000'; g.strokeStyle = '#fff'; g.lineWidth = 2; rrect(g, 24, cy - 18, 78, 36, 4); g.fill(); g.stroke();
   txt(g, String(Math.round(d.ias)), 94, cy + 1, 26, '#fff', 'right');
   txt(g, d.selSpd ? String(d.selSpd) : '', 66, 100, 20, COL.mag);

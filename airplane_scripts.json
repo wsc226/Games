@@ -278,6 +278,14 @@
       "text": "Flaps ten. Green light."
     },
     {
+      "id": "takeoff.first_officer.remind_flaps10",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "runway",
+      "trigger": "Reminder: FLAPS 10 not set in time on the runway (button flashes red).",
+      "text": "Captain, set flaps ten for takeoff."
+    },
+    {
       "id": "takeoff.captain.crew_seats",
       "mode": "takeoff",
       "role": "captain",
@@ -316,7 +324,7 @@
       "mode": "takeoff",
       "role": "first_officer",
       "phase": "takeoff_roll",
-      "trigger": "Speed passes 68%.",
+      "trigger": "Speed reaches V1 (145 kt).",
       "text": "V one."
     },
     {
@@ -324,15 +332,23 @@
       "mode": "takeoff",
       "role": "first_officer",
       "phase": "takeoff_roll",
-      "trigger": "Speed enters the green Vr zone.",
+      "trigger": "Speed reaches VR (158 kt), the green ROTATE zone.",
       "text": "Rotate."
+    },
+    {
+      "id": "takeoff.first_officer.v2",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "airborne",
+      "trigger": "Speed reaches V2 (168 kt) just after liftoff.",
+      "text": "V two."
     },
     {
       "id": "takeoff.first_officer.positive_rate",
       "mode": "takeoff",
       "role": "first_officer",
       "phase": "airborne",
-      "trigger": "Wheels leave the runway.",
+      "trigger": "About 3 seconds after liftoff, plane climbing.",
       "text": "Positive rate."
     },
     {
@@ -342,6 +358,22 @@
       "phase": "airborne",
       "trigger": "Player presses LDG GEAR in the air.",
       "text": "Gear up."
+    },
+    {
+      "id": "takeoff.first_officer.remind_gear",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "airborne",
+      "trigger": "Reminder: LDG GEAR not raised in time after liftoff (button flashes red).",
+      "text": "Captain, gear up, please!"
+    },
+    {
+      "id": "takeoff.first_officer.remind_flaps_up",
+      "mode": "takeoff",
+      "role": "first_officer",
+      "phase": "climb",
+      "trigger": "Reminder: FLAPS not raised in time during the climb (button flashes red).",
+      "text": "Captain, flaps up now."
     },
     {
       "id": "takeoff.tower.contact_departure",
@@ -651,6 +683,7 @@
     {"key":"dl|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"dl","variant":null,"text":"Delta four one two, runway two eight, line up and wait.","file":"assets/airplane/voice/dl/takeoff.tower.line_up.mp3"},
     {"key":"ua|takeoff.tower.line_up","line_id":"takeoff.tower.line_up","role":"tower","airline":"ua","variant":null,"text":"United five five eight, runway one five left, line up and wait.","file":"assets/airplane/voice/ua/takeoff.tower.line_up.mp3"},
     {"key":"common|takeoff.first_officer.flaps_10","line_id":"takeoff.first_officer.flaps_10","role":"first_officer","airline":null,"variant":null,"text":"Flaps ten. Green light.","file":"assets/airplane/voice/common/takeoff.first_officer.flaps_10.mp3"},
+    {"key":"common|takeoff.first_officer.remind_flaps10","line_id":"takeoff.first_officer.remind_flaps10","role":"first_officer","airline":null,"variant":null,"text":"Captain, set flaps ten for takeoff.","file":"assets/airplane/voice/common/takeoff.first_officer.remind_flaps10.mp3"},
     {"key":"common|takeoff.captain.crew_seats","line_id":"takeoff.captain.crew_seats","role":"captain","airline":null,"variant":null,"text":"Cabin crew, please be seated for takeoff.","file":"assets/airplane/voice/common/takeoff.captain.crew_seats.mp3"},
     {"key":"cx|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"cx","variant":null,"text":"Cathay four five one, wind calm, runway two five left, cleared for takeoff.","file":"assets/airplane/voice/cx/takeoff.tower.takeoff_clearance.mp3"},
     {"key":"hx|takeoff.tower.takeoff_clearance","line_id":"takeoff.tower.takeoff_clearance","role":"tower","airline":"hx","variant":null,"text":"Hong Kong Express two three seven, wind calm, runway two five left, cleared for takeoff.","file":"assets/airplane/voice/hx/takeoff.tower.takeoff_clearance.mp3"},
@@ -668,8 +701,11 @@
     {"key":"common|takeoff.first_officer.eighty_knots","line_id":"takeoff.first_officer.eighty_knots","role":"first_officer","airline":null,"variant":null,"text":"Eighty knots.","file":"assets/airplane/voice/common/takeoff.first_officer.eighty_knots.mp3"},
     {"key":"common|takeoff.first_officer.v1","line_id":"takeoff.first_officer.v1","role":"first_officer","airline":null,"variant":null,"text":"V one.","file":"assets/airplane/voice/common/takeoff.first_officer.v1.mp3"},
     {"key":"common|takeoff.first_officer.rotate","line_id":"takeoff.first_officer.rotate","role":"first_officer","airline":null,"variant":null,"text":"Rotate.","file":"assets/airplane/voice/common/takeoff.first_officer.rotate.mp3"},
+    {"key":"common|takeoff.first_officer.v2","line_id":"takeoff.first_officer.v2","role":"first_officer","airline":null,"variant":null,"text":"V two.","file":"assets/airplane/voice/common/takeoff.first_officer.v2.mp3"},
     {"key":"common|takeoff.first_officer.positive_rate","line_id":"takeoff.first_officer.positive_rate","role":"first_officer","airline":null,"variant":null,"text":"Positive rate.","file":"assets/airplane/voice/common/takeoff.first_officer.positive_rate.mp3"},
     {"key":"common|takeoff.captain.gear_up","line_id":"takeoff.captain.gear_up","role":"captain","airline":null,"variant":null,"text":"Gear up.","file":"assets/airplane/voice/common/takeoff.captain.gear_up.mp3"},
+    {"key":"common|takeoff.first_officer.remind_gear","line_id":"takeoff.first_officer.remind_gear","role":"first_officer","airline":null,"variant":null,"text":"Captain, gear up, please!","file":"assets/airplane/voice/common/takeoff.first_officer.remind_gear.mp3"},
+    {"key":"common|takeoff.first_officer.remind_flaps_up","line_id":"takeoff.first_officer.remind_flaps_up","role":"first_officer","airline":null,"variant":null,"text":"Captain, flaps up now.","file":"assets/airplane/voice/common/takeoff.first_officer.remind_flaps_up.mp3"},
     {"key":"cx|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"cx","variant":null,"text":"Cathay four five one, contact departure. Good day.","file":"assets/airplane/voice/cx/takeoff.tower.contact_departure.mp3"},
     {"key":"hx|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"hx","variant":null,"text":"Hong Kong Express two three seven, contact departure. Good day.","file":"assets/airplane/voice/hx/takeoff.tower.contact_departure.mp3"},
     {"key":"jl|takeoff.tower.contact_departure","line_id":"takeoff.tower.contact_departure","role":"tower","airline":"jl","variant":null,"text":"Japan Air seven two three, contact departure. Good day.","file":"assets/airplane/voice/jl/takeoff.tower.contact_departure.mp3"},

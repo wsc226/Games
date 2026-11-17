@@ -197,6 +197,16 @@ body.sky #views{display:none}
 #ad-close{margin:8px auto 0;font-size:14px;font-weight:800;letter-spacing:2px;color:#3a352d;padding:10px 30px;min-height:44px;border:2px solid #6a6459;border-radius:8px}
 .korry.done .kbar-t{color:#8a8a55}
 .korry.done{opacity:.55;pointer-events:none}
+/* PFD on the flight-control panel */
+#p-body{display:flex;gap:10px;align-items:stretch;height:calc(100% - 25px);margin:0 14px}
+#tk-pfd{flex:none;height:100%;max-width:42vw;border-width:3px}
+#p-body #k-grid{flex:1;margin:0;min-width:0}
+/* LATE: crucial button not pressed in time -> flash red */
+@keyframes late{from{background:linear-gradient(160deg,#2a2a2a,#0c0c0c);box-shadow:0 3px 5px rgba(0,0,0,.55)}
+  to{background:linear-gradient(160deg,#c62020,#7a0606);box-shadow:0 0 22px 6px rgba(255,40,40,.85)}}
+.korry.late{animation:late .45s ease-in-out infinite alternate;border-color:#ff3b3b}
+.korry.late .kbar-t{color:#ff6b6b;text-shadow:0 0 10px rgba(255,60,60,.95)}
+#rotate-b.late{background:#d01818!important;border-color:#ff8080!important;box-shadow:0 0 30px 8px rgba(255,40,40,.8)!important}
 
 /* ═══ SKY CHALLENGE PANEL ═══ */
 #sky-panel{height:min(46vh,400px);background:linear-gradient(180deg,#2b2f35,#1c1f24);border-top:3px solid #0d0f12;
@@ -243,6 +253,9 @@ body.sky #stars{display:block}
   .vb{width:52px;height:50px;font-size:18px}
   #panel{height:300px}
   .korry{height:70px}
+  #p-body{margin:0 4px;gap:6px}
+  #p-body #k-grid{grid-template-columns:repeat(2,1fr);gap:4px 6px;padding:6px}
+  #p-body .korry{height:52px}
   .klbl{font-size:13px}
   #fb{font-size:48px}
   #sky-panel{height:min(40vh,300px);padding:4px;gap:4px}
@@ -357,6 +370,8 @@ body.sky #stars{display:block}
   <div id="panel">
     <div class="screw"></div><div class="screw"></div><div class="screw"></div><div class="screw"></div>
     <div id="p-title">FLIGHT CONTROL</div>
+    <div id="p-body">
+    <div class="du" id="tk-pfd"><canvas id="pfd-tk" width="512" height="512"></canvas></div>
     <div id="k-grid">
       <div class="kcell"><div class="klbl">PUSH<br>BACK</div>
         <button class="korry lkd" id="k-push"><div class="kbar"><div class="kbar-fill" id="pf"></div><span class="kbar-t">PUSH</span></div></button></div>
@@ -370,6 +385,7 @@ body.sky #stars{display:block}
         <button class="korry lkd" id="k-belt"><div class="kbar"><span class="kbar-t" id="kt-belt">ON</span></div></button></div>
       <div class="kcell"><div class="klbl">CABIN<br>PA</div>
         <button class="korry lkd" id="k-ann"><div class="kbar"><span class="kbar-t">SPEAK</span></div></button></div>
+    </div>
     </div>
     <div id="ann-drawer">
       <div id="ad-title">CABIN ANNOUNCEMENTS</div>

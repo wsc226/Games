@@ -7,7 +7,8 @@ let done = {};
 let pushProg = 0, thrustProg = 0, vrOn = false, alt = 0;
 let pushT = null, thrustT = null, decayT = null, beepT = null, altT = null;
 let pushHeld = false, thrustHeld = false, wrongN = {}, wrongLast = null;
-const TK = { speed: 0, yBase: 0, pitch: 0, pitchT: 0, vx: 0, callouts: {}, tug: null, bridge: null, clouds: null, deck: null, flapsCmd: 0, gearCmd: 0, ctlCheck: 0 };
+const TK = { speed: 0, yBase: 0, pitch: 0, pitchT: 0, vx: 0, callouts: {}, tug: null, bridge: null, clouds: null, deck: null, flapsCmd: 0, gearCmd: 0, ctlCheck: 0, ias: 0, lateTok: 0 };
+const VSPD = { v1: 145, vr: 158, v2: 168 }, KT_PER = 2.03;   // knots per % thrust on the roll (VR zone 78% = 158 kt)
 const PUSH_CURVE = new THREE.CubicBezierCurve3(new THREE.Vector3(-150, 0, -300), new THREE.Vector3(-150, 0, -245), new THREE.Vector3(-150, 0, -205), new THREE.Vector3(-110, 0, -205));
 
 function setHeadingFromNose(root, d) { root.rotation.y = Math.atan2(-d.z, d.x); }
@@ -44,13 +45,15 @@ function tkTick(dt, t) {
   else { st.ail = st.elev = st.rud = st.spoil = 0; }
   // takeoff roll
   if (ST === S.ROLL) { TK.speed = thrustProg * .85; P.root.position.x += TK.speed * dt; RT.shake = thrustProg / 100 * .6;
-    $('spd-kt').textContent = Math.round(thrustProg * 1.85); st.n1 = .3 + thrustProg / 100 * .68;
-    callout(25, 'takeoff.first_officer.thrust_set'); callout(45, 'takeoff.first_officer.eighty_knots'); callout(68, 'takeoff.first_officer.v1');
+    $('spd-kt').textContent = Math.round(thrustProg * KT_PER); st.n1 = .3 + thrustProg / 100 * .68;
+    callout(25, 'takeoff.first_officer.thrust_set'); callout(45, 'takeoff.first_officer.eighty_knots'); callout(VSPD.v1 / KT_PER, 'takeoff.first_officer.v1');
     if (P.root.position.x > 3300) doRotate(); }
   if ([S.AIRB, S.CLIMB, S.CLEAN, S.CRUISE, S.END].includes(ST)) {
     RT.shake = Math.max(0, RT.shake - dt);
     TK.pitch = damp(TK.pitch, TK.pitchT, 1.2, dt); P.root.rotation.z = TK.pitch * DEG;
-    if (ST === S.AIRB) { TK.vx = damp(TK.vx, 85, 1, dt); if (TK.pitch > 7) P.root.position.y = Math.min(260, P.root.position.y + 9 * dt); }
+    if (ST === S.AIRB) { TK.ias = Math.min(176, TK.ias + 6 * dt); if (TK.ias >= VSPD.v2 && !TK.callouts.v2) { TK.callouts.v2 = 1; say('takeoff.first_officer.v2'); }
+      TK.vx = damp(TK.vx, 85, 1, dt); if (TK.pitch > 7) P.root.position.y = Math.min(260, P.root.position.y + 9 * dt);
+      $('hud-alt').textContent = String(Math.round(P.root.position.y * 3.28)).padStart(5, '0') + ' FT'; }
     else { const k = alt / 35000; TK.vx = damp(TK.vx, lerp(95, 260, k), .6, dt); P.root.position.y = damp(P.root.position.y, TK.yBase + alt * .0457, 3, dt);
       TK.pitchT = alt >= 35000 ? 2 : k > .85 ? 5 : 12; }
     P.root.position.x += TK.vx * dt;
@@ -76,7 +79,9 @@ function tkTick(dt, t) {
   P.cockpitLight.intensity = RT.view === 'cockpit' ? 6 + (W.envK || 0) * 6 : 0;
   if (!RT.cmpT || RT.t - RT.cmpT > .25) { RT.cmpT = RT.t; const h = Math.round(wrapDeg(AL.hdg - P.root.rotation.y / DEG)) % 360; $('cmp-b').textContent = String(h).padStart(3, '0') + '°'; $('cmp-p').textContent = ['N','NE','E','SE','S','SW','W','NW'][Math.round(h / 45) % 8]; }
   bulkT -= dt; if (bulkT <= 0 && cabinOn) { bulkT = 1; P.drawBulkhead(alt, phaseName()); }
-  RT.instrT -= dt; if (RT.instrT <= 0 && RT.view === 'cockpit') { RT.instrT = .08; refreshInstruments(tkInstr()); }
+  RT.instrT -= dt; if (RT.instrT <= 0) { RT.instrT = .08; const d = tkInstr();
+    if (RT.view === 'cockpit') refreshInstruments(d); else drawPFD(INST.c.pfd.getContext('2d'), d.pfd);
+    if (!TK.pfdCtx) TK.pfdCtx = $('pfd-tk').getContext('2d'); TK.pfdCtx.drawImage(INST.c.pfd, 0, 0); }
   const nOn = st.n1 > 0 ? st.n1 : 0; engineSet(ST === S.AIR ? 0 : nOn);
 }
 function phaseName() { return { GATE: 'Boarding', DOORS: 'Boarding complete', PUSHRDY: 'Ready for pushback', PUSHING: 'Pushing back', WELRDY: 'Engines starting',
@@ -85,15 +90,17 @@ function phaseName() { return { GATE: 'Boarding', DOORS: 'Boarding complete', PU
 function tkInstr() {
   const P = RT.plane, hdg = wrapDeg(AL.hdg - P.root.rotation.y / DEG);
   const air = [S.AIRB, S.CLIMB, S.CLEAN, S.CRUISE, S.END].includes(ST);
-  const ias = air ? Math.min(290, 165 + alt / 300) : ST === S.ROLL ? thrustProg * 1.85 : 0;
+  const ias = ST === S.AIRB ? TK.ias : air ? Math.min(290, Math.max(TK.ias, 172 + alt / 300)) : ST === S.ROLL ? thrustProg * KT_PER
+    : ST === S.TAXI ? 16 : ST === S.PUSHING ? 3 : 0;
   const n1 = P.state.n1 * 100;
   return {
     pfd: { pitch: TK.pitch, roll: 0, ias,
       mach: alt / 35000 * .85, alt: ST === S.AIRB ? (P.root.position.y * 3.28) : alt, vs: air && alt > 0 && alt < 35000 ? 3000 : ST === S.AIRB ? 1500 : 0,
-      hdg, selAlt: 35000, selSpd: alt > 10000 ? 290 : 160, selHdg: AL.hdg, fma: ['THR REF', 'TO/GA', 'TO/GA'] },
+      hdg, selAlt: 35000, selSpd: alt > 10000 ? 290 : VSPD.v2, selHdg: AL.hdg, fma: ['THR REF', 'TO/GA', 'TO/GA'],
+      vspd: air && alt > 3000 ? null : VSPD },
     nd: { hdg, range: 20, course: AL.hdg, wp: AL.apt + 'D1', gs: ias, tas: ias, storms: [], traffic: [] },
     eicas: { n1: [n1, n1, n1, n1], gear: P.state.gear, flaps: P.state.flaps, msgs: beltOn ? [{ t: 'SEATBELTS ON', c: '#fff' }] : [] },
-    mcp: { spd: alt > 10000 ? 290 : 160, hdg: AL.hdg, vs: '----', alt: 35000 },
+    mcp: { spd: alt > 10000 ? 290 : VSPD.v2, hdg: AL.hdg, vs: '----', alt: 35000 },
   };
 }
 function callout(th, id) { if (thrustProg >= th && !TK.callouts[id]) { TK.callouts[id] = 1; say(id); } }
@@ -110,7 +117,14 @@ function wrong(act) {
     if (b && !b.classList.contains('lkd')) { b.classList.add('guide'); later(3200, () => { if (level !== 'easy') b.classList.remove('guide'); }); } wrongN[act] = 0; }
 }
 const KEYS = ['k-push', 'k-thrust', 'k-flaps', 'k-gear', 'k-belt', 'k-ann'];
-function lockAll() { KEYS.forEach(id => { const b = $(id); b.classList.add('lkd'); b.classList.remove('guide', 'held'); }); }
+function lockAll() { TK.lateTok++; KEYS.forEach(id => { const b = $(id); b.classList.add('lkd'); b.classList.remove('guide', 'held', 'late'); }); }
+/* crucial button not pressed in time: flash red + caution chime + first-officer reminder (repeats) */
+function remind(id, line, extra = 0) {
+  const tok = TK.lateTok;
+  const fire = () => { if (tok !== TK.lateTok) return; const b = $(id); b.classList.remove('guide'); b.classList.add('late');
+    sfx('master_caution'); say(line); later(10000, fire); };
+  later((level === 'easy' ? 9000 : 6000) + extra, fire);
+}
 function unlock(...ids) { ids.forEach(id => $(id).classList.remove('lkd')); }
 function guide(...ids) { if (level === 'easy') ids.forEach(id => $(id).classList.add('guide')); }
 function updBtns() {
@@ -126,6 +140,9 @@ function updBtns() {
     case S.CLIMB: unlock('k-flaps', 'k-belt'); guide('k-flaps'); break;
     case S.CRUISE: unlock('k-ann', 'k-belt'); guide('k-ann'); break;
   }
+  if (ST === S.HOLD && !flap10) remind('k-flaps', 'takeoff.first_officer.remind_flaps10');
+  if (ST === S.AIRB) remind('k-gear', 'takeoff.first_officer.remind_gear');
+  if (ST === S.CLIMB) remind('k-flaps', 'takeoff.first_officer.remind_flaps_up', 4000);
   $$('.lvl').forEach(b => b.classList.toggle('lkd', ST === S.ROLL || ST === S.PUSHING));
   updDrawer();
 }
@@ -232,31 +249,32 @@ function thrustHoldEnd() {
 function chkVr() {
   const inZone = thrustProg >= 78;
   if (inZone && !vrOn) { vrOn = true; $('rotate-b').classList.add('show'); sfx('rotate_cue'); say('takeoff.first_officer.rotate');
-    if (level === 'easy') later(1300, () => { if (ST === S.ROLL && thrustProg >= 78) doRotate(); }); }
-  else if (!inZone && vrOn && thrustProg < 70) { vrOn = false; $('rotate-b').classList.remove('show'); }
+    if (level === 'easy') later(1300, () => { if (ST === S.ROLL && thrustProg >= 78) doRotate(); });
+    else later(2500, () => { if (ST === S.ROLL && vrOn) { $('rotate-b').classList.add('late'); sfx('master_caution'); } }); }
+  else if (!inZone && vrOn && thrustProg < 70) { vrOn = false; $('rotate-b').classList.remove('show', 'late'); }
 }
 function doRotate() {
   if (ST !== S.ROLL) return;
-  vrOn = false; $('rotate-b').classList.remove('show');
+  vrOn = false; $('rotate-b').classList.remove('show', 'late'); TK.ias = VSPD.vr;
   clearInterval(thrustT); thrustT = null; thrustHeld = false; clearInterval(decayT); decayT = null;
   $('k-thrust').classList.remove('held'); $('tf').style.width = '0%'; $('spd-wrap').classList.remove('show');
   TK.vx = TK.speed; TK.pitchT = 11; RT.plane.state.n1 = .98;
   goTo(S.AIRB); fb('UP', 'ok'); sfx('success_big'); hud('hud-alt', true);
   setPreset({ az: -110, el: -6, dist: 80 });
-  later(2200, () => { if (ST === S.AIRB) say('takeoff.first_officer.positive_rate'); });
+  later(3000, () => { if (ST === S.AIRB) say('takeoff.first_officer.positive_rate'); });
 }
 function gearUpInAir() {
   gearDown = false; sfx('gear_motion'); gearTransit(); TK.gearCmd = 1;
   $('kt-gear').textContent = 'UP'; $('k-gear').classList.remove('lit'); fb('GEAR UP', 'ok'); say('takeoff.captain.gear_up');
-  TK.yBase = RT.plane.root.position.y;
-  goTo(S.CLIMB); altStart(); setPreset({ az: -70, el: 4, dist: 95 });
+  const y0 = RT.plane.root.position.y, a0 = Math.round(y0 * 3.28 / 10) * 10; TK.yBase = y0 - a0 * .0457;   // climb continues from liftoff altitude
+  goTo(S.CLIMB); altStart(a0); setPreset({ az: -70, el: 4, dist: 95 });
   later(5000, () => say('takeoff.tower.contact_departure'));
 }
 function gearResist() {
   sfx('gear_horn'); const b = $('k-gear'); b.classList.remove('resist'); void b.offsetWidth; b.classList.add('resist');
   ['lp-g1', 'lp-g2', 'lp-g3'].forEach(id => { $(id).className = 'lamp amb'; later(1600, () => $(id).className = 'lamp grn'); }); fb('WAIT', 'wait');
 }
-function altStart() { alt = 0; altT = setInterval(() => { alt = Math.min(35000, alt + 150); $('hud-alt').textContent = String(alt).padStart(5, '0') + ' FT'; if (alt >= 35000) { clearInterval(altT); altT = null; } }, 100); }
+function altStart(a0 = 0) { alt = a0; altT = setInterval(() => { alt = Math.min(35000, alt + 150); $('hud-alt').textContent = String(alt).padStart(5, '0') + ' FT'; if (alt >= 35000) { clearInterval(altT); altT = null; } }, 100); }
 function flapsClean() {
   flap10 = false; sfx('flaps_motion'); updFlaps(); say('takeoff.captain.flaps_up');
   goTo(S.CLEAN); lockAll(); setPreset({ az: 35, el: 12, dist: 110 });
@@ -297,7 +315,7 @@ function tkReset() {
   pushProg = 0; thrustProg = 0; vrOn = false; alt = 0;
   [pushT, thrustT, decayT, beepT, altT].forEach(t => clearInterval(t)); pushT = thrustT = decayT = beepT = altT = null;
   pushHeld = thrustHeld = false; wrongN = {}; wrongLast = null; TK.callouts = {}; TK.ctlCheck = 0; TK.didCheck = 0; RT.shake = 0;
-  $('fb').className = ''; $('rotate-b').classList.remove('show'); $('end-ov').classList.remove('show'); $('spd-wrap').classList.remove('show');
+  $('fb').className = ''; $('rotate-b').classList.remove('show', 'late'); TK.ias = 0; $('end-ov').classList.remove('show'); $('spd-wrap').classList.remove('show');
   $('spd-fill').style.width = '0%'; $('pf').style.width = '0%'; $('tf').style.width = '0%';
   closeDrawer();
 }
