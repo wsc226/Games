@@ -37,7 +37,7 @@ const tod = () => { const h = new Date().getHours(); return h < 12 && h >= 5 ? '
 
 /* ═══ STATE (shared) ═══ */
 let AL = null;            // chosen airline
-let GAME = 'takeoff';     // 'takeoff' | 'sky'
+let GAME = 'takeoff';     // 'takeoff' | 'sky' | 'landing'
 let level = 'easy';
 
 /* ═══ AUDIO (synth fallbacks + optional files) ═══ */
@@ -105,6 +105,12 @@ const SYN = {
   gear_horn: () => { for (let n = 0; n < 4; n++) tone(244, .22, 'square', .13, null, n * .3); },
   pushback_beep: () => { tone(940, .14, 'square', .09); },
   thunder: () => { noisy(2.5, .35, 90); noisy(1.2, .15, 300); },
+  fire_bell: () => { for (let n = 0; n < 10; n++) tone(1250, .07, 'square', .1, null, n * .1); },
+  crash_boom: () => { noisy(3.2, .6, 70); noisy(1.4, .35, 260); noisy(.6, .3, 1200); tone(55, 2.2, 'sine', .45, 28); },
+  touchdown: () => { noisy(.35, .35, 160); noisy(.5, .12, 2200); tone(70, .3, 'sine', .3); },
+  cover_click: () => { tone(2200, .04, 'square', .12); tone(900, .05, 'square', .08, null, .05); },
+  extinguisher: () => { noisy(1.6, .3, 3200); noisy(1.6, .2, 900); },
+  siren: () => { tone(650, .8, 'sawtooth', .07, 950); tone(950, .8, 'sawtooth', .07, 650, .8); },
   master_caution: () => { tone(1100, .18, 'square', .1); tone(1100, .18, 'square', .1, null, .3); },
 };
 function sfx(k, vol = 1) { if (muted) return; if (!playFile(k, vol)) SYN[k] && SYN[k](); }

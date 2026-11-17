@@ -43,6 +43,16 @@
       "description": "The airplane's automatic collision-avoidance voice. Flat, synthetic, urgent.",
       "rate": 1.1,
       "pitch": 0.8
+    },
+    "gpws": {
+      "description": "The airplane's ground-proximity warning voice (altitude callouts, 'too low gear'). Flat, synthetic, loud.",
+      "rate": 1,
+      "pitch": 0.75
+    },
+    "rescue": {
+      "description": "Airport fire and rescue chief on the radio. Calm, strong, reassuring.",
+      "rate": 1,
+      "pitch": 0.9
     }
   },
   "variables": {
@@ -178,6 +188,42 @@
       "loop": false,
       "description": "Cockpit caution chime (TCAS traffic / failed challenge).",
       "search": "cockpit caution chime"
+    },
+    "fire_bell": {
+      "file": "assets/airplane/sfx/fire_bell.mp3",
+      "loop": false,
+      "description": "Cockpit fire warning bell, repeating (MAYDAY engine fire).",
+      "search": "cockpit fire bell alarm"
+    },
+    "crash_boom": {
+      "file": "assets/airplane/sfx/crash_boom.mp3",
+      "loop": false,
+      "description": "Big crash: heavy impact, metal crunch and explosion.",
+      "search": "plane crash explosion metal impact"
+    },
+    "touchdown": {
+      "file": "assets/airplane/sfx/touchdown.mp3",
+      "loop": false,
+      "description": "Wheels touching the runway: thump plus short tyre chirp.",
+      "search": "airplane landing tire screech touchdown"
+    },
+    "cover_click": {
+      "file": "assets/airplane/sfx/cover_click.mp3",
+      "loop": false,
+      "description": "Flip-up switch guard opening (MAYDAY cover).",
+      "search": "switch cover flip click"
+    },
+    "extinguisher": {
+      "file": "assets/airplane/sfx/extinguisher.mp3",
+      "loop": false,
+      "description": "Engine fire bottle discharge whoosh (pull fire handle).",
+      "search": "fire extinguisher discharge whoosh"
+    },
+    "siren": {
+      "file": "assets/airplane/sfx/siren.mp3",
+      "loop": false,
+      "description": "Airport fire truck siren.",
+      "search": "fire truck siren"
     }
   },
   "lines": [
@@ -625,6 +671,349 @@
       "trigger": "All challenges finished.",
       "prefix": "callsign",
       "text": "great flying today. Contact the next center. Good day."
+    },
+    {
+      "id": "landing.tower.cleared",
+      "mode": "landing",
+      "role": "tower",
+      "phase": "approach",
+      "trigger": "Landing mode starts on final approach.",
+      "per_airline": true,
+      "text": "{callsign} {flight_spoken}, runway {runway_spoken}, wind calm, cleared to land."
+    },
+    {
+      "id": "landing.captain.prepare",
+      "mode": "landing",
+      "role": "captain",
+      "phase": "approach",
+      "trigger": "After the landing clearance.",
+      "chime": true,
+      "text": "Cabin crew, please prepare the cabin for landing."
+    },
+    {
+      "id": "landing.first_officer.ask_flaps20",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "approach",
+      "trigger": "Step 1 starts (1950 ft).",
+      "text": "Flaps twenty, captain."
+    },
+    {
+      "id": "landing.first_officer.flaps20",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "approach",
+      "trigger": "Player sets FLAPS 20.",
+      "text": "Flaps twenty. Speed checks."
+    },
+    {
+      "id": "landing.first_officer.ask_gear",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "approach",
+      "trigger": "Step 2 starts (1550 ft).",
+      "text": "Gear down, captain."
+    },
+    {
+      "id": "landing.first_officer.gear_down",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "approach",
+      "trigger": "Player lowers the gear.",
+      "text": "Gear down. Three green."
+    },
+    {
+      "id": "landing.first_officer.ask_flaps30",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "approach",
+      "trigger": "Step 3 starts (1150 ft).",
+      "text": "Flaps thirty, captain."
+    },
+    {
+      "id": "landing.first_officer.flaps30",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "approach",
+      "trigger": "Player sets FLAPS 30.",
+      "text": "Flaps thirty. Landing checklist complete."
+    },
+    {
+      "id": "landing.first_officer.ask_speedbrake",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "approach",
+      "trigger": "Step 4 starts (750 ft).",
+      "text": "Arm the speed brake, captain."
+    },
+    {
+      "id": "landing.first_officer.speedbrake",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "approach",
+      "trigger": "Player arms the SPEED BRAKE.",
+      "text": "Speed brake armed."
+    },
+    {
+      "id": "landing.first_officer.warn_speedbrake",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "approach",
+      "trigger": "Speed brake not armed in time (button flashes red).",
+      "text": "Captain! Speed brake! Arm it now!"
+    },
+    {
+      "id": "landing.gpws.too_low_flaps",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "approach",
+      "trigger": "Flaps not set in time (button flashes red).",
+      "text": "Too low, flaps! Too low, flaps!"
+    },
+    {
+      "id": "landing.gpws.too_low_gear",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "approach",
+      "trigger": "Gear not down in time (button flashes red, repeats).",
+      "text": "Too low, gear! Too low, gear!"
+    },
+    {
+      "id": "landing.gpws.sink_rate",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "approach",
+      "trigger": "Flaps step failed: the plane stalls.",
+      "text": "Sink rate! Sink rate!"
+    },
+    {
+      "id": "landing.gpws.pull_up",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "approach",
+      "trigger": "Stall: the nose drops.",
+      "text": "Pull up! Pull up!"
+    },
+    {
+      "id": "landing.gpws.1000",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "approach",
+      "trigger": "Passing 1000 ft.",
+      "text": "One thousand."
+    },
+    {
+      "id": "landing.gpws.500",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "approach",
+      "trigger": "Passing 500 ft.",
+      "text": "Five hundred."
+    },
+    {
+      "id": "landing.gpws.minimums",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "approach",
+      "trigger": "Passing 200 ft.",
+      "text": "Minimums."
+    },
+    {
+      "id": "landing.gpws.50",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "flare",
+      "trigger": "Radio altitude 50 ft.",
+      "text": "Fifty."
+    },
+    {
+      "id": "landing.gpws.40",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "flare",
+      "trigger": "Radio altitude 40 ft.",
+      "text": "Forty."
+    },
+    {
+      "id": "landing.gpws.30",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "flare",
+      "trigger": "Radio altitude 30 ft (press FLARE here).",
+      "text": "Thirty."
+    },
+    {
+      "id": "landing.gpws.20",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "flare",
+      "trigger": "Radio altitude 20 ft.",
+      "text": "Twenty."
+    },
+    {
+      "id": "landing.gpws.10",
+      "mode": "landing",
+      "role": "gpws",
+      "phase": "flare",
+      "trigger": "Radio altitude 10 ft.",
+      "text": "Ten."
+    },
+    {
+      "id": "landing.first_officer.touchdown",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "rollout",
+      "trigger": "Touchdown without the speed brake armed.",
+      "text": "Touchdown!"
+    },
+    {
+      "id": "landing.first_officer.touchdown_spoilers",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "rollout",
+      "trigger": "Touchdown with the speed brake armed.",
+      "text": "Touchdown! Spoilers up."
+    },
+    {
+      "id": "landing.first_officer.ask_reverse",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "rollout",
+      "trigger": "Right after touchdown.",
+      "text": "Reverse thrust!"
+    },
+    {
+      "id": "landing.first_officer.reverse",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "rollout",
+      "trigger": "Player presses REVERSE.",
+      "text": "Reversers normal."
+    },
+    {
+      "id": "landing.first_officer.warn_reverse",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "rollout",
+      "trigger": "REVERSE not pressed in time (button flashes red).",
+      "text": "Captain, reverse now!"
+    },
+    {
+      "id": "landing.first_officer.ask_brakes",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "rollout",
+      "trigger": "About a second after touchdown.",
+      "text": "Brakes, captain!"
+    },
+    {
+      "id": "landing.first_officer.brakes",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "rollout",
+      "trigger": "Player presses BRAKES.",
+      "text": "Brakes on. We are slowing down."
+    },
+    {
+      "id": "landing.first_officer.warn_brakes",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "rollout",
+      "trigger": "BRAKES not pressed in time (button flashes red).",
+      "text": "Brakes! Brakes! The runway is ending!"
+    },
+    {
+      "id": "landing.first_officer.sixty_knots",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "rollout",
+      "trigger": "Slowing through 60 knots (reverse goes to idle).",
+      "text": "Sixty knots."
+    },
+    {
+      "id": "landing.tower.welcome",
+      "mode": "landing",
+      "role": "tower",
+      "phase": "rollout",
+      "trigger": "Plane stopped safely.",
+      "per_airline": true,
+      "text": "{callsign} {flight_spoken}, nice landing! Welcome home."
+    },
+    {
+      "id": "landing.captain.welcome_home",
+      "mode": "landing",
+      "role": "captain",
+      "phase": "rollout",
+      "trigger": "After the tower welcome.",
+      "chime": true,
+      "text": "Ladies and gentlemen, welcome home. Please stay seated with your seatbelt fastened until the seatbelt sign is off."
+    },
+    {
+      "id": "landing.tower.crash",
+      "mode": "landing",
+      "role": "tower",
+      "phase": "crash",
+      "trigger": "The plane crashes.",
+      "per_airline": true,
+      "text": "Crash, crash, crash! {callsign} {flight_spoken} is down on runway {runway_spoken}. All fire and rescue, go!"
+    },
+    {
+      "id": "landing.rescue.all_safe",
+      "mode": "landing",
+      "role": "rescue",
+      "phase": "crash",
+      "trigger": "Fire trucks are spraying the wreck.",
+      "text": "Fire and rescue on scene. Everyone is out, and everyone is safe!"
+    },
+    {
+      "id": "landing.captain.mayday_call",
+      "mode": "landing",
+      "role": "captain",
+      "phase": "mayday",
+      "trigger": "Player lifts the cover and presses MAYDAY.",
+      "per_airline": true,
+      "text": "Mayday, mayday, mayday! {callsign} {flight_spoken}, engine three fire. Request emergency landing."
+    },
+    {
+      "id": "landing.tower.mayday_ack",
+      "mode": "landing",
+      "role": "tower",
+      "phase": "mayday",
+      "trigger": "After the mayday call.",
+      "per_airline": true,
+      "text": "{callsign} {flight_spoken}, mayday acknowledged. Runway {runway_spoken}, cleared to land. Fire and rescue are on the way."
+    },
+    {
+      "id": "landing.first_officer.fire_handle",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "mayday",
+      "trigger": "After the tower answers the mayday.",
+      "text": "Engine fire, engine three! Pull the fire handle!"
+    },
+    {
+      "id": "landing.first_officer.fire_remind",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "mayday",
+      "trigger": "Fire handle not pulled (button flashes, repeats).",
+      "text": "Captain, pull the fire handle!"
+    },
+    {
+      "id": "landing.first_officer.fire_out",
+      "mode": "landing",
+      "role": "first_officer",
+      "phase": "mayday",
+      "trigger": "Player presses PULL FIRE.",
+      "text": "Fire bottle discharged. The fire is out!"
+    },
+    {
+      "id": "landing.rescue.mayday_safe",
+      "mode": "landing",
+      "role": "rescue",
+      "phase": "mayday",
+      "trigger": "Fire trucks reach the plane after a MAYDAY landing.",
+      "text": "Fire crew here. Engine three is cool now. Great landing, captain!"
     }
   ],
   "renders": [
@@ -776,6 +1165,103 @@
     {"key":"common|sky.first_officer.too_close","line_id":"sky.first_officer.too_close","role":"first_officer","airline":null,"variant":null,"text":"That was too close! Let's try again.","file":"assets/airplane/voice/common/sky.first_officer.too_close.mp3"},
     {"key":"common|sky.first_officer.try_again","line_id":"sky.first_officer.try_again","role":"first_officer","airline":null,"variant":null,"text":"No problem, Captain. Let's try that one again.","file":"assets/airplane/voice/common/sky.first_officer.try_again.mp3"},
     {"key":"common|sky.first_officer.great_job","line_id":"sky.first_officer.great_job","role":"first_officer","airline":null,"variant":null,"text":"Great flying, Captain!","file":"assets/airplane/voice/common/sky.first_officer.great_job.mp3"},
-    {"key":"common|sky.center.goodbye","line_id":"sky.center.goodbye","role":"center","airline":null,"variant":null,"text":"great flying today. Contact the next center. Good day.","file":"assets/airplane/voice/common/sky.center.goodbye.mp3"}
+    {"key":"common|sky.center.goodbye","line_id":"sky.center.goodbye","role":"center","airline":null,"variant":null,"text":"great flying today. Contact the next center. Good day.","file":"assets/airplane/voice/common/sky.center.goodbye.mp3"},
+    {"key":"cx|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"cx","variant":null,"text":"Cathay four five one, runway two five left, wind calm, cleared to land.","file":"assets/airplane/voice/cx/landing.tower.cleared.mp3"},
+    {"key":"hx|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"hx","variant":null,"text":"Hong Kong Express two three seven, runway two five left, wind calm, cleared to land.","file":"assets/airplane/voice/hx/landing.tower.cleared.mp3"},
+    {"key":"jl|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"jl","variant":null,"text":"Japan Air seven two three, runway three four left, wind calm, cleared to land.","file":"assets/airplane/voice/jl/landing.tower.cleared.mp3"},
+    {"key":"nh|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"nh","variant":null,"text":"All Nippon eight eight two, runway three four left, wind calm, cleared to land.","file":"assets/airplane/voice/nh/landing.tower.cleared.mp3"},
+    {"key":"zg|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"zg","variant":null,"text":"Zip Air one zero five, runway three four left, wind calm, cleared to land.","file":"assets/airplane/voice/zg/landing.tower.cleared.mp3"},
+    {"key":"ek|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"ek","variant":null,"text":"Emirates three one one, runway three zero left, wind calm, cleared to land.","file":"assets/airplane/voice/ek/landing.tower.cleared.mp3"},
+    {"key":"as|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"as","variant":null,"text":"Alaska six seven, runway one six left, wind calm, cleared to land.","file":"assets/airplane/voice/as/landing.tower.cleared.mp3"},
+    {"key":"mu|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"mu","variant":null,"text":"China Eastern seven three three, runway three five right, wind calm, cleared to land.","file":"assets/airplane/voice/mu/landing.tower.cleared.mp3"},
+    {"key":"vn|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"vn","variant":null,"text":"Vietnam five nine one, runway two five right, wind calm, cleared to land.","file":"assets/airplane/voice/vn/landing.tower.cleared.mp3"},
+    {"key":"aa|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"aa","variant":null,"text":"American two seven three, runway one eight left, wind calm, cleared to land.","file":"assets/airplane/voice/aa/landing.tower.cleared.mp3"},
+    {"key":"dl|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"dl","variant":null,"text":"Delta four one two, runway two eight, wind calm, cleared to land.","file":"assets/airplane/voice/dl/landing.tower.cleared.mp3"},
+    {"key":"ua|landing.tower.cleared","line_id":"landing.tower.cleared","role":"tower","airline":"ua","variant":null,"text":"United five five eight, runway one five left, wind calm, cleared to land.","file":"assets/airplane/voice/ua/landing.tower.cleared.mp3"},
+    {"key":"common|landing.captain.prepare","line_id":"landing.captain.prepare","role":"captain","airline":null,"variant":null,"text":"Cabin crew, please prepare the cabin for landing.","file":"assets/airplane/voice/common/landing.captain.prepare.mp3"},
+    {"key":"common|landing.first_officer.ask_flaps20","line_id":"landing.first_officer.ask_flaps20","role":"first_officer","airline":null,"variant":null,"text":"Flaps twenty, captain.","file":"assets/airplane/voice/common/landing.first_officer.ask_flaps20.mp3"},
+    {"key":"common|landing.first_officer.flaps20","line_id":"landing.first_officer.flaps20","role":"first_officer","airline":null,"variant":null,"text":"Flaps twenty. Speed checks.","file":"assets/airplane/voice/common/landing.first_officer.flaps20.mp3"},
+    {"key":"common|landing.first_officer.ask_gear","line_id":"landing.first_officer.ask_gear","role":"first_officer","airline":null,"variant":null,"text":"Gear down, captain.","file":"assets/airplane/voice/common/landing.first_officer.ask_gear.mp3"},
+    {"key":"common|landing.first_officer.gear_down","line_id":"landing.first_officer.gear_down","role":"first_officer","airline":null,"variant":null,"text":"Gear down. Three green.","file":"assets/airplane/voice/common/landing.first_officer.gear_down.mp3"},
+    {"key":"common|landing.first_officer.ask_flaps30","line_id":"landing.first_officer.ask_flaps30","role":"first_officer","airline":null,"variant":null,"text":"Flaps thirty, captain.","file":"assets/airplane/voice/common/landing.first_officer.ask_flaps30.mp3"},
+    {"key":"common|landing.first_officer.flaps30","line_id":"landing.first_officer.flaps30","role":"first_officer","airline":null,"variant":null,"text":"Flaps thirty. Landing checklist complete.","file":"assets/airplane/voice/common/landing.first_officer.flaps30.mp3"},
+    {"key":"common|landing.first_officer.ask_speedbrake","line_id":"landing.first_officer.ask_speedbrake","role":"first_officer","airline":null,"variant":null,"text":"Arm the speed brake, captain.","file":"assets/airplane/voice/common/landing.first_officer.ask_speedbrake.mp3"},
+    {"key":"common|landing.first_officer.speedbrake","line_id":"landing.first_officer.speedbrake","role":"first_officer","airline":null,"variant":null,"text":"Speed brake armed.","file":"assets/airplane/voice/common/landing.first_officer.speedbrake.mp3"},
+    {"key":"common|landing.first_officer.warn_speedbrake","line_id":"landing.first_officer.warn_speedbrake","role":"first_officer","airline":null,"variant":null,"text":"Captain! Speed brake! Arm it now!","file":"assets/airplane/voice/common/landing.first_officer.warn_speedbrake.mp3"},
+    {"key":"common|landing.gpws.too_low_flaps","line_id":"landing.gpws.too_low_flaps","role":"gpws","airline":null,"variant":null,"text":"Too low, flaps! Too low, flaps!","file":"assets/airplane/voice/common/landing.gpws.too_low_flaps.mp3"},
+    {"key":"common|landing.gpws.too_low_gear","line_id":"landing.gpws.too_low_gear","role":"gpws","airline":null,"variant":null,"text":"Too low, gear! Too low, gear!","file":"assets/airplane/voice/common/landing.gpws.too_low_gear.mp3"},
+    {"key":"common|landing.gpws.sink_rate","line_id":"landing.gpws.sink_rate","role":"gpws","airline":null,"variant":null,"text":"Sink rate! Sink rate!","file":"assets/airplane/voice/common/landing.gpws.sink_rate.mp3"},
+    {"key":"common|landing.gpws.pull_up","line_id":"landing.gpws.pull_up","role":"gpws","airline":null,"variant":null,"text":"Pull up! Pull up!","file":"assets/airplane/voice/common/landing.gpws.pull_up.mp3"},
+    {"key":"common|landing.gpws.1000","line_id":"landing.gpws.1000","role":"gpws","airline":null,"variant":null,"text":"One thousand.","file":"assets/airplane/voice/common/landing.gpws.1000.mp3"},
+    {"key":"common|landing.gpws.500","line_id":"landing.gpws.500","role":"gpws","airline":null,"variant":null,"text":"Five hundred.","file":"assets/airplane/voice/common/landing.gpws.500.mp3"},
+    {"key":"common|landing.gpws.minimums","line_id":"landing.gpws.minimums","role":"gpws","airline":null,"variant":null,"text":"Minimums.","file":"assets/airplane/voice/common/landing.gpws.minimums.mp3"},
+    {"key":"common|landing.gpws.50","line_id":"landing.gpws.50","role":"gpws","airline":null,"variant":null,"text":"Fifty.","file":"assets/airplane/voice/common/landing.gpws.50.mp3"},
+    {"key":"common|landing.gpws.40","line_id":"landing.gpws.40","role":"gpws","airline":null,"variant":null,"text":"Forty.","file":"assets/airplane/voice/common/landing.gpws.40.mp3"},
+    {"key":"common|landing.gpws.30","line_id":"landing.gpws.30","role":"gpws","airline":null,"variant":null,"text":"Thirty.","file":"assets/airplane/voice/common/landing.gpws.30.mp3"},
+    {"key":"common|landing.gpws.20","line_id":"landing.gpws.20","role":"gpws","airline":null,"variant":null,"text":"Twenty.","file":"assets/airplane/voice/common/landing.gpws.20.mp3"},
+    {"key":"common|landing.gpws.10","line_id":"landing.gpws.10","role":"gpws","airline":null,"variant":null,"text":"Ten.","file":"assets/airplane/voice/common/landing.gpws.10.mp3"},
+    {"key":"common|landing.first_officer.touchdown","line_id":"landing.first_officer.touchdown","role":"first_officer","airline":null,"variant":null,"text":"Touchdown!","file":"assets/airplane/voice/common/landing.first_officer.touchdown.mp3"},
+    {"key":"common|landing.first_officer.touchdown_spoilers","line_id":"landing.first_officer.touchdown_spoilers","role":"first_officer","airline":null,"variant":null,"text":"Touchdown! Spoilers up.","file":"assets/airplane/voice/common/landing.first_officer.touchdown_spoilers.mp3"},
+    {"key":"common|landing.first_officer.ask_reverse","line_id":"landing.first_officer.ask_reverse","role":"first_officer","airline":null,"variant":null,"text":"Reverse thrust!","file":"assets/airplane/voice/common/landing.first_officer.ask_reverse.mp3"},
+    {"key":"common|landing.first_officer.reverse","line_id":"landing.first_officer.reverse","role":"first_officer","airline":null,"variant":null,"text":"Reversers normal.","file":"assets/airplane/voice/common/landing.first_officer.reverse.mp3"},
+    {"key":"common|landing.first_officer.warn_reverse","line_id":"landing.first_officer.warn_reverse","role":"first_officer","airline":null,"variant":null,"text":"Captain, reverse now!","file":"assets/airplane/voice/common/landing.first_officer.warn_reverse.mp3"},
+    {"key":"common|landing.first_officer.ask_brakes","line_id":"landing.first_officer.ask_brakes","role":"first_officer","airline":null,"variant":null,"text":"Brakes, captain!","file":"assets/airplane/voice/common/landing.first_officer.ask_brakes.mp3"},
+    {"key":"common|landing.first_officer.brakes","line_id":"landing.first_officer.brakes","role":"first_officer","airline":null,"variant":null,"text":"Brakes on. We are slowing down.","file":"assets/airplane/voice/common/landing.first_officer.brakes.mp3"},
+    {"key":"common|landing.first_officer.warn_brakes","line_id":"landing.first_officer.warn_brakes","role":"first_officer","airline":null,"variant":null,"text":"Brakes! Brakes! The runway is ending!","file":"assets/airplane/voice/common/landing.first_officer.warn_brakes.mp3"},
+    {"key":"common|landing.first_officer.sixty_knots","line_id":"landing.first_officer.sixty_knots","role":"first_officer","airline":null,"variant":null,"text":"Sixty knots.","file":"assets/airplane/voice/common/landing.first_officer.sixty_knots.mp3"},
+    {"key":"cx|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"cx","variant":null,"text":"Cathay four five one, nice landing! Welcome home.","file":"assets/airplane/voice/cx/landing.tower.welcome.mp3"},
+    {"key":"hx|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"hx","variant":null,"text":"Hong Kong Express two three seven, nice landing! Welcome home.","file":"assets/airplane/voice/hx/landing.tower.welcome.mp3"},
+    {"key":"jl|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"jl","variant":null,"text":"Japan Air seven two three, nice landing! Welcome home.","file":"assets/airplane/voice/jl/landing.tower.welcome.mp3"},
+    {"key":"nh|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"nh","variant":null,"text":"All Nippon eight eight two, nice landing! Welcome home.","file":"assets/airplane/voice/nh/landing.tower.welcome.mp3"},
+    {"key":"zg|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"zg","variant":null,"text":"Zip Air one zero five, nice landing! Welcome home.","file":"assets/airplane/voice/zg/landing.tower.welcome.mp3"},
+    {"key":"ek|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"ek","variant":null,"text":"Emirates three one one, nice landing! Welcome home.","file":"assets/airplane/voice/ek/landing.tower.welcome.mp3"},
+    {"key":"as|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"as","variant":null,"text":"Alaska six seven, nice landing! Welcome home.","file":"assets/airplane/voice/as/landing.tower.welcome.mp3"},
+    {"key":"mu|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"mu","variant":null,"text":"China Eastern seven three three, nice landing! Welcome home.","file":"assets/airplane/voice/mu/landing.tower.welcome.mp3"},
+    {"key":"vn|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"vn","variant":null,"text":"Vietnam five nine one, nice landing! Welcome home.","file":"assets/airplane/voice/vn/landing.tower.welcome.mp3"},
+    {"key":"aa|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"aa","variant":null,"text":"American two seven three, nice landing! Welcome home.","file":"assets/airplane/voice/aa/landing.tower.welcome.mp3"},
+    {"key":"dl|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"dl","variant":null,"text":"Delta four one two, nice landing! Welcome home.","file":"assets/airplane/voice/dl/landing.tower.welcome.mp3"},
+    {"key":"ua|landing.tower.welcome","line_id":"landing.tower.welcome","role":"tower","airline":"ua","variant":null,"text":"United five five eight, nice landing! Welcome home.","file":"assets/airplane/voice/ua/landing.tower.welcome.mp3"},
+    {"key":"common|landing.captain.welcome_home","line_id":"landing.captain.welcome_home","role":"captain","airline":null,"variant":null,"text":"Ladies and gentlemen, welcome home. Please stay seated with your seatbelt fastened until the seatbelt sign is off.","file":"assets/airplane/voice/common/landing.captain.welcome_home.mp3"},
+    {"key":"cx|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"cx","variant":null,"text":"Crash, crash, crash! Cathay four five one is down on runway two five left. All fire and rescue, go!","file":"assets/airplane/voice/cx/landing.tower.crash.mp3"},
+    {"key":"hx|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"hx","variant":null,"text":"Crash, crash, crash! Hong Kong Express two three seven is down on runway two five left. All fire and rescue, go!","file":"assets/airplane/voice/hx/landing.tower.crash.mp3"},
+    {"key":"jl|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"jl","variant":null,"text":"Crash, crash, crash! Japan Air seven two three is down on runway three four left. All fire and rescue, go!","file":"assets/airplane/voice/jl/landing.tower.crash.mp3"},
+    {"key":"nh|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"nh","variant":null,"text":"Crash, crash, crash! All Nippon eight eight two is down on runway three four left. All fire and rescue, go!","file":"assets/airplane/voice/nh/landing.tower.crash.mp3"},
+    {"key":"zg|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"zg","variant":null,"text":"Crash, crash, crash! Zip Air one zero five is down on runway three four left. All fire and rescue, go!","file":"assets/airplane/voice/zg/landing.tower.crash.mp3"},
+    {"key":"ek|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"ek","variant":null,"text":"Crash, crash, crash! Emirates three one one is down on runway three zero left. All fire and rescue, go!","file":"assets/airplane/voice/ek/landing.tower.crash.mp3"},
+    {"key":"as|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"as","variant":null,"text":"Crash, crash, crash! Alaska six seven is down on runway one six left. All fire and rescue, go!","file":"assets/airplane/voice/as/landing.tower.crash.mp3"},
+    {"key":"mu|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"mu","variant":null,"text":"Crash, crash, crash! China Eastern seven three three is down on runway three five right. All fire and rescue, go!","file":"assets/airplane/voice/mu/landing.tower.crash.mp3"},
+    {"key":"vn|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"vn","variant":null,"text":"Crash, crash, crash! Vietnam five nine one is down on runway two five right. All fire and rescue, go!","file":"assets/airplane/voice/vn/landing.tower.crash.mp3"},
+    {"key":"aa|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"aa","variant":null,"text":"Crash, crash, crash! American two seven three is down on runway one eight left. All fire and rescue, go!","file":"assets/airplane/voice/aa/landing.tower.crash.mp3"},
+    {"key":"dl|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"dl","variant":null,"text":"Crash, crash, crash! Delta four one two is down on runway two eight. All fire and rescue, go!","file":"assets/airplane/voice/dl/landing.tower.crash.mp3"},
+    {"key":"ua|landing.tower.crash","line_id":"landing.tower.crash","role":"tower","airline":"ua","variant":null,"text":"Crash, crash, crash! United five five eight is down on runway one five left. All fire and rescue, go!","file":"assets/airplane/voice/ua/landing.tower.crash.mp3"},
+    {"key":"common|landing.rescue.all_safe","line_id":"landing.rescue.all_safe","role":"rescue","airline":null,"variant":null,"text":"Fire and rescue on scene. Everyone is out, and everyone is safe!","file":"assets/airplane/voice/common/landing.rescue.all_safe.mp3"},
+    {"key":"cx|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"cx","variant":null,"text":"Mayday, mayday, mayday! Cathay four five one, engine three fire. Request emergency landing.","file":"assets/airplane/voice/cx/landing.captain.mayday_call.mp3"},
+    {"key":"hx|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"hx","variant":null,"text":"Mayday, mayday, mayday! Hong Kong Express two three seven, engine three fire. Request emergency landing.","file":"assets/airplane/voice/hx/landing.captain.mayday_call.mp3"},
+    {"key":"jl|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"jl","variant":null,"text":"Mayday, mayday, mayday! Japan Air seven two three, engine three fire. Request emergency landing.","file":"assets/airplane/voice/jl/landing.captain.mayday_call.mp3"},
+    {"key":"nh|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"nh","variant":null,"text":"Mayday, mayday, mayday! All Nippon eight eight two, engine three fire. Request emergency landing.","file":"assets/airplane/voice/nh/landing.captain.mayday_call.mp3"},
+    {"key":"zg|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"zg","variant":null,"text":"Mayday, mayday, mayday! Zip Air one zero five, engine three fire. Request emergency landing.","file":"assets/airplane/voice/zg/landing.captain.mayday_call.mp3"},
+    {"key":"ek|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"ek","variant":null,"text":"Mayday, mayday, mayday! Emirates three one one, engine three fire. Request emergency landing.","file":"assets/airplane/voice/ek/landing.captain.mayday_call.mp3"},
+    {"key":"as|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"as","variant":null,"text":"Mayday, mayday, mayday! Alaska six seven, engine three fire. Request emergency landing.","file":"assets/airplane/voice/as/landing.captain.mayday_call.mp3"},
+    {"key":"mu|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"mu","variant":null,"text":"Mayday, mayday, mayday! China Eastern seven three three, engine three fire. Request emergency landing.","file":"assets/airplane/voice/mu/landing.captain.mayday_call.mp3"},
+    {"key":"vn|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"vn","variant":null,"text":"Mayday, mayday, mayday! Vietnam five nine one, engine three fire. Request emergency landing.","file":"assets/airplane/voice/vn/landing.captain.mayday_call.mp3"},
+    {"key":"aa|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"aa","variant":null,"text":"Mayday, mayday, mayday! American two seven three, engine three fire. Request emergency landing.","file":"assets/airplane/voice/aa/landing.captain.mayday_call.mp3"},
+    {"key":"dl|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"dl","variant":null,"text":"Mayday, mayday, mayday! Delta four one two, engine three fire. Request emergency landing.","file":"assets/airplane/voice/dl/landing.captain.mayday_call.mp3"},
+    {"key":"ua|landing.captain.mayday_call","line_id":"landing.captain.mayday_call","role":"captain","airline":"ua","variant":null,"text":"Mayday, mayday, mayday! United five five eight, engine three fire. Request emergency landing.","file":"assets/airplane/voice/ua/landing.captain.mayday_call.mp3"},
+    {"key":"cx|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"cx","variant":null,"text":"Cathay four five one, mayday acknowledged. Runway two five left, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/cx/landing.tower.mayday_ack.mp3"},
+    {"key":"hx|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"hx","variant":null,"text":"Hong Kong Express two three seven, mayday acknowledged. Runway two five left, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/hx/landing.tower.mayday_ack.mp3"},
+    {"key":"jl|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"jl","variant":null,"text":"Japan Air seven two three, mayday acknowledged. Runway three four left, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/jl/landing.tower.mayday_ack.mp3"},
+    {"key":"nh|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"nh","variant":null,"text":"All Nippon eight eight two, mayday acknowledged. Runway three four left, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/nh/landing.tower.mayday_ack.mp3"},
+    {"key":"zg|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"zg","variant":null,"text":"Zip Air one zero five, mayday acknowledged. Runway three four left, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/zg/landing.tower.mayday_ack.mp3"},
+    {"key":"ek|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"ek","variant":null,"text":"Emirates three one one, mayday acknowledged. Runway three zero left, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/ek/landing.tower.mayday_ack.mp3"},
+    {"key":"as|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"as","variant":null,"text":"Alaska six seven, mayday acknowledged. Runway one six left, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/as/landing.tower.mayday_ack.mp3"},
+    {"key":"mu|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"mu","variant":null,"text":"China Eastern seven three three, mayday acknowledged. Runway three five right, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/mu/landing.tower.mayday_ack.mp3"},
+    {"key":"vn|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"vn","variant":null,"text":"Vietnam five nine one, mayday acknowledged. Runway two five right, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/vn/landing.tower.mayday_ack.mp3"},
+    {"key":"aa|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"aa","variant":null,"text":"American two seven three, mayday acknowledged. Runway one eight left, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/aa/landing.tower.mayday_ack.mp3"},
+    {"key":"dl|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"dl","variant":null,"text":"Delta four one two, mayday acknowledged. Runway two eight, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/dl/landing.tower.mayday_ack.mp3"},
+    {"key":"ua|landing.tower.mayday_ack","line_id":"landing.tower.mayday_ack","role":"tower","airline":"ua","variant":null,"text":"United five five eight, mayday acknowledged. Runway one five left, cleared to land. Fire and rescue are on the way.","file":"assets/airplane/voice/ua/landing.tower.mayday_ack.mp3"},
+    {"key":"common|landing.first_officer.fire_handle","line_id":"landing.first_officer.fire_handle","role":"first_officer","airline":null,"variant":null,"text":"Engine fire, engine three! Pull the fire handle!","file":"assets/airplane/voice/common/landing.first_officer.fire_handle.mp3"},
+    {"key":"common|landing.first_officer.fire_remind","line_id":"landing.first_officer.fire_remind","role":"first_officer","airline":null,"variant":null,"text":"Captain, pull the fire handle!","file":"assets/airplane/voice/common/landing.first_officer.fire_remind.mp3"},
+    {"key":"common|landing.first_officer.fire_out","line_id":"landing.first_officer.fire_out","role":"first_officer","airline":null,"variant":null,"text":"Fire bottle discharged. The fire is out!","file":"assets/airplane/voice/common/landing.first_officer.fire_out.mp3"},
+    {"key":"common|landing.rescue.mayday_safe","line_id":"landing.rescue.mayday_safe","role":"rescue","airline":null,"variant":null,"text":"Fire crew here. Engine three is cool now. Great landing, captain!","file":"assets/airplane/voice/common/landing.rescue.mayday_safe.mp3"}
   ]
 }

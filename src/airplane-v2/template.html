@@ -197,6 +197,42 @@ body.sky #views{display:none}
 #ad-close{margin:8px auto 0;font-size:14px;font-weight:800;letter-spacing:2px;color:#3a352d;padding:10px 30px;min-height:44px;border:2px solid #6a6459;border-radius:8px}
 .korry.done .kbar-t{color:#8a8a55}
 .korry.done{opacity:.55;pointer-events:none}
+/* engine gauges + landing grid + guarded MAYDAY switch */
+#tk-eng{flex:none;height:100%;aspect-ratio:320/512;max-width:26vw;border-width:3px}
+#l-grid{display:none;grid-template-columns:repeat(3,1fr);gap:8px 10px;border:2px solid rgba(255,255,255,.75);border-radius:10px;padding:10px 10px 12px;flex:1;min-width:0}
+#mayday-col{display:none;flex:none;width:112px;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  border:2px solid rgba(255,255,255,.75);border-radius:10px;padding:8px 6px;background:rgba(0,0,0,.06)}
+body.landing #k-grid,body.landing #ann-drawer{display:none}
+body.landing #l-grid{display:grid}
+body.landing #mayday-col{display:flex}
+#md-lbl{color:#8a0e0e}
+#guard{position:relative;width:96px;height:110px;perspective:520px}
+#md-btn{position:absolute;inset:9px;border-radius:12px;background:radial-gradient(circle at 40% 32%,#ff6a5a,#c01010 55%,#640404);
+  border:3px solid #2a0000;color:#fff;font-weight:900;font-size:13px;letter-spacing:1px;box-shadow:0 4px 8px rgba(0,0,0,.6),inset 0 2px 3px rgba(255,255,255,.3);
+  text-shadow:0 1px 2px #000;touch-action:none}
+#md-btn:active{transform:translateY(2px)}
+#md-cover{position:absolute;inset:0;border-radius:14px;border:3px solid #d8a800;transform-origin:50% 0;transition:transform .35s cubic-bezier(.3,1.4,.6,1);
+  background:repeating-linear-gradient(45deg,rgba(255,206,0,.62) 0 11px,rgba(25,25,25,.62) 11px 22px);box-shadow:0 4px 10px rgba(0,0,0,.45),inset 0 0 0 2px rgba(255,255,255,.25)}
+#guard.open #md-cover{transform:rotateX(-118deg);pointer-events:none}
+#md-hint{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#3a352d;text-align:center}
+@keyframes mdflash{from{box-shadow:0 0 0 rgba(255,0,0,0)}to{box-shadow:0 0 26px 8px rgba(255,30,30,.95)}}
+#guard.active #md-btn{animation:mdflash .4s ease-in-out infinite alternate}
+#guard.fire #md-btn{background:radial-gradient(circle at 40% 32%,#ffd36a,#e07800 55%,#7a3a00);animation:mdflash .3s ease-in-out infinite alternate}
+#guard.done #md-btn{background:#3a3a3a;color:#8a8a8a;animation:none}
+#guard.lkd{opacity:.45;pointer-events:none}
+#ld-card{position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:24;background:rgba(0,10,30,.72);border:2px solid #6fb0ff;
+  border-radius:14px;padding:8px 22px 10px;text-align:center;color:#fff;display:none;min-width:240px}
+body.landing #ld-card{display:block}
+#ld-card small{display:block;font-size:11px;letter-spacing:3px;color:#8fd0ff;font-weight:800}
+#ld-card b{display:block;font-size:24px;letter-spacing:1px;margin-top:2px}
+#ld-card .bar{height:8px;border-radius:4px;background:rgba(255,255,255,.18);margin-top:6px;overflow:hidden}
+#ld-card .bar i{display:block;height:100%;width:0%;background:#3ee06a;transition:background .3s}
+#ld-card.warn{border-color:#ff3b3b;background:rgba(60,0,0,.78)}
+#ld-card.warn .bar i{background:#ff3b3b}
+#ld-ra{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:23;font:900 64px Menlo,monospace;color:#3ee06a;
+  text-shadow:0 0 18px rgba(60,225,105,.8),0 3px 8px #000;pointer-events:none;display:none}
+#end-ov.crash #end-t{color:#ff3b30;text-shadow:0 0 30px rgba(255,60,40,.6),0 3px 8px #000}
+#end-s{text-align:center;max-width:90%;line-height:1.4}
 /* PFD on the flight-control panel */
 #p-body{display:flex;gap:10px;align-items:stretch;height:calc(100% - 25px);margin:0 14px}
 #tk-pfd{flex:none;height:100%;max-width:42vw;border-width:3px}
@@ -262,6 +298,15 @@ body.sky #stars{display:block}
   #sky-side{display:none}
   .du{max-width:49vw}
 }
+/* Portrait flight-control panel: displays on top, buttons underneath */
+@media (orientation:portrait){
+  #panel{height:auto}
+  #p-body{flex-wrap:wrap;height:auto;justify-content:center}
+  #tk-pfd,#tk-eng,#mayday-col{height:min(23vh,230px)}
+  #k-grid,#l-grid{flex:1 1 100%;order:2}
+  #guard{height:96px}
+  #p-body .korry{height:66px}
+}
 /* Portrait: PFD + ND side by side, MCP / EICAS / buttons in a strip underneath */
 @media (orientation:portrait){
   #sky-panel{height:auto;flex-wrap:wrap;align-content:flex-start;padding:6px;gap:6px}
@@ -293,6 +338,7 @@ body.sky #stars{display:block}
   <div id="gm-tabs">
     <button class="gm on" id="gm-takeoff"><b>🛫 TAKEOFF</b><span>Gate · pushback · taxi · fly to cruise</span></button>
     <button class="gm" id="gm-sky"><b>⛈ SKY CHALLENGE</b><span>Pilot view · storms · ATC · traffic</span></button>
+    <button class="gm" id="gm-land"><b>🛬 LANDING</b><span>Final approach · flare · MAYDAY</span></button>
   </div>
   <div id="a-grid"></div>
 </div>
@@ -333,6 +379,8 @@ body.sky #stars{display:block}
     <div id="fb"></div>
     <div id="subtitle"></div>
     <div class="hud" id="taxi-l">TAXIING</div>
+    <div id="ld-card"><small id="ld-k">FINAL APPROACH</small><b id="ld-t">Get ready…</b><div class="bar"><i id="ld-bar"></i></div></div>
+    <div id="ld-ra"></div>
     <div id="end-ov">
       <div id="end-t">WELL DONE</div>
       <div id="end-s"></div>
@@ -372,6 +420,7 @@ body.sky #stars{display:block}
     <div id="p-title">FLIGHT CONTROL</div>
     <div id="p-body">
     <div class="du" id="tk-pfd"><canvas id="pfd-tk" width="512" height="512"></canvas></div>
+    <div class="du" id="tk-eng"><canvas id="eng-tk" width="320" height="512"></canvas></div>
     <div id="k-grid">
       <div class="kcell"><div class="klbl">PUSH<br>BACK</div>
         <button class="korry lkd" id="k-push"><div class="kbar"><div class="kbar-fill" id="pf"></div><span class="kbar-t">PUSH</span></div></button></div>
@@ -385,6 +434,25 @@ body.sky #stars{display:block}
         <button class="korry lkd" id="k-belt"><div class="kbar"><span class="kbar-t" id="kt-belt">ON</span></div></button></div>
       <div class="kcell"><div class="klbl">CABIN<br>PA</div>
         <button class="korry lkd" id="k-ann"><div class="kbar"><span class="kbar-t">SPEAK</span></div></button></div>
+    </div>
+    <div id="l-grid">
+      <div class="kcell"><div class="klbl">FLAPS</div>
+        <button class="korry lkd" id="l-flaps"><div class="kbar"><span class="kbar-t" id="kt-lflaps">UP</span></div></button></div>
+      <div class="kcell"><div class="klbl">LDG<br>GEAR</div>
+        <button class="korry lkd" id="l-gear"><div class="kbar"><span class="kbar-t" id="kt-lgear">UP</span></div></button></div>
+      <div class="kcell"><div class="klbl">SPEED<br>BRAKE</div>
+        <button class="korry lkd" id="l-spd"><div class="kbar"><span class="kbar-t" id="kt-lspd">DOWN</span></div></button></div>
+      <div class="kcell"><div class="klbl">FLARE</div>
+        <button class="korry lkd" id="l-flare"><div class="kbar"><span class="kbar-t">FLARE</span></div></button></div>
+      <div class="kcell"><div class="klbl">REVERSE</div>
+        <button class="korry lkd" id="l-rev"><div class="kbar"><span class="kbar-t" id="kt-lrev">OFF</span></div></button></div>
+      <div class="kcell"><div class="klbl">BRAKES</div>
+        <button class="korry lkd" id="l-brk"><div class="kbar"><span class="kbar-t" id="kt-lbrk">OFF</span></div></button></div>
+    </div>
+    <div id="mayday-col">
+      <div class="klbl" id="md-lbl">MAYDAY</div>
+      <div id="guard"><button id="md-btn"><span id="md-t">MAYDAY</span></button><div id="md-cover"></div></div>
+      <div id="md-hint">LIFT COVER</div>
     </div>
     </div>
     <div id="ann-drawer">

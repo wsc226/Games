@@ -290,7 +290,7 @@ function buildPlane(al, opts = {}) {
   // belly fairing
   const fair = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), stdMat(C.belly, .45, .15)); fair.scale.set(15, 1.9, 3.3); fair.position.set(-2, -2.4, 0); fair.castShadow = true; model.add(fair);
 
-  const P = { root, model, fuseMat, flaps: [], le: [], spoilers: [], ailerons: { L: [], R: [] }, elevators: [], rudders: [], fans: [], gear: [], lights: {}, doors: [] };
+  const P = { root, model, fuseMat, flaps: [], le: [], spoilers: [], ailerons: { L: [], R: [] }, elevators: [], rudders: [], fans: [], gear: [], lights: {}, doors: [], engines: [], pylons: [] };
 
   // wings, engines, wing gear (built per side; left = mirrored in z)
   ['R', 'L'].forEach(side => {
@@ -320,7 +320,8 @@ function buildPlane(al, opts = {}) {
     [11.65, 21.05].forEach(z => {
       const le = piecewise(z, WING.zs, WING.le), wy = WING.y(z);
       const e = buildEngine(nacMat); const ex = le + 1.2, ey = wy - 2.15; e.group.position.set(ex, ey, z); W.add(e.group); P.fans.push(e.fan);
-      const py = new THREE.Mesh(pylonGeom(le, wy, ex, ey), nacMat); py.position.z = z; py.castShadow = true; W.add(py);
+      const ei = side === 'R' ? (z < 15 ? 2 : 3) : (z < 15 ? 1 : 0); P.engines[ei] = e.group;   // engines numbered 1-4 from the left wingtip
+      const py = new THREE.Mesh(pylonGeom(le, wy, ex, ey), nacMat); py.position.z = z; py.castShadow = true; W.add(py); P.pylons[side === 'R' ? (z < 15 ? 2 : 3) : (z < 15 ? 1 : 0)] = py;
     });
     // wing landing gear + body gear
     const wg = gearLeg(new THREE.Vector3(-3.6, -2.4, 5.4), 2.98, true, 'x', 1); W.add(wg.pivot); P.gear.push(wg);

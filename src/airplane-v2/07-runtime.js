@@ -21,7 +21,7 @@ function setupControls() {
   RT.controls = c;
   // drag-to-look inside the aircraft (takeoff mode)
   let drag = null; const el = W.renderer.domElement;
-  el.addEventListener('pointerdown', e => { if (RT.view !== 'chase' && GAME === 'takeoff') drag = { x: e.clientX, y: e.clientY, yaw: RT.look.yaw, pitch: RT.look.pitch }; });
+  el.addEventListener('pointerdown', e => { if (RT.view !== 'chase' && GAME !== 'sky') drag = { x: e.clientX, y: e.clientY, yaw: RT.look.yaw, pitch: RT.look.pitch }; });
   addEventListener('pointermove', e => { if (!drag) return; RT.look.yaw = clamp(drag.yaw + (e.clientX - drag.x) * .004, -1.6, 1.6); RT.look.pitch = clamp(drag.pitch + (e.clientY - drag.y) * .004, -.9, .7); });
   addEventListener('pointerup', () => { drag = null; });
 }

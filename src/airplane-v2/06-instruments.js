@@ -187,3 +187,50 @@ function refreshInstruments(d, { tex = true, dom = false } = {}) {
     $('eicas-c').getContext('2d').drawImage(INST.c.eicas, 0, 0);
   }
 }
+
+/* ── engine gauges for the control panel: four N1 dials + EGT, REV and FIRE ── */
+const ENG_C = (() => { const c = makeCanvas(320, 512); return c; })();
+function drawENG(g, e) {
+  const Wd = 320, H = 512; g.save(); g.fillStyle = '#000'; g.fillRect(0, 0, Wd, H);
+  txt(g, 'N1 %', Wd / 2, 22, 15, '#8a9099');
+  const pos = [[82, 128], [238, 128], [82, 298], [238, 298]];   // engines 1 2 / 3 4 (left to right, top to bottom)
+  for (let i = 0; i < 4; i++) {
+    const [cx, cy] = pos[i], n1 = clamp(e.n1[i], 0, 110), R = 58, a0 = Math.PI * .75, span = Math.PI * 1.25;
+    const fire = e.fire && e.fire[i], rev = e.rev && n1 > 30;
+    // dial
+    g.lineWidth = 3; g.strokeStyle = '#d9dde3'; g.beginPath(); g.arc(cx, cy, R, a0, a0 + span); g.stroke();
+    g.strokeStyle = COL.red; g.beginPath(); g.arc(cx, cy, R, a0 + span * 1.0, a0 + span * 1.04); g.stroke();
+    for (let t = 0; t <= 10; t++) { const a = a0 + span * t / 10; g.beginPath(); g.moveTo(cx + Math.cos(a) * (R - 8), cy + Math.sin(a) * (R - 8)); g.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); g.stroke(); }
+    // filled sector
+    const a = a0 + span * n1 / 100;
+    g.fillStyle = fire ? 'rgba(255,40,40,.35)' : 'rgba(255,255,255,.18)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R - 3, a0, a); g.closePath(); g.fill();
+    g.strokeStyle = fire ? COL.red : '#fff'; g.lineWidth = 4; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * (R - 4), cy + Math.sin(a) * (R - 4)); g.stroke();
+    // digital readout
+    g.fillStyle = '#000'; g.strokeStyle = fire ? COL.red : '#fff'; g.lineWidth = 2; rrect(g, cx - 2, cy + 6, 54, 28, 4); g.fill(); g.stroke();
+    txt(g, n1.toFixed(1), cx + 48, cy + 21, 18, fire ? COL.red : '#fff', 'right');
+    txt(g, String(i + 1), cx - 28, cy + 30, 18, '#8a9099');
+    if (rev) { g.fillStyle = COL.green; rrect(g, cx - 20, cy - 30, 40, 20, 3); g.fill(); txt(g, 'REV', cx, cy - 20, 14, '#000'); }
+    if (fire) { g.fillStyle = COL.red; rrect(g, cx - 28, cy - 34, 56, 24, 4); g.fill(); txt(g, 'FIRE', cx, cy - 22, 16, '#fff'); }
+  }
+  // EGT row
+  txt(g, 'EGT °C', Wd / 2, 400, 13, '#8a9099');
+  for (let i = 0; i < 4; i++) { const x = 44 + i * 77, egt = e.egt[i], hot = egt > 900;
+    g.fillStyle = '#000'; g.strokeStyle = hot ? COL.red : '#fff'; g.lineWidth = 2; rrect(g, x - 32, 414, 64, 30, 4); g.fill(); g.stroke();
+    txt(g, String(Math.round(egt)), x, 430, 17, hot ? COL.red : '#fff'); }
+  // message line
+  if (e.msg) txt(g, e.msg, Wd / 2, 482, 17, e.msgCol || COL.amber);
+  g.restore();
+}
+/* engine data from the plane's state (shared by takeoff and landing) */
+function engData(n1Base, opts = {}) {
+  const n1 = [0, 1, 2, 3].map(i => opts.out && opts.out[i] ? Math.max(0, (opts.spool || 0)) : n1Base * 100 + (n1Base > .05 ? Math.sin(RT.t * .7 + i * 1.7) * .4 : 0));
+  const egt = n1.map((v, i) => opts.fire && opts.fire[i] ? 1050 + Math.sin(RT.t * 3) * 30 : v < 1 ? 20 : 380 + v * 5.2);
+  return { n1, egt, rev: opts.rev, fire: opts.fire, msg: opts.msg, msgCol: opts.msgCol };
+}
+/* draw PFD + engines onto the control panel (and the cockpit screens when in cockpit view) */
+function panelInstr(d, e) {
+  if (RT.view === 'cockpit') refreshInstruments(d); else drawPFD(INST.c.pfd.getContext('2d'), d.pfd);
+  if (!RT.pfdCtx) { RT.pfdCtx = $('pfd-tk').getContext('2d'); RT.engCtx = $('eng-tk').getContext('2d'); }
+  RT.pfdCtx.drawImage(INST.c.pfd, 0, 0);
+  drawENG(ENG_C.getContext('2d'), e); RT.engCtx.drawImage(ENG_C, 0, 0);
+}

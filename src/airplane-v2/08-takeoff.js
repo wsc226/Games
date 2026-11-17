@@ -79,9 +79,8 @@ function tkTick(dt, t) {
   P.cockpitLight.intensity = RT.view === 'cockpit' ? 6 + (W.envK || 0) * 6 : 0;
   if (!RT.cmpT || RT.t - RT.cmpT > .25) { RT.cmpT = RT.t; const h = Math.round(wrapDeg(AL.hdg - P.root.rotation.y / DEG)) % 360; $('cmp-b').textContent = String(h).padStart(3, '0') + '°'; $('cmp-p').textContent = ['N','NE','E','SE','S','SW','W','NW'][Math.round(h / 45) % 8]; }
   bulkT -= dt; if (bulkT <= 0 && cabinOn) { bulkT = 1; P.drawBulkhead(alt, phaseName()); }
-  RT.instrT -= dt; if (RT.instrT <= 0) { RT.instrT = .08; const d = tkInstr();
-    if (RT.view === 'cockpit') refreshInstruments(d); else drawPFD(INST.c.pfd.getContext('2d'), d.pfd);
-    if (!TK.pfdCtx) TK.pfdCtx = $('pfd-tk').getContext('2d'); TK.pfdCtx.drawImage(INST.c.pfd, 0, 0); }
+  RT.instrT -= dt; if (RT.instrT <= 0) { RT.instrT = .08;
+    panelInstr(tkInstr(), engData(st.n1, { msg: ST === S.ROLL ? 'TO THRUST' : st.n1 > .05 ? '' : 'ENG OFF', msgCol: COL.green })); }
   const nOn = st.n1 > 0 ? st.n1 : 0; engineSet(ST === S.AIR ? 0 : nOn);
 }
 function phaseName() { return { GATE: 'Boarding', DOORS: 'Boarding complete', PUSHRDY: 'Ready for pushback', PUSHING: 'Pushing back', WELRDY: 'Engines starting',
@@ -132,6 +131,7 @@ function updBtns() {
   switch (ST) {
     case S.GATE: unlock('k-ann', 'k-belt'); guide('k-ann'); break;
     case S.PUSHRDY: unlock('k-push', 'k-belt'); guide('k-push'); break;
+    case S.PUSHING: unlock('k-push'); break;   // keep PUSH live under the finger while it is held
     case S.WELRDY: unlock('k-ann', 'k-belt'); guide('k-ann'); break;
     case S.HOLD: unlock('k-ann', 'k-flaps', 'k-gear', 'k-belt'); guide(flap10 ? 'k-ann' : 'k-flaps'); break;
     case S.TORDY: unlock('k-thrust', 'k-gear'); guide('k-thrust'); break;
@@ -228,7 +228,7 @@ function doTakeoffAnn() {
 }
 /* PUSH hold */
 function pushHoldStart() {
-  if (ST !== S.PUSHRDY) return; pushHeld = true; $('k-push').classList.add('held'); pushStart();
+  if (ST !== S.PUSHRDY) return; pushHeld = true; pushStart(); $('k-push').classList.add('held');
   pushT = setInterval(() => { pushProg = Math.min(100, pushProg + .8); $('pf').style.width = pushProg + '%'; setPushPos();
     if (pushProg >= 100) { clearInterval(pushT); pushT = null; pushDone(); $('k-push').classList.remove('held'); $('pf').style.width = '0%'; } }, 50);
 }
